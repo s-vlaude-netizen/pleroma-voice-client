@@ -30,6 +30,11 @@ class Prefs(context: Context) {
         get() = prefs.getString(KEY_ACCOUNT, "").orEmpty()
         set(value) = prefs.edit().putString(KEY_ACCOUNT, value).apply()
 
+    /** Speaking speed, adjustable by voice ("schneller" / "langsamer"). */
+    var speechRate: Float
+        get() = prefs.getFloat(KEY_SPEECH_RATE, 1.0f)
+        set(value) = prefs.edit().putFloat(KEY_SPEECH_RATE, value).apply()
+
     val isLoggedIn: Boolean
         get() = instance.isNotBlank() && accessToken.isNotBlank()
 
@@ -47,5 +52,6 @@ class Prefs(context: Context) {
         private const val KEY_CLIENT_SECRET = "client_secret"
         private const val KEY_TOKEN = "access_token"
         private const val KEY_ACCOUNT = "account_name"
+        private const val KEY_SPEECH_RATE = "speech_rate"
     }
 }
