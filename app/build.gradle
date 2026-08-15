@@ -1,0 +1,59 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+// Release signing is taken from environment variables when they are present
+// (that is how the GitHub Actions release build signs the APK). When they are
+// absent — a plain local `./gradlew assembleRelease` — we fall back to the
+// debug keystore so the produced APK is still installable.
+def keystorePath = System.getenv("KEYSTORE_FILE")
+def hasReleaseKeystore = keystorePath != null && !keystorePath.isEmpty() && file(keystorePath).exists()
+
+android {
+    namespace 'de.peroma.voice'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "de.peroma.voice"
+        minSdk 24
+        targetSdk 34
+        versionCode 1
+        versionName "1.0.0"
+    }
+
+    signingConfigs {
+        release {
+            if (hasReleaseKeystore) {
+                storeFile file(keystorePath)
+                storePassword System.getenv("KEYSTORE_PASSWORD")
+                keyAlias System.getenv("KEY_ALIAS")
+                keyPassword System.getenv("KEY_PASSWORD")
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig hasReleaseKeystore ? signingConfigs.release : signingConfigs.debug
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+}
+
+dependencies {
+    implementation 'androidx.core:core-ktx:1.13.1'
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'com.google.android.material:material:1.12.0'
+
+    testImplementation 'junit:junit:4.13.2'
+}

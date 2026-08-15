@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Peroma Voice</string>
+    <string name="login_title">Anmelden</string>
+
+    <string name="instance_hint">Instanz, z. B. pleroma.example</string>
+    <string name="login_button">Mit Pleroma anmelden</string>
+    <string name="login_intro">Gib die Adresse deiner Pleroma-Instanz ein. Danach öffnet sich der Browser zur Anmeldung.</string>
+
+    <string name="read_timeline">Timeline vorlesen</string>
+    <string name="pause">Pause</string>
+    <string name="resume">Weiterlesen</string>
+    <string name="next_post">Nächster Beitrag</string>
+    <string name="previous_post">Vorheriger Beitrag</string>
+    <string name="stop">Stopp</string>
+    <string name="dictate">Beitrag diktieren</string>
+    <string name="repeat_post">Beitrag wiederholen</string>
+    <string name="logout">Abmelden</string>
+
+    <string name="send">Senden</string>
+    <string name="cancel">Abbrechen</string>
+    <string name="retry">Nochmal diktieren</string>
+
+    <string name="notification_channel_name">Timeline-Wiedergabe</string>
+    <string name="idle">Bereit</string>
+</resources>
