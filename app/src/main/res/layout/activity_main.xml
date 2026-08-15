@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/statusText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="96dp"
+            android:textSize="18sp"
+            android:text="@string/idle"
+            android:focusable="true" />
+
+        <Button
+            android:id="@+id/btnRead"
+            style="@style/VoiceButton"
+            android:text="@string/read_timeline" />
+
+        <Button
+            android:id="@+id/btnPause"
+            style="@style/VoiceButton"
+            android:text="@string/pause" />
+
+        <Button
+            android:id="@+id/btnNext"
+            style="@style/VoiceButton"
+            android:text="@string/next_post" />
+
+        <Button
+            android:id="@+id/btnPrev"
+            style="@style/VoiceButton"
+            android:text="@string/previous_post" />
+
+        <Button
+            android:id="@+id/btnRepeat"
+            style="@style/VoiceButton"
+            android:text="@string/repeat_post" />
+
+        <Button
+            android:id="@+id/btnStop"
+            style="@style/VoiceButton"
+            android:text="@string/stop" />
+
+        <Button
+            android:id="@+id/btnDictate"
+            style="@style/VoiceButton"
+            android:text="@string/dictate" />
+
+        <Button
+            android:id="@+id/btnLogout"
+            style="@style/VoiceButton"
+            android:text="@string/logout" />
+
+    </LinearLayout>
+</ScrollView>
