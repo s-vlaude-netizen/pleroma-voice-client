@@ -3,13 +3,16 @@
     <string name="app_name">Peroma Voice</string>
     <string name="login_title">Anmelden</string>
 
-    <string name="instance_hint">Instanz, z. B. pleroma.example</string>
+    <string name="instance_hint">Instanz, z. B. pleroma.example</string>
     <string name="login_button">Mit Pleroma anmelden</string>
     <string name="login_intro">Gib die Adresse deiner Pleroma-Instanz ein. Danach öffnet sich der Browser zur Anmeldung.</string>
 
+    <string name="start_voice">Sprachsteuerung starten</string>
+    <string name="stop_voice">Sprachsteuerung beenden</string>
+    <string name="manual_hint">Optional: dieselben Funktionen per Knopf, falls die Spracherkennung gerade nicht verfügbar ist.</string>
+
     <string name="read_timeline">Timeline vorlesen</string>
     <string name="pause">Pause</string>
-    <string name="resume">Weiterlesen</string>
     <string name="next_post">Nächster Beitrag</string>
     <string name="previous_post">Vorheriger Beitrag</string>
     <string name="stop">Stopp</string>
@@ -21,6 +24,6 @@
     <string name="cancel">Abbrechen</string>
     <string name="retry">Nochmal diktieren</string>
 
-    <string name="notification_channel_name">Timeline-Wiedergabe</string>
+    <string name="notification_channel_name">Sprachsitzung</string>
     <string name="idle">Bereit</string>
 </resources>
