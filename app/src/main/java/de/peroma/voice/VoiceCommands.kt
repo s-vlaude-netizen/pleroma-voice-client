@@ -47,7 +47,9 @@ object VoiceCommands {
             "vorheriger", "vorherige", "vorheriges", "zurück", "davor", "nochmal zurück"
         ),
         VoiceCommand.REPEAT to listOf(
-            "wiederholen", "wiederhole", "nochmal", "noch einmal", "was war das"
+            // Recognizers write this as one word or two, so accept both.
+            "wiederholen", "wiederhole", "nochmal", "noch mal", "noch einmal",
+            "was war das"
         ),
         VoiceCommand.PAUSE to listOf(
             "pause", "pausieren", "warte", "moment", "still"
@@ -89,13 +91,17 @@ object VoiceCommands {
     private val PREPARED: List<Pair<VoiceCommand, List<List<String>>>> =
         TABLE.map { (command, phrases) -> command to phrases.map { words(it) } }
 
-    /** Confirmation dialogs must read "senden" as yes, not as "write a post". */
+    /**
+     * The confirmation step is a plain yes/no.
+     *
+     * "senden" has to read as yes here rather than as "write a post". There is
+     * deliberately no re-dictate option: it did the same thing as no from the
+     * user's point of view, and it was unreliable anyway, since recognizers
+     * write "nochmal" as two words about as often as one.
+     */
     private val CONFIRMATION: List<Pair<VoiceCommand, List<List<String>>>> = listOf(
         VoiceCommand.DECLINE to listOf(
             "nein", "verwerfen", "abbrechen", "löschen", "doch nicht", "stopp"
-        ).map { words(it) },
-        VoiceCommand.REPEAT to listOf(
-            "nochmal", "noch einmal", "wiederholen", "neu diktieren", "korrigieren"
         ).map { words(it) },
         VoiceCommand.CONFIRM to listOf(
             "ja", "senden", "abschicken", "veröffentlichen", "bestätigen", "okay", "ok",

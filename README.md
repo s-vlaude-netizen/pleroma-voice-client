@@ -35,12 +35,15 @@ vorlesen lassen und Beiträge diktieren, ohne einmal hinzusehen.
 | „Wiederholen", „Nochmal" | aktuellen Beitrag erneut vorlesen |
 | „Pause" / „Weiter" | anhalten / fortsetzen |
 | „Neuer Beitrag", „Diktieren", „Posten" | Beitrag diktieren |
-| „Ja", „Senden" / „Nein", „Verwerfen" / „Nochmal" | Entwurf bestätigen, verwerfen, neu diktieren |
+| „Ja", „Senden" / „Nein", „Verwerfen" | Entwurf senden oder verwerfen |
 | „Schneller" / „Langsamer" | Sprechtempo ändern |
 | „Wo bin ich" | aktuellen Stand ansagen |
 | „Hilfe" | alle Befehle vorlesen |
 | „Abmelden" | Konto abmelden |
 | „Beenden", „Tschüss" | Sprachsitzung beenden |
+
+Die Bestätigung eines Entwurfs ist bewusst ein reines Ja/Nein. Nach „Nein" ist der
+Entwurf weg — für einen neuen Anlauf sagst du wieder „Neuer Beitrag".
 
 Befehle werden auf **ganze Wörter** geprüft, nicht auf Teilzeichenketten — „Jahr"
 gilt also nicht als „ja", und „nächster Beitrag" startet keinen neuen Beitrag.
@@ -67,7 +70,7 @@ Jeder Build legt die APK zusätzlich als Workflow-Artefakt unter *Actions* ab.
 
 | Version | Bedienung |
 | --- | --- |
-| **2.0.0** | Sprachsteuerung als Hauptbedienung, Knöpfe optional |
+| **2.0.x** | Sprachsteuerung als Hauptbedienung, Knöpfe optional |
 | **1.0.0** | reine Knopfbedienung, Diktat über Bestätigungsdialog |
 
 Beide bleiben unter *Releases* verfügbar. 2.0.0 ändert die Bedienung grundlegend,
