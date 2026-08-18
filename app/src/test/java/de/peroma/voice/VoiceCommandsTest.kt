@@ -68,11 +68,26 @@ class VoiceCommandsTest {
     }
 
     @Test
-    fun confirmationRecognisesRejectionAndRetry() {
+    fun confirmationRecognisesRejection() {
         assertEquals(VoiceCommand.DECLINE, VoiceCommands.parseConfirmation("nein"))
         assertEquals(VoiceCommand.DECLINE, VoiceCommands.parseConfirmation("verwerfen"))
-        assertEquals(VoiceCommand.REPEAT, VoiceCommands.parseConfirmation("nochmal"))
-        assertEquals(VoiceCommand.REPEAT, VoiceCommands.parseConfirmation("neu diktieren"))
+        assertEquals(VoiceCommand.DECLINE, VoiceCommands.parseConfirmation("abbrechen"))
+    }
+
+    /** Confirming a post is a plain yes/no — re-dictating is not an option. */
+    @Test
+    fun confirmationHasNoRedictateOption() {
+        assertEquals(VoiceCommand.UNKNOWN, VoiceCommands.parseConfirmation("nochmal"))
+        assertEquals(VoiceCommand.UNKNOWN, VoiceCommands.parseConfirmation("noch mal"))
+        assertEquals(VoiceCommand.UNKNOWN, VoiceCommands.parseConfirmation("neu diktieren"))
+    }
+
+    /** Recognizers split "nochmal" about as often as they keep it together. */
+    @Test
+    fun repeatAcceptsBothSpellingsOfNochmal() {
+        assertEquals(VoiceCommand.REPEAT, VoiceCommands.parse("nochmal"))
+        assertEquals(VoiceCommand.REPEAT, VoiceCommands.parse("noch mal"))
+        assertEquals(VoiceCommand.REPEAT, VoiceCommands.parse("noch einmal"))
     }
 
     /** A rejection is checked before acceptance so "nein, nicht senden" is a no. */

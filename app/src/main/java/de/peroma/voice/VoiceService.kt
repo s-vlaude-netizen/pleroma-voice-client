@@ -81,6 +81,7 @@ class VoiceService : Service() {
     private var loading = false
     private var silenceStreak = 0
     private var dictationRetries = 0
+    private var confirmMisses = 0
     private var draft: String = ""
 
     private var utteranceCounter = 0
@@ -626,22 +627,44 @@ class VoiceService : Service() {
 
         draft = spoken.trim()
         dictationRetries = 0
+        confirmMisses = 0
         speak(
-            "Dein Beitrag lautet: $draft. Soll ich das senden? Sag Ja, Nein, oder Nochmal.",
+            "Dein Beitrag lautet: $draft. Soll ich das senden? Sag Ja oder Nein.",
             After.LISTEN_CONFIRM
         )
     }
 
     private fun handleConfirmation(spoken: String) {
         when (VoiceCommands.parseConfirmation(spoken)) {
-            VoiceCommand.CONFIRM -> publishDraft()
-            VoiceCommand.REPEAT -> promptForDictation()
+            VoiceCommand.CONFIRM -> {
+                confirmMisses = 0
+                publishDraft()
+            }
+
             VoiceCommand.DECLINE -> {
+                confirmMisses = 0
                 draft = ""
                 speak("Beitrag verworfen. Zurück zum Hauptmenü.", After.LISTEN_COMMAND)
             }
 
-            else -> speak("Bitte sag Ja, Nein, oder Nochmal.", After.LISTEN_CONFIRM)
+            // Anything else is neither yes nor no. Give the user a couple of
+            // tries, but never loop forever: without a cap, a recognizer that
+            // keeps mishearing would keep asking the same question and the
+            // session could not be left by voice at all.
+            else -> {
+                confirmMisses++
+                if (confirmMisses >= MAX_CONFIRM_MISSES) {
+                    confirmMisses = 0
+                    draft = ""
+                    speak(
+                        "Ich habe dich nicht verstanden. Der Beitrag wird verworfen. " +
+                            "Zurück zum Hauptmenü.",
+                        After.LISTEN_COMMAND
+                    )
+                } else {
+                    speak("Bitte sag Ja oder Nein.", After.LISTEN_CONFIRM)
+                }
+            }
         }
     }
 
@@ -665,8 +688,10 @@ class VoiceService : Service() {
             },
             onError = { error ->
                 beep(ToneGenerator.TONE_PROP_NACK)
+                confirmMisses = 0
                 speak(
-                    "Senden fehlgeschlagen. ${error.userMessage()}. Nochmal versuchen?",
+                    "Senden fehlgeschlagen. ${error.userMessage()}. " +
+                        "Soll ich es erneut versuchen? Sag Ja oder Nein.",
                     After.LISTEN_CONFIRM
                 )
             }
@@ -863,6 +888,9 @@ class VoiceService : Service() {
 
         /** Backoff after a recognizer failure, so retries cannot spin. */
         private const val RECOGNIZER_RETRY_DELAY_MS = 800L
+
+        /** Unrecognised yes/no answers tolerated before the draft is dropped. */
+        private const val MAX_CONFIRM_MISSES = 3
 
         private const val COMMAND_WINDOW_MS = 6_000L
         private const val BETWEEN_POSTS_WINDOW_MS = 2_200L
