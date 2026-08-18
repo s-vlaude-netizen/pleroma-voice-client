@@ -68,6 +68,7 @@ class VoiceService : Service() {
     private var recognizer: SpeechRecognizer? = null
     private var listening = false
     private var listenTimeout: Runnable? = null
+    private var listenStart: Runnable? = null
 
     private var toneGenerator: ToneGenerator? = null
     private var audioManager: AudioManager? = null
@@ -299,32 +300,51 @@ class VoiceService : Service() {
             putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, false)
         }
 
-        try {
-            speech.startListening(intent)
-        } catch (e: Exception) {
-            listening = false
-            handleSilence()
-            return
-        }
-
-        // The engine's own silence timeout is only a hint, so close the window
-        // ourselves — otherwise the pause between posts would drag on.
-        val timeout = Runnable {
-            if (listening) {
+        // Open the microphone only once the earcon has died away. Starting it
+        // immediately means the recognizer hears our own beep and reports that
+        // it understood nothing.
+        val start = Runnable {
+            if (!listening) return@Runnable
+            try {
+                speech.startListening(intent)
+            } catch (e: Exception) {
                 listening = false
-                try {
-                    recognizer?.cancel()
-                } catch (e: Exception) {
-                    // Nothing useful to do; treat it as silence below.
-                }
-                handleSilence()
+                retryAfterRecognizerTrouble()
+                return@Runnable
             }
+
+            // The engine's own silence timeout is only a hint, so close the
+            // window ourselves — otherwise the pause between posts drags on.
+            val timeout = Runnable {
+                if (listening) {
+                    listening = false
+                    try {
+                        recognizer?.cancel()
+                    } catch (e: Exception) {
+                        // Nothing useful to do; treat it as silence below.
+                    }
+                    handleSilence()
+                }
+            }
+            listenTimeout = timeout
+            mainHandler.postDelayed(timeout, windowMs)
         }
-        listenTimeout = timeout
-        mainHandler.postDelayed(timeout, windowMs)
+        listenStart = start
+        mainHandler.postDelayed(start, BEEP_SETTLE_MS)
+    }
+
+    /**
+     * A recognizer that is busy or broken fails almost instantly. Without a
+     * pause the session would retry in a tight loop, burn through the silence
+     * budget in a fraction of a second and shut itself down in a burst of beeps.
+     */
+    private fun retryAfterRecognizerTrouble() {
+        mainHandler.postDelayed({ handleSilence() }, RECOGNIZER_RETRY_DELAY_MS)
     }
 
     private fun cancelListening() {
+        listenStart?.let { mainHandler.removeCallbacks(it) }
+        listenStart = null
         listenTimeout?.let { mainHandler.removeCallbacks(it) }
         listenTimeout = null
         if (listening) {
@@ -361,7 +381,14 @@ class VoiceService : Service() {
                             "Mir fehlt die Freigabe für das Mikrofon. Bitte in der App erteilen.",
                             After.STOP_SESSION
                         )
-                    else -> handleSilence()
+
+                    // The user simply said nothing — carry on straight away.
+                    SpeechRecognizer.ERROR_NO_MATCH,
+                    SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> handleSilence()
+
+                    // Busy, client or audio errors come back instantly, so
+                    // back off before trying again.
+                    else -> retryAfterRecognizerTrouble()
                 }
             }
         }
@@ -830,6 +857,12 @@ class VoiceService : Service() {
 
         private const val CHANNEL_ID = "voice_session"
         private const val NOTIFICATION_ID = 42
+
+        /** Let the earcon fade before the microphone opens. */
+        private const val BEEP_SETTLE_MS = 220L
+
+        /** Backoff after a recognizer failure, so retries cannot spin. */
+        private const val RECOGNIZER_RETRY_DELAY_MS = 800L
 
         private const val COMMAND_WINDOW_MS = 6_000L
         private const val BETWEEN_POSTS_WINDOW_MS = 2_200L
