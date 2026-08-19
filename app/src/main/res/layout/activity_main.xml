@@ -50,6 +50,11 @@
                 android:text="@string/read_timeline" />
 
             <Button
+                android:id="@+id/btnTogglePauses"
+                style="@style/VoiceButton"
+                android:text="@string/pauses_state_off" />
+
+            <Button
                 android:id="@+id/btnNext"
                 style="@style/VoiceButton"
                 android:text="@string/next_post" />

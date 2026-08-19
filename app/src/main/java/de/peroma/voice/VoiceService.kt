@@ -485,6 +485,22 @@ class VoiceService : Service() {
                 speak("Pausiert. Sag Weiter, um fortzufahren.", After.LISTEN_COMMAND)
             }
 
+            VoiceCommand.PAUSES_ON -> {
+                prefs.pauseBetweenPosts = true
+                speak(
+                    "Ich frage jetzt zwischen den Beiträgen nach.",
+                    After.LISTEN_COMMAND
+                )
+            }
+
+            VoiceCommand.PAUSES_OFF -> {
+                prefs.pauseBetweenPosts = false
+                speak(
+                    "Ich lese die Timeline jetzt am Stück vor.",
+                    After.LISTEN_COMMAND
+                )
+            }
+
             VoiceCommand.NEW_POST -> promptForDictation()
             VoiceCommand.HELP -> speak(VoiceCommands.HELP_TEXT, After.LISTEN_COMMAND)
 
@@ -567,6 +583,16 @@ class VoiceService : Service() {
         )
     }
 
+    /**
+     * What follows a post: by default the next one, straight away.
+     *
+     * Opening the microphone after every post is the optional mode — it makes
+     * hands-free navigation possible, but it also puts a gap and a beep between
+     * every entry, which is not what you want when you just let the timeline run.
+     */
+    private fun afterPost(): After =
+        if (prefs.pauseBetweenPosts) After.LISTEN_BETWEEN_POSTS else After.NEXT_POST
+
     private fun speakCurrentPost() {
         if (posts.isEmpty()) {
             speak("Es ist keine Timeline geladen. Sag Timeline vorlesen.", After.LISTEN_COMMAND)
@@ -575,7 +601,7 @@ class VoiceService : Service() {
         if (index !in posts.indices) index = 0
         stage = Stage.READING
         val post = posts[index]
-        speak(post.toSpeech(index + 1, posts.size), After.LISTEN_BETWEEN_POSTS)
+        speak(post.toSpeech(index + 1, posts.size), afterPost())
     }
 
     private fun nextPost(auto: Boolean) {
@@ -584,9 +610,14 @@ class VoiceService : Service() {
             return
         }
         if (index >= posts.lastIndex) {
+            val ending = if (auto) {
+                "Das waren alle ${posts.size} Beiträge."
+            } else {
+                "Es gibt keinen weiteren Beitrag."
+            }
             speak(
-                if (auto) "Das war der letzte Beitrag. Was möchtest du tun?"
-                else "Es gibt keinen weiteren Beitrag. Was möchtest du tun?",
+                "$ending Möchtest du einen Beitrag schreiben? " +
+                    "Sag Neuer Beitrag, Timeline vorlesen, oder Beenden.",
                 After.LISTEN_COMMAND
             )
             return
@@ -601,7 +632,12 @@ class VoiceService : Service() {
             return
         }
         if (index <= 0) {
-            speak("Das ist bereits der erste Beitrag.", After.LISTEN_BETWEEN_POSTS)
+            // Re-read the first post rather than falling through to the second.
+            stage = Stage.READING
+            speak(
+                "Das ist bereits der erste Beitrag. " + posts[0].toSpeech(1, posts.size),
+                afterPost()
+            )
             return
         }
         index--

@@ -35,6 +35,16 @@ class Prefs(context: Context) {
         get() = prefs.getFloat(KEY_SPEECH_RATE, 1.0f)
         set(value) = prefs.edit().putFloat(KEY_SPEECH_RATE, value).apply()
 
+    /**
+     * Whether the microphone opens briefly between two posts.
+     *
+     * Off by default: the timeline is read straight through and the app only
+     * asks what to do once it reaches the end.
+     */
+    var pauseBetweenPosts: Boolean
+        get() = prefs.getBoolean(KEY_PAUSE_BETWEEN_POSTS, false)
+        set(value) = prefs.edit().putBoolean(KEY_PAUSE_BETWEEN_POSTS, value).apply()
+
     val isLoggedIn: Boolean
         get() = instance.isNotBlank() && accessToken.isNotBlank()
 
@@ -53,5 +63,6 @@ class Prefs(context: Context) {
         private const val KEY_TOKEN = "access_token"
         private const val KEY_ACCOUNT = "account_name"
         private const val KEY_SPEECH_RATE = "speech_rate"
+        private const val KEY_PAUSE_BETWEEN_POSTS = "pause_between_posts"
     }
 }

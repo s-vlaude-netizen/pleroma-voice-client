@@ -25,6 +25,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var prefs: Prefs
     private lateinit var statusText: TextView
     private lateinit var startButton: Button
+    private lateinit var pauseToggle: Button
 
     private val micPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -65,6 +66,20 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btnRead).setOnClickListener {
             VoiceService.send(this, VoiceService.ACTION_READ_TIMELINE)
         }
+
+        pauseToggle = findViewById(R.id.btnTogglePauses)
+        pauseToggle.setOnClickListener {
+            prefs.pauseBetweenPosts = !prefs.pauseBetweenPosts
+            updatePauseToggle()
+            setStatus(
+                if (prefs.pauseBetweenPosts) {
+                    "Zwischen den Beiträgen wird nachgefragt."
+                } else {
+                    "Die Timeline wird am Stück vorgelesen."
+                }
+            )
+        }
+        updatePauseToggle()
         findViewById<Button>(R.id.btnNext).setOnClickListener {
             VoiceService.send(this, VoiceService.ACTION_NEXT)
         }
@@ -101,6 +116,12 @@ class MainActivity : AppCompatActivity() {
     override fun onStop() {
         super.onStop()
         VoiceService.State.listener = null
+    }
+
+    private fun updatePauseToggle() {
+        pauseToggle.setText(
+            if (prefs.pauseBetweenPosts) R.string.pauses_state_on else R.string.pauses_state_off
+        )
     }
 
     private fun requestNotificationPermissionIfNeeded() {
