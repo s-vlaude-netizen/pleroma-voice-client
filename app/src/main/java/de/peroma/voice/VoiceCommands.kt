@@ -9,6 +9,8 @@ enum class VoiceCommand {
     REPEAT,
     PAUSE,
     RESUME,
+    PAUSES_OFF,
+    PAUSES_ON,
     STOP_READING,
     NEW_POST,
     CONFIRM,
@@ -50,6 +52,16 @@ object VoiceCommands {
             // Recognizers write this as one word or two, so accept both.
             "wiederholen", "wiederhole", "nochmal", "noch mal", "noch einmal",
             "was war das"
+        ),
+        // Listed before PAUSE: "Pausen aus" must never be heard as "Pause".
+        // OFF before ON, because "nicht nachfragen" contains "nachfragen".
+        VoiceCommand.PAUSES_OFF to listOf(
+            "am stück", "durchlesen", "ohne pausen", "ohne unterbrechung",
+            "pausen aus", "nicht nachfragen", "nicht unterbrechen"
+        ),
+        VoiceCommand.PAUSES_ON to listOf(
+            "mit pausen", "pausen an", "pausen ein", "zwischendurch fragen",
+            "nachfragen", "zwischenfragen"
         ),
         VoiceCommand.PAUSE to listOf(
             "pause", "pausieren", "warte", "moment", "still"
@@ -144,6 +156,8 @@ object VoiceCommands {
     const val HELP_TEXT: String =
         "Du kannst sagen: Timeline vorlesen. Nächster Beitrag. Vorheriger Beitrag. " +
             "Wiederholen. Pause. Weiter. Stopp. Neuer Beitrag, um etwas zu diktieren. " +
-            "Schneller oder langsamer für das Sprechtempo. Abmelden. " +
+            "Schneller oder langsamer für das Sprechtempo. " +
+            "Mit Pausen, wenn ich zwischen den Beiträgen nachfragen soll, " +
+            "oder Am Stück, wenn ich durchlesen soll. Abmelden. " +
             "Oder: Beenden, um die Sprachsteuerung zu schließen."
 }

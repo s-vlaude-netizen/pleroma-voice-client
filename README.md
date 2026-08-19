@@ -14,9 +14,12 @@ vorlesen lassen und Beiträge diktieren, ohne einmal hinzusehen.
   Sitzung läuft in der Hosentasche weiter.
 - **Signaltöne** — ein kurzer Ton zeigt an, wann die App zuhört; eigene Töne für
   Erfolg und Fehler. So ist ohne Blick klar, wer gerade „dran" ist.
-- **Timeline vorlesen** — Autor, Inhaltswarnung, Text und Bildbeschreibungen der
-  Anhänge. Zwischen zwei Beiträgen hört die App kurz zu: sagst du nichts, geht es
-  automatisch weiter; sagst du etwas, wird der Befehl ausgeführt.
+- **Timeline am Stück vorlesen** — Autor, Inhaltswarnung, Text und Bildbeschreibungen
+  der Anhänge. Standardmäßig laufen alle Beiträge ohne Unterbrechung durch; erst am
+  Ende fragt die App, wie es weitergehen soll.
+- **Zwischenfragen optional** — wer freihändig navigieren will, schaltet mit
+  „Mit Pausen" (oder dem Knopf) einen Modus ein, in dem das Mikrofon nach jedem
+  Beitrag kurz aufgeht. „Am Stück" schaltet zurück. Die Einstellung wird gemerkt.
 - **Beiträge diktieren** — diktieren, der Entwurf wird **zur Kontrolle vorgelesen**,
   und erst nach einem gesprochenen „Ja" veröffentlicht.
 - **Sprechtempo per Stimme** — „schneller" / „langsamer", wird dauerhaft gemerkt.
@@ -34,6 +37,7 @@ vorlesen lassen und Beiträge diktieren, ohne einmal hinzusehen.
 | „Vorheriger", „Zurück" | vorheriger Beitrag |
 | „Wiederholen", „Nochmal" | aktuellen Beitrag erneut vorlesen |
 | „Pause" / „Weiter" | anhalten / fortsetzen |
+| „Am Stück" / „Mit Pausen" | ohne bzw. mit Nachfrage zwischen den Beiträgen |
 | „Neuer Beitrag", „Diktieren", „Posten" | Beitrag diktieren |
 | „Ja", „Senden" / „Nein", „Verwerfen" | Entwurf senden oder verwerfen |
 | „Schneller" / „Langsamer" | Sprechtempo ändern |
@@ -41,6 +45,10 @@ vorlesen lassen und Beiträge diktieren, ohne einmal hinzusehen.
 | „Hilfe" | alle Befehle vorlesen |
 | „Abmelden" | Konto abmelden |
 | „Beenden", „Tschüss" | Sprachsitzung beenden |
+
+Im Standardmodus („am Stück") hört das Mikrofon während des Vorlesens **nicht** zu —
+zum Abbrechen dienen die Benachrichtigung oder der Knopf in der App. Wer mitten im
+Vorlesen per Stimme steuern will, schaltet „Mit Pausen" ein.
 
 Die Bestätigung eines Entwurfs ist bewusst ein reines Ja/Nein. Nach „Nein" ist der
 Entwurf weg — für einen neuen Anlauf sagst du wieder „Neuer Beitrag".
@@ -70,10 +78,11 @@ Jeder Build legt die APK zusätzlich als Workflow-Artefakt unter *Actions* ab.
 
 | Version | Bedienung |
 | --- | --- |
-| **2.0.x** | Sprachsteuerung als Hauptbedienung, Knöpfe optional |
+| **2.1.x** | Timeline läuft am Stück durch, Zwischenfragen optional |
+| **2.0.x** | Sprachsteuerung als Hauptbedienung, Nachfrage nach jedem Beitrag |
 | **1.0.0** | reine Knopfbedienung, Diktat über Bestätigungsdialog |
 
-Beide bleiben unter *Releases* verfügbar. 2.0.0 ändert die Bedienung grundlegend,
+Alle bleiben unter *Releases* verfügbar. Version 2 ändert die Bedienung grundlegend,
 nutzt aber dieselben Konto- und Anmeldedaten — ein Update behält die Anmeldung bei.
 
 ## Benutzung

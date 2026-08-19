@@ -12,6 +12,8 @@
     <string name="manual_hint">Optional: dieselben Funktionen per Knopf, falls die Spracherkennung gerade nicht verfügbar ist.</string>
 
     <string name="read_timeline">Timeline vorlesen</string>
+    <string name="pauses_state_on">Zwischenfragen: an — tippen zum Ausschalten</string>
+    <string name="pauses_state_off">Zwischenfragen: aus — tippen zum Einschalten</string>
     <string name="pause">Pause</string>
     <string name="next_post">Nächster Beitrag</string>
     <string name="previous_post">Vorheriger Beitrag</string>

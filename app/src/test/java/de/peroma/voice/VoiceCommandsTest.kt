@@ -40,6 +40,31 @@ class VoiceCommandsTest {
     }
 
     @Test
+    fun recognisesReadingModeCommands() {
+        assertEquals(VoiceCommand.PAUSES_OFF, VoiceCommands.parse("am Stück"))
+        assertEquals(VoiceCommand.PAUSES_OFF, VoiceCommands.parse("durchlesen"))
+        assertEquals(VoiceCommand.PAUSES_OFF, VoiceCommands.parse("ohne Pausen"))
+        assertEquals(VoiceCommand.PAUSES_ON, VoiceCommands.parse("mit Pausen"))
+        assertEquals(VoiceCommand.PAUSES_ON, VoiceCommands.parse("Pausen an"))
+        assertEquals(VoiceCommand.PAUSES_ON, VoiceCommands.parse("nachfragen"))
+    }
+
+    /** "Pausen aus" must switch the mode, not pause playback. */
+    @Test
+    fun readingModeDoesNotCollideWithPause() {
+        assertEquals(VoiceCommand.PAUSES_OFF, VoiceCommands.parse("Pausen aus"))
+        assertEquals(VoiceCommand.PAUSE, VoiceCommands.parse("Pause"))
+        assertEquals(VoiceCommand.PAUSE, VoiceCommands.parse("pausieren"))
+    }
+
+    /** "nicht nachfragen" contains "nachfragen", so the negation must win. */
+    @Test
+    fun negatedReadingModeWins() {
+        assertEquals(VoiceCommand.PAUSES_OFF, VoiceCommands.parse("nicht nachfragen"))
+        assertEquals(VoiceCommand.PAUSES_OFF, VoiceCommands.parse("nicht unterbrechen"))
+    }
+
+    @Test
     fun recognisesSessionCommands() {
         assertEquals(VoiceCommand.HELP, VoiceCommands.parse("Hilfe"))
         assertEquals(VoiceCommand.HELP, VoiceCommands.parse("was kann ich sagen"))
