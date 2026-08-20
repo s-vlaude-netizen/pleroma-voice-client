@@ -1,5 +1,8 @@
 # Peroma Voice — Audio-Client für Pleroma
 
+*English and German. The app speaks whichever language you pick — see
+[Sprache / Language](#sprache--language).*
+
 Ein reiner **Audio-Client** für das Fediverse-Netzwerk [Pleroma](https://pleroma.social)
 (oft „Peroma" ausgesprochen). Ab Version 2 wird die App **wie ein Telefonmenü per
 Stimme bedient**: App starten, Bildschirm ausschalten, Handy einstecken — Timeline
@@ -25,6 +28,8 @@ vorlesen lassen und Beiträge diktieren, ohne einmal hinzusehen.
 - **Sprechtempo per Stimme** — „schneller" / „langsamer", wird dauerhaft gemerkt.
 - **Knöpfe bleiben optional** — dieselben Funktionen sind weiterhin antippbar, falls
   die Spracherkennung mal nicht verfügbar ist.
+- **Zweisprachig** — Englisch und Deutsch, jeweils komplett: Oberfläche, gesprochene
+  Ansagen und Sprachbefehle. Umschaltbar per Stimme („English" / „Deutsch") oder Knopf.
 - **Anmeldung per OAuth** — kein Passwort in der App, die Anmeldung läuft über die
   Weboberfläche deiner Instanz.
 
@@ -44,7 +49,37 @@ vorlesen lassen und Beiträge diktieren, ohne einmal hinzusehen.
 | „Wo bin ich" | aktuellen Stand ansagen |
 | „Hilfe" | alle Befehle vorlesen |
 | „Abmelden" | Konto abmelden |
+| „English" / „Deutsch" | Sprache umschalten |
 | „Beenden", „Tschüss" | Sprachsitzung beenden |
+
+### English commands
+
+| Say | Effect |
+| --- | --- |
+| "read timeline", "what's new" | load and read the home timeline |
+| "next", "skip" / "previous", "back" | move between posts |
+| "repeat", "again" | read the current post again |
+| "pause" / "continue" | stop and resume |
+| "straight through" / "with pauses" | read without or with a prompt between posts |
+| "new post", "dictate", "post something" | dictate a post |
+| "yes", "send" / "no", "discard" | send or discard the draft |
+| "faster" / "slower" | change the speaking rate |
+| "where am I" | say the current position |
+| "help" | read out all commands |
+| "German" / "English" | switch language |
+| "sign out" | log out of the account |
+| "end", "goodbye" | end the voice session |
+
+## Sprache / Language
+
+Beim ersten Start folgt die App der Gerätesprache: Deutsch auf einem deutschen
+Gerät, sonst Englisch. Danach gilt, was du zuletzt gewählt hast — per Sprachbefehl
+(„English" bzw. „Deutsch") oder über den Knopf in der App.
+
+Die Wahl gilt für **alles**: Oberfläche, Ansagen, erkannte Befehle und die
+Stimme, die die Timeline vorliest. Ein Wechsel mitten in der Sitzung verwirft die
+geladene Timeline, weil deren Sprechtexte in der alten Sprache aufgebaut wurden —
+einfach „Timeline vorlesen" bzw. „read timeline" erneut sagen.
 
 Im Standardmodus („am Stück") hört das Mikrofon während des Vorlesens **nicht** zu —
 zum Abbrechen dienen die Benachrichtigung oder der Knopf in der App. Wer mitten im
@@ -78,6 +113,7 @@ Jeder Build legt die APK zusätzlich als Workflow-Artefakt unter *Actions* ab.
 
 | Version | Bedienung |
 | --- | --- |
+| **2.2.x** | Englisch und Deutsch, umschaltbar |
 | **2.1.x** | Timeline läuft am Stück durch, Zwischenfragen optional |
 | **2.0.x** | Sprachsteuerung als Hauptbedienung, Nachfrage nach jedem Beitrag |
 | **1.0.0** | reine Knopfbedienung, Diktat über Bestätigungsdialog |
@@ -99,14 +135,14 @@ nutzt aber dieselben Konto- und Anmeldedaten — ein Update behält die Anmeldun
 Die Sprachqualität kommt vom **TTS-Dienst des Geräts**, nicht aus der App — Android
 erlaubt es nicht, ein eigenes Sprachmodell dafür mitzuliefern. Die App holt aber das
 Beste aus dem heraus, was installiert ist: sie wählt automatisch die
-höchstwertige deutsche Stimme, die **offline** funktioniert.
+höchstwertige Stimme der gewählten Sprache, die **offline** funktioniert.
 
 Klingt es blechern, hilft ein besserer Dienst:
 
 1. *Google Sprachausgabe* installieren bzw. aktualisieren.
 2. Android-Einstellungen → *Bedienungshilfen → Sprachausgabe* → Modul wählen.
-3. Dort unter *Sprachdaten installieren → Deutsch* die **hochwertigen** Stimmen laden
-   (oft als „Hohe Qualität" / „Neural" gekennzeichnet).
+3. Dort unter *Sprachdaten installieren* für **Deutsch bzw. Englisch** die
+   hochwertigen Stimmen laden (oft als „Hohe Qualität" / „Neural" gekennzeichnet).
 
 Alternativ gibt es freie Engines wie RHVoice. Nach dem Wechsel die App neu starten.
 
@@ -154,7 +190,8 @@ Lokal funktionieren dieselben Werte als Umgebungsvariablen (`KEYSTORE_FILE` als 
 | `PleromaApi.kt` | OAuth-Registrierung, Token-Tausch, Timeline, Beitrag senden |
 | `Post.kt` | Timeline-Eintrag, aufbereitet als Sprechtext |
 | `SpeechText.kt` | HTML → vorlesbarer Text (Links, Hashtags, Erwähnungen, Entities) |
-| `VoiceCommands.kt` | deutsche Sprachbefehle → Kommandos, wortweise geprüft |
+| `Strings.kt` | alle gesprochenen Texte je Sprache, plus Sprachauswahl |
+| `VoiceCommands.kt` | englische und deutsche Sprachbefehle → Kommandos, wortweise geprüft |
 | `VoiceService.kt` | Dialog-Zustandsautomat: sprechen ↔ zuhören, Wake-Lock, Töne |
 | `TtsSetup.kt` | wählt die beste installierte deutsche Offline-Stimme |
 | `MainActivity.kt` | Start der Sprachsitzung, optionale Knöpfe |

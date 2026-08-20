@@ -65,7 +65,7 @@ object PleromaApi {
             val text = stream?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }.orEmpty()
 
             if (status !in 200..299) {
-                throw IOException(describeError(status, text))
+                throw apiException(status, text)
             }
             return text
         } finally {
@@ -73,22 +73,23 @@ object PleromaApi {
         }
     }
 
-    private fun describeError(status: Int, body: String): String {
+    /** Classifies a failed response so the wording can be chosen per language. */
+    private fun apiException(status: Int, body: String): ApiException {
         val detail = try {
             if (body.isNotBlank()) JSONObject(body).optString("error", "") else ""
         } catch (e: Exception) {
             ""
         }
-        val suffix = if (detail.isNotBlank()) ": $detail" else ""
-        return when (status) {
-            401 -> "Nicht angemeldet oder Zugang abgelaufen$suffix"
-            403 -> "Zugriff verweigert$suffix"
-            404 -> "Endpunkt nicht gefunden — ist das wirklich eine Pleroma-Instanz?$suffix"
-            422 -> "Beitrag abgelehnt$suffix"
-            429 -> "Zu viele Anfragen, bitte kurz warten$suffix"
-            in 500..599 -> "Server-Fehler ($status)$suffix"
-            else -> "HTTP $status$suffix"
+        val kind = when (status) {
+            401 -> ApiErrorKind.UNAUTHORIZED
+            403 -> ApiErrorKind.FORBIDDEN
+            404 -> ApiErrorKind.NOT_FOUND
+            422 -> ApiErrorKind.REJECTED
+            429 -> ApiErrorKind.RATE_LIMITED
+            in 500..599 -> ApiErrorKind.SERVER
+            else -> ApiErrorKind.OTHER
         }
+        return ApiException(kind, status, detail)
     }
 
     data class AppCredentials(val clientId: String, val clientSecret: String)
@@ -107,7 +108,7 @@ object PleromaApi {
         val id = json.optString("client_id")
         val secret = json.optString("client_secret")
         if (id.isBlank() || secret.isBlank()) {
-            throw IOException("Instanz lieferte keine OAuth-Zugangsdaten")
+            throw ApiException(ApiErrorKind.NO_CREDENTIALS)
         }
         return AppCredentials(id, secret)
     }
@@ -138,7 +139,7 @@ object PleromaApi {
         )
         val json = JSONObject(request("POST", "https://$instance/oauth/token", body = body))
         val token = json.optString("access_token")
-        if (token.isBlank()) throw IOException("Kein Zugriffstoken erhalten")
+        if (token.isBlank()) throw ApiException(ApiErrorKind.NO_TOKEN)
         return token
     }
 
@@ -151,7 +152,12 @@ object PleromaApi {
         return if (name.isNotBlank()) name else json.optString("username")
     }
 
-    fun fetchHomeTimeline(instance: String, token: String, limit: Int = 20): List<Post> {
+    fun fetchHomeTimeline(
+        instance: String,
+        token: String,
+        strings: Strings,
+        limit: Int = 20
+    ): List<Post> {
         val text = request(
             "GET",
             "https://$instance/api/v1/timelines/home?limit=$limit",
@@ -161,7 +167,7 @@ object PleromaApi {
         val posts = ArrayList<Post>(array.length())
         for (i in 0 until array.length()) {
             val obj = array.optJSONObject(i) ?: continue
-            posts.add(Post.fromJson(obj))
+            posts.add(Post.fromJson(obj, strings))
         }
         return posts
     }

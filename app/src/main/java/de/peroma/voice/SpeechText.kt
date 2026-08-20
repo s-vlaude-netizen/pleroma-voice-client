@@ -17,7 +17,7 @@ object SpeechText {
     private val WHITESPACE = Regex("[ \\t\\x0B\\f\\r]+")
     private val BLANK_LINES = Regex("\\n{2,}")
 
-    fun fromHtml(html: String?): String {
+    fun fromHtml(html: String?, strings: Strings): String {
         if (html.isNullOrBlank()) return ""
 
         var text = html
@@ -25,7 +25,7 @@ object SpeechText {
         text = LIST_ITEM.replace(text, "\n")
         text = BLOCK_END.replace(text, "\n")
         text = TAG.replace(text, "")
-        text = unescapeEntities(text)
+        text = unescapeEntities(text, strings)
 
         // Bare links are unlistenable; announce them instead of spelling them out.
         text = URL.replace(text) { match ->
@@ -33,12 +33,12 @@ object SpeechText {
                 .substringAfter("://")
                 .substringBefore('/')
                 .removePrefix("www.")
-            if (host.isNotBlank()) "Link zu $host" else "Link"
+            if (host.isNotBlank()) strings.linkTo(host) else strings.bareLink
         }
 
         text = CUSTOM_EMOJI.replace(text, "")
         text = MENTION.replace(text) { match -> match.groupValues[1] }
-        text = HASHTAG.replace(text) { match -> "Hashtag ${match.groupValues[1]}" }
+        text = HASHTAG.replace(text) { match -> strings.hashtag(match.groupValues[1]) }
 
         text = WHITESPACE.replace(text, " ")
         text = BLANK_LINES.replace(text, "\n")
@@ -47,14 +47,14 @@ object SpeechText {
     }
 
     /** Display names often carry decorative emoji and shortcodes. */
-    fun cleanupName(name: String): String {
-        var cleaned = unescapeEntities(name)
+    fun cleanupName(name: String, strings: Strings): String {
+        var cleaned = unescapeEntities(name, strings)
         cleaned = CUSTOM_EMOJI.replace(cleaned, "")
         cleaned = WHITESPACE.replace(cleaned, " ")
         return cleaned.trim()
     }
 
-    private fun unescapeEntities(input: String): String {
+    private fun unescapeEntities(input: String, strings: Strings): String {
         var text = input
         text = text.replace("&lt;", "<")
             .replace("&gt;", ">")
@@ -71,6 +71,6 @@ object SpeechText {
             if (code != null && code in 1..0x10FFFF) String(Character.toChars(code)) else ""
         }
         // Ampersand last so it cannot re-create an entity.
-        return text.replace("&amp;", " und ")
+        return text.replace("&amp;", strings.ampersand)
     }
 }

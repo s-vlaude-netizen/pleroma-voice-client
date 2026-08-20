@@ -26,6 +26,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var statusText: TextView
     private lateinit var startButton: Button
     private lateinit var pauseToggle: Button
+    private lateinit var languageToggle: Button
 
     private val micPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -33,10 +34,7 @@ class MainActivity : AppCompatActivity() {
         if (granted) {
             startVoiceSession()
         } else {
-            setStatus(
-                "Ohne Mikrofon-Freigabe funktioniert die Sprachsteuerung nicht. " +
-                    "Die Knöpfe unten funktionieren weiterhin."
-            )
+            setStatus(getString(R.string.mic_denied))
         }
     }
 
@@ -72,14 +70,31 @@ class MainActivity : AppCompatActivity() {
             prefs.pauseBetweenPosts = !prefs.pauseBetweenPosts
             updatePauseToggle()
             setStatus(
-                if (prefs.pauseBetweenPosts) {
-                    "Zwischen den Beiträgen wird nachgefragt."
-                } else {
-                    "Die Timeline wird am Stück vorgelesen."
-                }
+                getString(
+                    if (prefs.pauseBetweenPosts) {
+                        R.string.pauses_on_status
+                    } else {
+                        R.string.pauses_off_status
+                    }
+                )
             )
         }
         updatePauseToggle()
+
+        languageToggle = findViewById(R.id.btnToggleLanguage)
+        languageToggle.setOnClickListener {
+            val next = if (prefs.language == Language.GERMAN) {
+                Language.ENGLISH
+            } else {
+                Language.GERMAN
+            }
+            prefs.language = next
+            updateLanguageToggle()
+            // The running session caches the language, so let it restart cleanly.
+            VoiceService.send(this, VoiceService.ACTION_STOP_SESSION)
+            setStatus(next.strings.languageSwitched(next))
+        }
+        updateLanguageToggle()
         findViewById<Button>(R.id.btnNext).setOnClickListener {
             VoiceService.send(this, VoiceService.ACTION_NEXT)
         }
@@ -97,11 +112,7 @@ class MainActivity : AppCompatActivity() {
         findViewById<View>(R.id.manualControls).visibility = View.VISIBLE
 
         requestNotificationPermissionIfNeeded()
-        setStatus(
-            "Angemeldet als ${prefs.accountName} auf ${prefs.instance}.\n\n" +
-                "Tippe auf Sprachsteuerung starten — danach kannst du den Bildschirm " +
-                "ausschalten und alles per Stimme steuern."
-        )
+        setStatus(getString(R.string.main_intro, prefs.accountName, prefs.instance))
     }
 
     override fun onStart() {
@@ -110,12 +121,24 @@ class MainActivity : AppCompatActivity() {
         VoiceService.State.listener = { state ->
             Background.onMain { statusText.text = state.statusText }
         }
-        statusText.text = VoiceService.State.current.statusText
+        // Keep the intro on screen until the service actually reports something.
+        val current = VoiceService.State.current.statusText
+        if (current.isNotBlank()) statusText.text = current
     }
 
     override fun onStop() {
         super.onStop()
         VoiceService.State.listener = null
+    }
+
+    private fun updateLanguageToggle() {
+        languageToggle.setText(
+            if (prefs.language == Language.GERMAN) {
+                R.string.language_state_de
+            } else {
+                R.string.language_state_en
+            }
+        )
     }
 
     private fun updatePauseToggle() {
@@ -144,7 +167,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun startVoiceSession() {
         VoiceService.send(this, VoiceService.ACTION_START_SESSION)
-        setStatus("Sprachsteuerung wird gestartet …")
+        setStatus(getString(R.string.starting_voice))
     }
 
     private fun onDictateClicked() {
@@ -158,7 +181,7 @@ class MainActivity : AppCompatActivity() {
     private fun logout() {
         VoiceService.send(this, VoiceService.ACTION_STOP_SESSION)
         prefs.clearSession()
-        Toast.makeText(this, "Abgemeldet", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, R.string.logged_out_toast, Toast.LENGTH_SHORT).show()
         startActivity(Intent(this, LoginActivity::class.java))
         finish()
     }

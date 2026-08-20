@@ -27,7 +27,6 @@ import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
-import java.util.Locale
 
 /**
  * The whole app, driven by voice.
@@ -64,6 +63,8 @@ class VoiceService : Service() {
     private var ttsReady = false
     private var pendingAction: String? = null
     private var speechRate = 1.0f
+    private var language = Language.ENGLISH
+    private var strings: Strings = EnglishStrings
 
     private var recognizer: SpeechRecognizer? = null
     private var listening = false
@@ -93,6 +94,8 @@ class VoiceService : Service() {
     override fun onCreate() {
         super.onCreate()
         prefs = Prefs(this)
+        language = prefs.language
+        strings = language.strings
         speechRate = prefs.speechRate
         audioManager = getSystemService(Context.AUDIO_SERVICE) as? AudioManager
         toneGenerator = try {
@@ -100,6 +103,7 @@ class VoiceService : Service() {
         } catch (e: Exception) {
             null
         }
+        lastStatus = strings.ready
         createNotificationChannel()
         initTts()
     }
@@ -107,11 +111,11 @@ class VoiceService : Service() {
     private fun initTts() {
         tts = TextToSpeech(this) { status ->
             if (status != TextToSpeech.SUCCESS) {
-                publish("Sprachausgabe nicht verfügbar.")
+                publish(strings.ttsUnavailable)
                 return@TextToSpeech
             }
             val engine = tts ?: return@TextToSpeech
-            TtsSetup.applyGermanVoice(engine)
+            TtsSetup.applyVoice(engine, language.locale)
             engine.setSpeechRate(speechRate)
             engine.setOnUtteranceProgressListener(utteranceListener)
             ttsReady = true
@@ -161,7 +165,7 @@ class VoiceService : Service() {
             return START_NOT_STICKY
         }
         if (!prefs.isLoggedIn) {
-            publish("Nicht angemeldet.")
+            publish(strings.notLoggedIn)
             return START_NOT_STICKY
         }
 
@@ -169,7 +173,7 @@ class VoiceService : Service() {
         if (!ttsReady) {
             // The engine is still starting up; replay the request once it is.
             pendingAction = action
-            publish("Sprachausgabe wird vorbereitet …")
+            publish(strings.preparingSpeech)
             return START_NOT_STICKY
         }
         dispatch(action)
@@ -192,11 +196,7 @@ class VoiceService : Service() {
         acquireWakeLock()
         silenceStreak = 0
         stage = Stage.MENU
-        speak(
-            "Sprachsteuerung aktiv. Du kannst den Bildschirm jetzt ausschalten. " +
-                "Sag Timeline vorlesen, Neuer Beitrag, oder Hilfe.",
-            After.LISTEN_COMMAND
-        )
+        speak(strings.sessionStarted, After.LISTEN_COMMAND)
     }
 
     // ---- speaking ----------------------------------------------------------
@@ -272,11 +272,7 @@ class VoiceService : Service() {
 
     private fun listen(windowMs: Long) {
         if (!SpeechRecognizer.isRecognitionAvailable(this)) {
-            speak(
-                "Auf diesem Gerät ist keine Spracherkennung eingerichtet. " +
-                    "Die Sprachsteuerung wird beendet.",
-                After.STOP_SESSION
-            )
+            speak(strings.noRecognizer, After.STOP_SESSION)
             return
         }
 
@@ -296,7 +292,7 @@ class VoiceService : Service() {
                 RecognizerIntent.EXTRA_LANGUAGE_MODEL,
                 RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
             )
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.GERMANY.toLanguageTag())
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, language.locale.toLanguageTag())
             putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
             putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, false)
         }
@@ -378,10 +374,7 @@ class VoiceService : Service() {
             mainHandler.post {
                 when (error) {
                     SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS ->
-                        speak(
-                            "Mir fehlt die Freigabe für das Mikrofon. Bitte in der App erteilen.",
-                            After.STOP_SESSION
-                        )
+                        speak(strings.missingMicPermission, After.STOP_SESSION)
 
                     // The user simply said nothing — carry on straight away.
                     SpeechRecognizer.ERROR_NO_MATCH,
@@ -425,9 +418,9 @@ class VoiceService : Service() {
                 dictationRetries++
                 if (dictationRetries >= 2) {
                     dictationRetries = 0
-                    speak("Ich habe nichts gehört. Zurück zum Hauptmenü.", After.LISTEN_COMMAND)
+                    speak(strings.nothingHeardToMenu, After.LISTEN_COMMAND)
                 } else {
-                    speak("Ich habe nichts gehört. Sprich deinen Beitrag nach dem Ton.", After.LISTEN_DICTATION)
+                    speak(strings.nothingHeardRetry, After.LISTEN_DICTATION)
                 }
             }
 
@@ -436,9 +429,9 @@ class VoiceService : Service() {
                 if (silenceStreak >= 2) {
                     silenceStreak = 0
                     draft = ""
-                    speak("Ich verwerfe den Beitrag. Zurück zum Hauptmenü.", After.LISTEN_COMMAND)
+                    speak(strings.draftDiscardedSilence, After.LISTEN_COMMAND)
                 } else {
-                    speak("Soll ich den Beitrag senden? Sag Ja oder Nein.", After.LISTEN_CONFIRM)
+                    speak(strings.confirmAgain, After.LISTEN_CONFIRM)
                 }
             }
 
@@ -446,14 +439,11 @@ class VoiceService : Service() {
                 silenceStreak++
                 when {
                     silenceStreak >= 6 -> {
-                        speak(
-                            "Ich höre nichts mehr und beende die Sprachsteuerung.",
-                            After.STOP_SESSION
-                        )
+                        speak(strings.nothingHeardEnding, After.STOP_SESSION)
                     }
 
                     silenceStreak == 3 -> {
-                        speak("Ich höre zu. Sag Hilfe, wenn du die Befehle brauchst.", After.LISTEN_COMMAND)
+                        speak(strings.stillListening, After.LISTEN_COMMAND)
                     }
 
                     else -> listenForCommand()
@@ -467,8 +457,11 @@ class VoiceService : Service() {
         when (stage) {
             Stage.DICTATING -> handleDictationResult(spoken)
             Stage.CONFIRMING -> handleConfirmation(spoken)
-            Stage.READING -> handleCommand(VoiceCommands.parse(spoken), duringReading = true)
-            else -> handleCommand(VoiceCommands.parse(spoken), duringReading = false)
+            Stage.READING ->
+                handleCommand(VoiceCommands.parse(spoken, language), duringReading = true)
+
+            else ->
+                handleCommand(VoiceCommands.parse(spoken, language), duringReading = false)
         }
     }
 
@@ -482,36 +475,33 @@ class VoiceService : Service() {
 
             VoiceCommand.PAUSE, VoiceCommand.STOP_READING -> {
                 stage = Stage.MENU
-                speak("Pausiert. Sag Weiter, um fortzufahren.", After.LISTEN_COMMAND)
+                speak(strings.paused, After.LISTEN_COMMAND)
             }
 
             VoiceCommand.PAUSES_ON -> {
                 prefs.pauseBetweenPosts = true
-                speak(
-                    "Ich frage jetzt zwischen den Beiträgen nach.",
-                    After.LISTEN_COMMAND
-                )
+                speak(strings.pausesOn, After.LISTEN_COMMAND)
             }
 
             VoiceCommand.PAUSES_OFF -> {
                 prefs.pauseBetweenPosts = false
-                speak(
-                    "Ich lese die Timeline jetzt am Stück vor.",
-                    After.LISTEN_COMMAND
-                )
+                speak(strings.pausesOff, After.LISTEN_COMMAND)
             }
 
             VoiceCommand.NEW_POST -> promptForDictation()
-            VoiceCommand.HELP -> speak(VoiceCommands.HELP_TEXT, After.LISTEN_COMMAND)
+            VoiceCommand.HELP -> speak(strings.helpText, After.LISTEN_COMMAND)
 
             VoiceCommand.FASTER -> changeRate(TtsSetup.RATE_STEP, duringReading)
             VoiceCommand.SLOWER -> changeRate(-TtsSetup.RATE_STEP, duringReading)
 
             VoiceCommand.STATUS -> speak(describeStatus(), After.LISTEN_COMMAND)
 
+            VoiceCommand.LANGUAGE_ENGLISH -> switchLanguage(Language.ENGLISH)
+            VoiceCommand.LANGUAGE_GERMAN -> switchLanguage(Language.GERMAN)
+
             VoiceCommand.LOGOUT -> {
                 prefs.clearSession()
-                speak("Du bist abgemeldet.", After.STOP_SESSION)
+                speak(strings.loggedOut, After.STOP_SESSION)
             }
 
             VoiceCommand.END_SESSION -> endSession(spokenFarewell = true)
@@ -521,18 +511,35 @@ class VoiceService : Service() {
                     // Don't nag in the middle of the timeline — just carry on.
                     nextPost(auto = true)
                 } else {
-                    speak(
-                        "Das habe ich nicht verstanden. Sag Hilfe für die möglichen Befehle.",
-                        After.LISTEN_COMMAND
-                    )
+                    speak(strings.notUnderstood, After.LISTEN_COMMAND)
                 }
             }
         }
     }
 
     private fun describeStatus(): String = when {
-        posts.isEmpty() -> "Es ist keine Timeline geladen. Sag Timeline vorlesen."
-        else -> "Beitrag ${index + 1} von ${posts.size}. ${posts[index].summary()}"
+        posts.isEmpty() -> strings.noTimelineLoaded
+        else -> strings.statusAt(index + 1, posts.size, posts[index].summary())
+    }
+
+    /**
+     * Switches the spoken language mid-session.
+     *
+     * Posts carry text that was already built in the old language, so the
+     * loaded timeline is dropped rather than read back in a mix of both.
+     */
+    private fun switchLanguage(target: Language) {
+        if (target == language) {
+            speak(strings.languageSwitched(target), After.LISTEN_COMMAND)
+            return
+        }
+        language = target
+        prefs.language = target
+        strings = target.strings
+        posts = emptyList()
+        index = 0
+        tts?.let { TtsSetup.applyVoice(it, target.locale) }
+        speak(strings.languageSwitched(target), After.LISTEN_COMMAND)
     }
 
     private fun changeRate(delta: Float, duringReading: Boolean) {
@@ -540,11 +547,8 @@ class VoiceService : Service() {
         prefs.speechRate = speechRate
         tts?.setSpeechRate(speechRate)
         val percent = (speechRate * 100).toInt()
-        if (duringReading) {
-            speak("Tempo $percent Prozent.", After.NEXT_POST)
-        } else {
-            speak("Tempo $percent Prozent.", After.LISTEN_COMMAND)
-        }
+        val text = strings.speechRate(percent)
+        speak(text, if (duringReading) After.NEXT_POST else After.LISTEN_COMMAND)
     }
 
     // ---- timeline ----------------------------------------------------------
@@ -552,33 +556,30 @@ class VoiceService : Service() {
     private fun loadAndRead() {
         if (loading) return
         if (!prefs.isLoggedIn) {
-            speak("Du bist nicht angemeldet.", After.STOP_SESSION)
+            speak(strings.notLoggedIn, After.STOP_SESSION)
             return
         }
         loading = true
-        speak("Timeline wird geladen.", After.NOTHING)
+        speak(strings.loadingTimeline, After.NOTHING)
 
         val instance = prefs.instance
         val token = prefs.accessToken
 
         Background.run(
-            work = { PleromaApi.fetchHomeTimeline(instance, token, limit = 20) },
+            work = { PleromaApi.fetchHomeTimeline(instance, token, strings, limit = 20) },
             onSuccess = { result ->
                 loading = false
                 posts = result
                 index = 0
                 if (result.isEmpty()) {
-                    speak("Deine Timeline enthält keine Beiträge.", After.LISTEN_COMMAND)
+                    speak(strings.emptyTimeline, After.LISTEN_COMMAND)
                 } else {
                     speakCurrentPost()
                 }
             },
             onError = { error ->
                 loading = false
-                speak(
-                    "Die Timeline konnte nicht geladen werden. ${error.userMessage()}",
-                    After.LISTEN_COMMAND
-                )
+                speak(strings.timelineFailed(error.userMessage(strings)), After.LISTEN_COMMAND)
             }
         )
     }
@@ -595,31 +596,23 @@ class VoiceService : Service() {
 
     private fun speakCurrentPost() {
         if (posts.isEmpty()) {
-            speak("Es ist keine Timeline geladen. Sag Timeline vorlesen.", After.LISTEN_COMMAND)
+            speak(strings.noTimelineLoaded, After.LISTEN_COMMAND)
             return
         }
         if (index !in posts.indices) index = 0
         stage = Stage.READING
         val post = posts[index]
-        speak(post.toSpeech(index + 1, posts.size), afterPost())
+        speak(post.toSpeech(index + 1, posts.size, strings), afterPost())
     }
 
     private fun nextPost(auto: Boolean) {
         if (posts.isEmpty()) {
-            speak("Es ist keine Timeline geladen. Sag Timeline vorlesen.", After.LISTEN_COMMAND)
+            speak(strings.noTimelineLoaded, After.LISTEN_COMMAND)
             return
         }
         if (index >= posts.lastIndex) {
-            val ending = if (auto) {
-                "Das waren alle ${posts.size} Beiträge."
-            } else {
-                "Es gibt keinen weiteren Beitrag."
-            }
-            speak(
-                "$ending Möchtest du einen Beitrag schreiben? " +
-                    "Sag Neuer Beitrag, Timeline vorlesen, oder Beenden.",
-                After.LISTEN_COMMAND
-            )
+            val ending = if (auto) strings.allPostsRead(posts.size) else strings.noFurtherPost
+            speak("$ending ${strings.whatNow}", After.LISTEN_COMMAND)
             return
         }
         index++
@@ -628,14 +621,14 @@ class VoiceService : Service() {
 
     private fun previousPost() {
         if (posts.isEmpty()) {
-            speak("Es ist keine Timeline geladen. Sag Timeline vorlesen.", After.LISTEN_COMMAND)
+            speak(strings.noTimelineLoaded, After.LISTEN_COMMAND)
             return
         }
         if (index <= 0) {
             // Re-read the first post rather than falling through to the second.
             stage = Stage.READING
             speak(
-                "Das ist bereits der erste Beitrag. " + posts[0].toSpeech(1, posts.size),
+                strings.alreadyFirstPost + " " + posts[0].toSpeech(1, posts.size, strings),
                 afterPost()
             )
             return
@@ -649,29 +642,28 @@ class VoiceService : Service() {
     private fun promptForDictation() {
         dictationRetries = 0
         draft = ""
-        speak("Sprich deinen Beitrag nach dem Ton.", After.LISTEN_DICTATION)
+        speak(strings.dictatePrompt, After.LISTEN_DICTATION)
     }
 
     private fun handleDictationResult(spoken: String) {
         // A bare "abbrechen" cancels; longer text is taken as the post itself,
         // so the word can still appear inside a real message.
         val wordCount = spoken.trim().split(Regex("\\s+")).size
-        if (wordCount <= 2 && VoiceCommands.parseConfirmation(spoken) == VoiceCommand.DECLINE) {
-            speak("Abgebrochen. Zurück zum Hauptmenü.", After.LISTEN_COMMAND)
+        val cancelled =
+            VoiceCommands.parseConfirmation(spoken, language) == VoiceCommand.DECLINE
+        if (wordCount <= 2 && cancelled) {
+            speak(strings.dictationCancelled, After.LISTEN_COMMAND)
             return
         }
 
         draft = spoken.trim()
         dictationRetries = 0
         confirmMisses = 0
-        speak(
-            "Dein Beitrag lautet: $draft. Soll ich das senden? Sag Ja oder Nein.",
-            After.LISTEN_CONFIRM
-        )
+        speak(strings.confirmDraft(draft), After.LISTEN_CONFIRM)
     }
 
     private fun handleConfirmation(spoken: String) {
-        when (VoiceCommands.parseConfirmation(spoken)) {
+        when (VoiceCommands.parseConfirmation(spoken, language)) {
             VoiceCommand.CONFIRM -> {
                 confirmMisses = 0
                 publishDraft()
@@ -680,7 +672,7 @@ class VoiceService : Service() {
             VoiceCommand.DECLINE -> {
                 confirmMisses = 0
                 draft = ""
-                speak("Beitrag verworfen. Zurück zum Hauptmenü.", After.LISTEN_COMMAND)
+                speak(strings.draftDiscarded, After.LISTEN_COMMAND)
             }
 
             // Anything else is neither yes nor no. Give the user a couple of
@@ -692,13 +684,9 @@ class VoiceService : Service() {
                 if (confirmMisses >= MAX_CONFIRM_MISSES) {
                     confirmMisses = 0
                     draft = ""
-                    speak(
-                        "Ich habe dich nicht verstanden. Der Beitrag wird verworfen. " +
-                            "Zurück zum Hauptmenü.",
-                        After.LISTEN_COMMAND
-                    )
+                    speak(strings.draftDiscardedNotUnderstood, After.LISTEN_COMMAND)
                 } else {
-                    speak("Bitte sag Ja oder Nein.", After.LISTEN_CONFIRM)
+                    speak(strings.sayYesOrNo, After.LISTEN_CONFIRM)
                 }
             }
         }
@@ -707,10 +695,10 @@ class VoiceService : Service() {
     private fun publishDraft() {
         val text = draft
         if (text.isBlank()) {
-            speak("Es liegt kein Beitrag vor.", After.LISTEN_COMMAND)
+            speak(strings.noDraft, After.LISTEN_COMMAND)
             return
         }
-        speak("Wird gesendet.", After.NOTHING)
+        speak(strings.sending, After.NOTHING)
 
         val instance = prefs.instance
         val token = prefs.accessToken
@@ -720,16 +708,12 @@ class VoiceService : Service() {
             onSuccess = {
                 draft = ""
                 beep(ToneGenerator.TONE_PROP_ACK)
-                speak("Beitrag veröffentlicht. Was möchtest du tun?", After.LISTEN_COMMAND)
+                speak(strings.published, After.LISTEN_COMMAND)
             },
             onError = { error ->
                 beep(ToneGenerator.TONE_PROP_NACK)
                 confirmMisses = 0
-                speak(
-                    "Senden fehlgeschlagen. ${error.userMessage()}. " +
-                        "Soll ich es erneut versuchen? Sag Ja oder Nein.",
-                    After.LISTEN_CONFIRM
-                )
+                speak(strings.sendFailed(error.userMessage(strings)), After.LISTEN_CONFIRM)
             }
         )
     }
@@ -738,7 +722,7 @@ class VoiceService : Service() {
 
     private fun endSession(spokenFarewell: Boolean) {
         if (spokenFarewell) {
-            speak("Sprachsteuerung beendet. Bis bald.", After.STOP_SESSION)
+            speak(strings.sessionEnded, After.STOP_SESSION)
             return
         }
         stage = Stage.IDLE
@@ -746,7 +730,7 @@ class VoiceService : Service() {
         tts?.stop()
         abandonAudioFocus()
         releaseWakeLock()
-        publish("Bereit.")
+        publish(strings.ready)
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
     }
@@ -812,7 +796,7 @@ class VoiceService : Service() {
 
     // ---- notification ------------------------------------------------------
 
-    private var lastStatus: String = "Bereit."
+    private var lastStatus: String = ""
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
@@ -893,14 +877,14 @@ class VoiceService : Service() {
         toneGenerator = null
         abandonAudioFocus()
         releaseWakeLock()
-        State.current = State("Bereit.", Stage.IDLE)
+        State.current = State(strings.ready, Stage.IDLE)
         State.listener?.invoke(State.current)
         super.onDestroy()
     }
 
     data class State(val statusText: String, val stage: Stage) {
         companion object {
-            var current = State("Bereit.", Stage.IDLE)
+            var current = State("", Stage.IDLE)
 
             /** Set by MainActivity while it is on screen. */
             var listener: ((State) -> Unit)? = null

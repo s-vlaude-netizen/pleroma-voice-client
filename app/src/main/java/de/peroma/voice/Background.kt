@@ -2,7 +2,19 @@ package de.peroma.voice
 
 import android.os.Handler
 import android.os.Looper
+import java.io.IOException
+import java.net.UnknownHostException
 import java.util.concurrent.Executors
+
+/**
+ * A request that failed, described by kind rather than by a ready-made
+ * sentence, so the message can be worded in the session's language.
+ */
+class ApiException(
+    val kind: ApiErrorKind,
+    val status: Int = 0,
+    val detail: String = ""
+) : IOException("$kind $status $detail")
 
 /**
  * Tiny helper for "do this off the main thread, then continue on it".
@@ -30,11 +42,8 @@ object Background {
 }
 
 /** Human readable message for anything thrown by the API layer. */
-fun Exception.userMessage(): String {
-    val message = localizedMessage
-    return when {
-        !message.isNullOrBlank() -> message
-        this is java.net.UnknownHostException -> "Server nicht erreichbar"
-        else -> "Unbekannter Fehler"
-    }
+fun Exception.userMessage(strings: Strings): String = when (this) {
+    is ApiException -> strings.apiError(kind, status, detail)
+    is UnknownHostException -> strings.apiError(ApiErrorKind.UNREACHABLE, 0, "")
+    else -> localizedMessage?.takeIf { it.isNotBlank() } ?: strings.unknownError
 }

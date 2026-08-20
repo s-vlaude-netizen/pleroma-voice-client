@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Peroma Voice</string>
+    <string name="login_title">Anmelden</string>
+
+    <string name="instance_hint">Instanz, z. B. pleroma.example</string>
+    <string name="login_button">Mit Pleroma anmelden</string>
+    <string name="login_intro">Gib die Adresse deiner Pleroma-Instanz ein. Danach öffnet sich der Browser zur Anmeldung.</string>
+
+    <string name="login_invalid_instance">Bitte eine gültige Instanz-Adresse eingeben.</string>
+    <string name="login_registering">Registriere App auf %1$s …</string>
+    <string name="login_opening_browser">Browser wird geöffnet. Bitte anmelden und Zugriff erlauben.</string>
+    <string name="login_failed">Anmeldung fehlgeschlagen: %1$s</string>
+    <string name="login_no_browser">Kein Browser gefunden, um die Anmeldung zu öffnen.</string>
+    <string name="login_denied">Zugriff wurde nicht erteilt (%1$s).</string>
+    <string name="login_no_code">Die Antwort der Instanz enthielt keinen Anmeldecode.</string>
+    <string name="login_missing_credentials">Anmeldedaten fehlen. Bitte erneut mit der Instanz beginnen.</string>
+    <string name="login_signing_in">Melde an …</string>
+    <string name="login_signed_in_as">Angemeldet als %1$s</string>
+
+    <string name="start_voice">Sprachsteuerung starten</string>
+    <string name="stop_voice">Sprachsteuerung beenden</string>
+    <string name="starting_voice">Sprachsteuerung wird gestartet …</string>
+    <string name="manual_hint">Optional: dieselben Funktionen per Knopf, falls die Spracherkennung gerade nicht verfügbar ist.</string>
+    <string name="main_intro">Angemeldet als %1$s auf %2$s.\n\nTippe auf Sprachsteuerung starten — danach kannst du den Bildschirm ausschalten und alles per Stimme steuern.</string>
+    <string name="mic_denied">Ohne Mikrofon-Freigabe funktioniert die Sprachsteuerung nicht. Die Knöpfe unten funktionieren weiterhin.</string>
+
+    <string name="read_timeline">Timeline vorlesen</string>
+    <string name="pauses_state_on">Zwischenfragen: an — tippen zum Ausschalten</string>
+    <string name="pauses_state_off">Zwischenfragen: aus — tippen zum Einschalten</string>
+    <string name="pauses_on_status">Zwischen den Beiträgen wird nachgefragt.</string>
+    <string name="pauses_off_status">Die Timeline wird am Stück vorgelesen.</string>
+    <string name="language_state_en">Sprache: Englisch — tippen für Deutsch</string>
+    <string name="language_state_de">Sprache: Deutsch — tippen für Englisch</string>
+    <string name="pause">Pause</string>
+    <string name="next_post">Nächster Beitrag</string>
+    <string name="previous_post">Vorheriger Beitrag</string>
+    <string name="stop">Stopp</string>
+    <string name="dictate">Beitrag diktieren</string>
+    <string name="repeat_post">Beitrag wiederholen</string>
+    <string name="logout">Abmelden</string>
+    <string name="logged_out_toast">Abgemeldet</string>
+
+    <string name="send">Senden</string>
+    <string name="cancel">Abbrechen</string>
+    <string name="retry">Nochmal diktieren</string>
+
+    <string name="notification_channel_name">Sprachsitzung</string>
+    <string name="idle">Bereit</string>
+</resources>

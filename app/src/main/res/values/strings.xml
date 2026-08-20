@@ -1,31 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Peroma Voice</string>
-    <string name="login_title">Anmelden</string>
+    <string name="login_title">Sign in</string>
 
-    <string name="instance_hint">Instanz, z. B. pleroma.example</string>
-    <string name="login_button">Mit Pleroma anmelden</string>
-    <string name="login_intro">Gib die Adresse deiner Pleroma-Instanz ein. Danach öffnet sich der Browser zur Anmeldung.</string>
+    <string name="instance_hint">Instance, e.g. pleroma.example</string>
+    <string name="login_button">Sign in with Pleroma</string>
+    <string name="login_intro">Enter the address of your Pleroma instance. The browser will then open for you to sign in.</string>
 
-    <string name="start_voice">Sprachsteuerung starten</string>
-    <string name="stop_voice">Sprachsteuerung beenden</string>
-    <string name="manual_hint">Optional: dieselben Funktionen per Knopf, falls die Spracherkennung gerade nicht verfügbar ist.</string>
+    <string name="login_invalid_instance">Please enter a valid instance address.</string>
+    <string name="login_registering">Registering the app on %1$s …</string>
+    <string name="login_opening_browser">Opening the browser. Please sign in and allow access.</string>
+    <string name="login_failed">Sign-in failed: %1$s</string>
+    <string name="login_no_browser">No browser found to open the sign-in page.</string>
+    <string name="login_denied">Access was not granted (%1$s).</string>
+    <string name="login_no_code">The instance replied without a sign-in code.</string>
+    <string name="login_missing_credentials">Sign-in details are missing. Please start again with the instance.</string>
+    <string name="login_signing_in">Signing in …</string>
+    <string name="login_signed_in_as">Signed in as %1$s</string>
 
-    <string name="read_timeline">Timeline vorlesen</string>
-    <string name="pauses_state_on">Zwischenfragen: an — tippen zum Ausschalten</string>
-    <string name="pauses_state_off">Zwischenfragen: aus — tippen zum Einschalten</string>
+    <string name="start_voice">Start voice control</string>
+    <string name="stop_voice">Stop voice control</string>
+    <string name="starting_voice">Starting voice control …</string>
+    <string name="manual_hint">Optional: the same functions as buttons, for when speech recognition is unavailable.</string>
+    <string name="main_intro">Signed in as %1$s on %2$s.\n\nTap Start voice control — after that you can switch the screen off and do everything by voice.</string>
+    <string name="mic_denied">Voice control does not work without microphone permission. The buttons below still do.</string>
+
+    <string name="read_timeline">Read timeline</string>
+    <string name="pauses_state_on">Ask between posts: on — tap to turn off</string>
+    <string name="pauses_state_off">Ask between posts: off — tap to turn on</string>
+    <string name="pauses_on_status">I will ask between posts.</string>
+    <string name="pauses_off_status">The timeline is read straight through.</string>
+    <string name="language_state_en">Language: English — tap for German</string>
+    <string name="language_state_de">Language: German — tap for English</string>
     <string name="pause">Pause</string>
-    <string name="next_post">Nächster Beitrag</string>
-    <string name="previous_post">Vorheriger Beitrag</string>
-    <string name="stop">Stopp</string>
-    <string name="dictate">Beitrag diktieren</string>
-    <string name="repeat_post">Beitrag wiederholen</string>
-    <string name="logout">Abmelden</string>
+    <string name="next_post">Next post</string>
+    <string name="previous_post">Previous post</string>
+    <string name="stop">Stop</string>
+    <string name="dictate">Dictate a post</string>
+    <string name="repeat_post">Repeat post</string>
+    <string name="logout">Sign out</string>
+    <string name="logged_out_toast">Signed out</string>
 
-    <string name="send">Senden</string>
-    <string name="cancel">Abbrechen</string>
-    <string name="retry">Nochmal diktieren</string>
+    <string name="send">Send</string>
+    <string name="cancel">Cancel</string>
+    <string name="retry">Dictate again</string>
 
-    <string name="notification_channel_name">Sprachsitzung</string>
-    <string name="idle">Bereit</string>
+    <string name="notification_channel_name">Voice session</string>
+    <string name="idle">Ready</string>
 </resources>

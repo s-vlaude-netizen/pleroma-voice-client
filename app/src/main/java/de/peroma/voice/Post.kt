@@ -4,6 +4,10 @@ import org.json.JSONObject
 
 /**
  * A timeline entry reduced to what can be spoken aloud.
+ *
+ * The text is built in whichever language the session is running in, so a post
+ * parsed as German cannot be re-read in English — the service re-parses the
+ * timeline when the language changes.
  */
 data class Post(
     val id: String,
@@ -16,18 +20,18 @@ data class Post(
 ) {
 
     /** The full text the speech engine reads for this post. */
-    fun toSpeech(index: Int, total: Int): String {
+    fun toSpeech(index: Int, total: Int, strings: Strings): String {
         val parts = ArrayList<String>()
-        parts.add("Beitrag $index von $total.")
+        parts.add(strings.postCounter(index, total))
 
         if (boostedBy != null) {
-            parts.add("$boostedBy teilt einen Beitrag von $author.")
+            parts.add(strings.boostedBy(boostedBy, author))
         } else {
-            parts.add("Von $author.")
+            parts.add(strings.byAuthor(author))
         }
 
         if (spoiler.isNotBlank()) {
-            parts.add("Inhaltswarnung: $spoiler.")
+            parts.add(strings.contentWarning(spoiler))
         }
 
         if (body.isNotBlank()) {
@@ -36,15 +40,15 @@ data class Post(
 
         when (mediaDescriptions.size) {
             0 -> Unit
-            1 -> parts.add("Ein Anhang. ${mediaDescriptions[0]}")
+            1 -> parts.add(strings.oneAttachment(mediaDescriptions[0]))
             else -> {
-                parts.add("${mediaDescriptions.size} Anhänge.")
+                parts.add(strings.manyAttachments(mediaDescriptions.size))
                 mediaDescriptions.forEach { parts.add(it) }
             }
         }
 
         if (body.isBlank() && mediaDescriptions.isEmpty() && spoiler.isBlank()) {
-            parts.add("Dieser Beitrag enthält keinen lesbaren Text.")
+            parts.add(strings.noReadableText)
         }
 
         return parts.joinToString(" ")
@@ -59,11 +63,15 @@ data class Post(
 
     companion object {
 
-        fun fromJson(obj: JSONObject): Post {
+        fun fromJson(obj: JSONObject, strings: Strings): Post {
             // A boost ("reblog") carries the original post as a nested object.
             val reblog = obj.optJSONObject("reblog")
             val source = reblog ?: obj
-            val boostedBy = if (reblog != null) displayName(obj.optJSONObject("account")) else null
+            val boostedBy = if (reblog != null) {
+                displayName(obj.optJSONObject("account"), strings)
+            } else {
+                null
+            }
 
             val media = ArrayList<String>()
             val attachments = source.optJSONArray("media_attachments")
@@ -71,38 +79,42 @@ data class Post(
                 for (i in 0 until attachments.length()) {
                     val item = attachments.optJSONObject(i) ?: continue
                     val type = when (item.optString("type")) {
-                        "image" -> "Bild"
-                        "video" -> "Video"
-                        "audio" -> "Audio"
-                        "gifv" -> "Animation"
-                        else -> "Anhang"
+                        "image" -> strings.mediaImage
+                        "video" -> strings.mediaVideo
+                        "audio" -> strings.mediaAudio
+                        "gifv" -> strings.mediaAnimation
+                        else -> strings.mediaOther
                     }
                     val description = item.optString("description").takeIf {
                         it.isNotBlank() && it != "null"
                     }
                     media.add(
-                        if (description != null) "$type: $description." else "$type ohne Beschreibung."
+                        if (description != null) {
+                            strings.attachmentWith(type, description)
+                        } else {
+                            strings.attachmentWithout(type)
+                        }
                     )
                 }
             }
 
             return Post(
                 id = source.optString("id"),
-                author = displayName(source.optJSONObject("account")),
+                author = displayName(source.optJSONObject("account"), strings),
                 acct = source.optJSONObject("account")?.optString("acct").orEmpty(),
-                body = SpeechText.fromHtml(source.optString("content")),
-                spoiler = SpeechText.fromHtml(source.optString("spoiler_text")),
+                body = SpeechText.fromHtml(source.optString("content"), strings),
+                spoiler = SpeechText.fromHtml(source.optString("spoiler_text"), strings),
                 mediaDescriptions = media,
                 boostedBy = boostedBy
             )
         }
 
-        private fun displayName(account: JSONObject?): String {
-            if (account == null) return "Unbekannt"
+        private fun displayName(account: JSONObject?, strings: Strings): String {
+            if (account == null) return strings.unknownAuthor
             val display = account.optString("display_name")
             val username = account.optString("username")
             val name = if (display.isNotBlank()) display else username
-            return SpeechText.cleanupName(name).ifBlank { "Unbekannt" }
+            return SpeechText.cleanupName(name, strings).ifBlank { strings.unknownAuthor }
         }
     }
 }
