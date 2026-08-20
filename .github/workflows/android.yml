@@ -45,7 +45,7 @@ jobs:
             echo "Using the repository release keystore."
           else
             echo "path=" >> "$GITHUB_OUTPUT"
-            echo "No KEYSTORE_BASE64 secret set — the APK will be signed with the debug key."
+            echo "No KEYSTORE_BASE64 secret set — signing with the committed project key."
           fi
 
       - name: Build release APK
