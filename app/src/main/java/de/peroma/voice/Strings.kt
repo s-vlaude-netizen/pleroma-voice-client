@@ -216,8 +216,9 @@ object EnglishStrings : Strings {
         "You can say: read timeline. Next post. Previous post. Repeat. Pause. Continue. " +
             "Stop. New post, to dictate something. Faster or slower for the speaking rate. " +
             "With pauses, if I should ask between posts, or straight through, if I should " +
-            "read without stopping. German, to switch language. Log out. " +
-            "Or: end, to close voice control."
+            "read without stopping. Say German or Russian to switch language. " +
+            "Say log out to sign out of your account. " +
+            "Say quit, or goodbye, to close voice control."
     override val pausesOn = "I will ask between posts from now on."
     override val pausesOff = "I will read the timeline straight through from now on."
     override val nowSpeakingThisLanguage = "I will speak English from now on."
@@ -335,8 +336,10 @@ object GermanStrings : Strings {
             "Wiederholen. Pause. Weiter. Stopp. Neuer Beitrag, um etwas zu diktieren. " +
             "Schneller oder langsamer für das Sprechtempo. " +
             "Mit Pausen, wenn ich zwischen den Beiträgen nachfragen soll, " +
-            "oder Am Stück, wenn ich durchlesen soll. Englisch, um die Sprache zu wechseln. " +
-            "Abmelden. Oder: Beenden, um die Sprachsteuerung zu schließen."
+            "oder Am Stück, wenn ich durchlesen soll. " +
+            "Sag Englisch oder Russisch, um die Sprache zu wechseln. " +
+            "Sag Abmelden, um dich vom Konto abzumelden. " +
+            "Sag Beenden, um die Sprachsteuerung zu schließen."
     override val pausesOn = "Ich frage jetzt zwischen den Beiträgen nach."
     override val pausesOff = "Ich lese die Timeline jetzt am Stück vor."
     override val nowSpeakingThisLanguage = "Ich spreche ab jetzt Deutsch."
@@ -457,8 +460,9 @@ object RussianStrings : Strings {
             "Пауза. Продолжай. Стоп. Новый пост, чтобы продиктовать. " +
             "Быстрее или медленнее для скорости речи. " +
             "Подряд, чтобы читать без остановок, или с паузами, чтобы я спрашивал " +
-            "между постами. Английский или немецкий, чтобы сменить язык. Выйти. " +
-            "Или: завершить, чтобы закрыть голосовое управление."
+            "между постами. Скажите «английский» или «немецкий», чтобы сменить язык. " +
+            "Скажите «выйти», чтобы выйти из аккаунта. " +
+            "Скажите «завершить», чтобы закрыть голосовое управление."
     override val pausesOn = "Теперь я буду спрашивать между постами."
     override val pausesOff = "Теперь я буду читать ленту подряд."
     override val nowSpeakingThisLanguage = "Теперь я говорю по-русски."

@@ -40,9 +40,15 @@ enum class VoiceCommand {
 object VoiceCommands {
 
     private val ENGLISH_TABLE: List<Pair<VoiceCommand, List<String>>> = listOf(
+        // "end" on its own is a poor voice command: recognizers hear a single
+        // short function word as "and" or "in" about as often as "end". It stays
+        // for anyone who tries it, but the reliable words come first and the
+        // help text offers those instead.
         VoiceCommand.END_SESSION to listOf(
-            "end voice control", "stop voice control", "end session", "end",
-            "goodbye", "good bye", "bye", "quit", "exit"
+            "quit", "goodbye", "good bye", "bye", "exit", "finish", "finished",
+            "i am done", "im done", "done", "that is all", "shut down",
+            "end voice control", "stop voice control", "end session",
+            "close voice control", "end"
         ),
         VoiceCommand.HELP to listOf(
             "help", "what can i say", "which commands", "commands"

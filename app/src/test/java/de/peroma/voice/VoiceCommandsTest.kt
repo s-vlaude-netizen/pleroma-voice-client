@@ -140,6 +140,29 @@ class VoiceCommandsTest {
         assertEquals(VoiceCommand.LOGOUT, parseEn("sign out"))
     }
 
+    /**
+     * "end" is a single short word and recognizers mangle it, so the session
+     * has to be closable by several sturdier words as well.
+     */
+    @Test
+    fun englishEndSessionHasReliableAlternatives() {
+        assertEquals(VoiceCommand.END_SESSION, parseEn("end"))
+        assertEquals(VoiceCommand.END_SESSION, parseEn("quit"))
+        assertEquals(VoiceCommand.END_SESSION, parseEn("exit"))
+        assertEquals(VoiceCommand.END_SESSION, parseEn("finished"))
+        assertEquals(VoiceCommand.END_SESSION, parseEn("I am done"))
+        assertEquals(VoiceCommand.END_SESSION, parseEn("that is all"))
+        assertEquals(VoiceCommand.END_SESSION, parseEn("stop voice control"))
+    }
+
+    /** Ending the session must not swallow the ordinary stop and slow commands. */
+    @Test
+    fun englishEndSessionDoesNotSwallowNeighbours() {
+        assertEquals(VoiceCommand.STOP_READING, parseEn("stop"))
+        assertEquals(VoiceCommand.SLOWER, parseEn("slow down"))
+        assertEquals(VoiceCommand.PAUSE, parseEn("pause"))
+    }
+
     @Test
     fun bothLanguagesCanBeSelectedByVoice() {
         assertEquals(VoiceCommand.LANGUAGE_ENGLISH, parseDe("englisch"))

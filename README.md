@@ -53,6 +53,10 @@ vorlesen lassen und Beiträge diktieren, ohne einmal hinzusehen.
 | „English" / „Deutsch" / „Russisch" | Sprache umschalten |
 | „Beenden", „Tschüss" | Sprachsitzung beenden |
 
+Auf Englisch ist **„quit" oder „goodbye"** zuverlässiger als „end": Erkenner hören
+ein einzelnes kurzes Wort wie „end" oft als „and" oder „in". „end" funktioniert
+weiterhin, wenn es denn richtig ankommt.
+
 ### English commands
 
 | Say | Effect |
@@ -69,7 +73,7 @@ vorlesen lassen und Beiträge diktieren, ohne einmal hinzusehen.
 | "help" | read out all commands |
 | "German" / "English" / "Russian" | switch language |
 | "sign out" | log out of the account |
-| "end", "goodbye" | end the voice session |
+| "quit", "goodbye", "finished" | end the voice session |
 
 ## Sprache / Language
 
