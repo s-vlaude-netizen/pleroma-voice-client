@@ -21,6 +21,7 @@ import android.os.IBinder
 import android.os.Looper
 import android.os.PowerManager
 import android.speech.RecognitionListener
+import android.speech.RecognitionService
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
@@ -83,6 +84,7 @@ class VoiceService : Service() {
     private var silenceStreak = 0
     private var dictationRetries = 0
     private var confirmMisses = 0
+    private var recognizerRefusals = 0
     private var draft: String = ""
 
     private var utteranceCounter = 0
@@ -295,6 +297,9 @@ class VoiceService : Service() {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, language.locale.toLanguageTag())
             putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
             putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, false)
+            // Several recognition services, Google's among them, expect to be
+            // told who is calling and misbehave when it is missing.
+            putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, packageName)
         }
 
         // Open the microphone only once the earcon has died away. Starting it
@@ -328,6 +333,46 @@ class VoiceService : Service() {
         }
         listenStart = start
         mainHandler.postDelayed(start, BEEP_SETTLE_MS)
+    }
+
+    /**
+     * The recognizer reported a permission problem — but not necessarily ours.
+     *
+     * ERROR_INSUFFICIENT_PERMISSIONS is raised by the recognition service, and
+     * it also fires when that service itself cannot reach the microphone. So
+     * check our own permission before blaming the user for it: telling someone
+     * to grant a permission they already granted sends them in circles.
+     */
+    private fun handleInsufficientPermissions() {
+        if (!hasMicPermission()) {
+            speak(strings.missingMicPermission, After.STOP_SESSION)
+            return
+        }
+
+        recognizerRefusals++
+        publish(strings.recognizerDiagnostic(installedRecognizers()))
+        if (recognizerRefusals >= MAX_RECOGNIZER_REFUSALS) {
+            recognizerRefusals = 0
+            speak(strings.recognizerRefusedMic, After.STOP_SESSION)
+        } else {
+            retryAfterRecognizerTrouble()
+        }
+    }
+
+    private fun hasMicPermission(): Boolean =
+        ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.RECORD_AUDIO
+        ) == PackageManager.PERMISSION_GRANTED
+
+    /** Shown on screen so a refusal can be traced to the service responsible. */
+    private fun installedRecognizers(): List<String> = try {
+        packageManager
+            .queryIntentServices(Intent(RecognitionService.SERVICE_INTERFACE), 0)
+            .mapNotNull { it.serviceInfo?.packageName }
+            .distinct()
+    } catch (e: Exception) {
+        emptyList()
     }
 
     /**
@@ -374,7 +419,7 @@ class VoiceService : Service() {
             mainHandler.post {
                 when (error) {
                     SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS ->
-                        speak(strings.missingMicPermission, After.STOP_SESSION)
+                        handleInsufficientPermissions()
 
                     // The user simply said nothing — carry on straight away.
                     SpeechRecognizer.ERROR_NO_MATCH,
@@ -454,6 +499,7 @@ class VoiceService : Service() {
 
     private fun handleSpoken(spoken: String) {
         silenceStreak = 0
+        recognizerRefusals = 0
         when (stage) {
             Stage.DICTATING -> handleDictationResult(spoken)
             Stage.CONFIRMING -> handleConfirmation(spoken)
@@ -908,6 +954,9 @@ class VoiceService : Service() {
 
         /** Backoff after a recognizer failure, so retries cannot spin. */
         private const val RECOGNIZER_RETRY_DELAY_MS = 800L
+
+        /** Microphone refusals tolerated before the session gives up. */
+        private const val MAX_RECOGNIZER_REFUSALS = 3
 
         /** Unrecognised yes/no answers tolerated before the draft is dropped. */
         private const val MAX_CONFIRM_MISSES = 3
