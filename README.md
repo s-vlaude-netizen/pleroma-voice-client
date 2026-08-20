@@ -1,6 +1,6 @@
 # Peroma Voice — Audio-Client für Pleroma
 
-*English and German. The app speaks whichever language you pick — see
+*English, German and Russian. The app speaks whichever language you pick — see
 [Sprache / Language](#sprache--language).*
 
 Ein reiner **Audio-Client** für das Fediverse-Netzwerk [Pleroma](https://pleroma.social)
@@ -28,8 +28,9 @@ vorlesen lassen und Beiträge diktieren, ohne einmal hinzusehen.
 - **Sprechtempo per Stimme** — „schneller" / „langsamer", wird dauerhaft gemerkt.
 - **Knöpfe bleiben optional** — dieselben Funktionen sind weiterhin antippbar, falls
   die Spracherkennung mal nicht verfügbar ist.
-- **Zweisprachig** — Englisch und Deutsch, jeweils komplett: Oberfläche, gesprochene
-  Ansagen und Sprachbefehle. Umschaltbar per Stimme („English" / „Deutsch") oder Knopf.
+- **Dreisprachig** — Englisch, Deutsch und Russisch, jeweils komplett: Oberfläche,
+  gesprochene Ansagen und Sprachbefehle. Umschaltbar per Stimme („English",
+  „Deutsch", „Русский") oder über den Knopf, der reihum durchschaltet.
 - **Anmeldung per OAuth** — kein Passwort in der App, die Anmeldung läuft über die
   Weboberfläche deiner Instanz.
 
@@ -49,7 +50,7 @@ vorlesen lassen und Beiträge diktieren, ohne einmal hinzusehen.
 | „Wo bin ich" | aktuellen Stand ansagen |
 | „Hilfe" | alle Befehle vorlesen |
 | „Abmelden" | Konto abmelden |
-| „English" / „Deutsch" | Sprache umschalten |
+| „English" / „Deutsch" / „Russisch" | Sprache umschalten |
 | „Beenden", „Tschüss" | Sprachsitzung beenden |
 
 ### English commands
@@ -66,15 +67,24 @@ vorlesen lassen und Beiträge diktieren, ohne einmal hinzusehen.
 | "faster" / "slower" | change the speaking rate |
 | "where am I" | say the current position |
 | "help" | read out all commands |
-| "German" / "English" | switch language |
+| "German" / "English" / "Russian" | switch language |
 | "sign out" | log out of the account |
 | "end", "goodbye" | end the voice session |
 
 ## Sprache / Language
 
 Beim ersten Start folgt die App der Gerätesprache: Deutsch auf einem deutschen
-Gerät, sonst Englisch. Danach gilt, was du zuletzt gewählt hast — per Sprachbefehl
-(„English" bzw. „Deutsch") oder über den Knopf in der App.
+Gerät, Russisch auf einem russischen, sonst Englisch. Damit bekommen internationale
+Nutzer ohne Zutun ihre Sprache. Danach gilt, was du zuletzt gewählt hast — per
+Sprachbefehl („English", „Deutsch", „Русский") oder über den Knopf in der App.
+
+**Diktieren folgt dieser Wahl automatisch.** Die App teilt dem Erkennungsdienst bei
+jeder Aufnahme die gewünschte Sprache mit (`en-US`, `de-DE`, `ru-RU`) — in den
+Systemeinstellungen ist dafür nichts zu tun. Zwei Vorbehalte: Der Dienst muss die
+Sprache beherrschen (offline braucht es das jeweilige Sprachpaket, nachzuladen unter
+*Spracheingabe → Google → Offline-Spracherkennung*), und einzelne Dienste ignorieren
+die Angabe und nehmen die Systemsprache — Samsungs eigener ist dafür bekannt. Hilft
+dann: als Spracheingabe Google wählen.
 
 Die Wahl gilt für **alles**: Oberfläche, Ansagen, erkannte Befehle und die
 Stimme, die die Timeline vorliest. Ein Wechsel mitten in der Sitzung verwirft die
@@ -113,6 +123,7 @@ Jeder Build legt die APK zusätzlich als Workflow-Artefakt unter *Actions* ab.
 
 | Version | Bedienung |
 | --- | --- |
+| **2.3.x** | zusätzlich Russisch; Updates ohne Deinstallieren |
 | **2.2.x** | Englisch und Deutsch, umschaltbar |
 | **2.1.x** | Timeline läuft am Stück durch, Zwischenfragen optional |
 | **2.0.x** | Sprachsteuerung als Hauptbedienung, Nachfrage nach jedem Beitrag |
@@ -214,7 +225,7 @@ Ein Wechsel des Schlüssels verlangt erneut ein Deinstallieren auf jedem Gerät.
 | `Post.kt` | Timeline-Eintrag, aufbereitet als Sprechtext |
 | `SpeechText.kt` | HTML → vorlesbarer Text (Links, Hashtags, Erwähnungen, Entities) |
 | `Strings.kt` | alle gesprochenen Texte je Sprache, plus Sprachauswahl |
-| `VoiceCommands.kt` | englische und deutsche Sprachbefehle → Kommandos, wortweise geprüft |
+| `VoiceCommands.kt` | Sprachbefehle je Sprache → Kommandos, wortweise geprüft |
 | `VoiceService.kt` | Dialog-Zustandsautomat: sprechen ↔ zuhören, Wake-Lock, Töne |
 | `TtsSetup.kt` | wählt die beste installierte deutsche Offline-Stimme |
 | `MainActivity.kt` | Start der Sprachsitzung, optionale Knöpfe |

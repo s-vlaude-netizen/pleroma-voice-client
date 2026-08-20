@@ -21,12 +21,13 @@ enum class VoiceCommand {
     LOGOUT,
     LANGUAGE_ENGLISH,
     LANGUAGE_GERMAN,
+    LANGUAGE_RUSSIAN,
     END_SESSION,
     UNKNOWN
 }
 
 /**
- * Maps spoken English or German to commands.
+ * Maps spoken English, German or Russian to commands.
  *
  * Matching is done on whole words rather than substrings, so "Jahr" does not
  * count as "ja" and "Beitrag" inside "nächster Beitrag" does not start a new
@@ -51,6 +52,9 @@ object VoiceCommands {
         ),
         VoiceCommand.LANGUAGE_ENGLISH to listOf(
             "english", "speak english", "in english"
+        ),
+        VoiceCommand.LANGUAGE_RUSSIAN to listOf(
+            "russian", "speak russian", "in russian"
         ),
         VoiceCommand.NEXT to listOf(
             "next", "skip", "forward"
@@ -121,6 +125,9 @@ object VoiceCommands {
         VoiceCommand.LANGUAGE_GERMAN to listOf(
             "deutsch", "sprich deutsch", "auf deutsch"
         ),
+        VoiceCommand.LANGUAGE_RUSSIAN to listOf(
+            "russisch", "sprich russisch", "auf russisch"
+        ),
         VoiceCommand.NEXT to listOf(
             "nächster", "nächste", "nächstes", "weiter zum nächsten",
             "überspringen", "überspring", "skip"
@@ -180,6 +187,84 @@ object VoiceCommands {
         )
     )
 
+
+    /**
+     * Russian inflects heavily, so a command can arrive in several forms:
+     * "следующий пост" but "следующая запись". Rather than stem the input,
+     * the common endings are simply listed — the tables stay readable and the
+     * matcher stays the same one the other languages use.
+     */
+    private val RUSSIAN_TABLE: List<Pair<VoiceCommand, List<String>>> = listOf(
+        VoiceCommand.END_SESSION to listOf(
+            "завершить", "заверши", "закончить", "закончи", "выключи голосовое управление",
+            "до свидания", "пока"
+        ),
+        VoiceCommand.HELP to listOf(
+            "помощь", "помоги", "что я могу сказать", "команды"
+        ),
+        VoiceCommand.LANGUAGE_ENGLISH to listOf(
+            "английский", "по английски", "английском"
+        ),
+        VoiceCommand.LANGUAGE_GERMAN to listOf(
+            "немецкий", "по немецки", "немецком"
+        ),
+        VoiceCommand.LANGUAGE_RUSSIAN to listOf(
+            "русский", "по русски", "русском"
+        ),
+        VoiceCommand.NEXT to listOf(
+            "следующий", "следующая", "следующее", "дальше", "пропусти", "пропустить"
+        ),
+        VoiceCommand.PREVIOUS to listOf(
+            "предыдущий", "предыдущая", "предыдущее", "назад", "вернись"
+        ),
+        VoiceCommand.REPEAT to listOf(
+            "повтори", "повторить", "ещё раз", "еще раз", "что это было"
+        ),
+        // Before PAUSE, so "без пауз" is not heard as "пауза".
+        // Negations first: "не спрашивай" contains "спрашивай".
+        VoiceCommand.PAUSES_OFF to listOf(
+            "подряд", "без пауз", "без остановок", "не спрашивай", "не перебивай"
+        ),
+        VoiceCommand.PAUSES_ON to listOf(
+            "с паузами", "спрашивай", "спрашивай между"
+        ),
+        VoiceCommand.PAUSE to listOf(
+            "пауза", "подожди", "погоди", "минуту"
+        ),
+        VoiceCommand.RESUME to listOf(
+            "продолжай", "продолжи", "продолжить", "читай дальше"
+        ),
+        VoiceCommand.STOP_READING to listOf(
+            "стоп", "хватит", "прекрати", "останови"
+        ),
+        VoiceCommand.FASTER to listOf(
+            "быстрее", "слишком медленно"
+        ),
+        VoiceCommand.SLOWER to listOf(
+            "медленнее", "слишком быстро"
+        ),
+        VoiceCommand.READ_TIMELINE to listOf(
+            "читай ленту", "прочитай ленту", "лента", "ленту", "новости",
+            "что нового", "главная"
+        ),
+        VoiceCommand.NEW_POST to listOf(
+            "новый пост", "написать пост", "написать", "продиктовать", "опубликовать пост",
+            "пост", "запись"
+        ),
+        VoiceCommand.STATUS to listOf(
+            "где я", "что сейчас", "текущий статус"
+        ),
+        VoiceCommand.LOGOUT to listOf(
+            "выйти из аккаунта", "выйти", "выход", "сменить аккаунт"
+        ),
+        VoiceCommand.CONFIRM to listOf(
+            "да", "отправь", "отправить", "опубликуй", "подтверди", "хорошо", "ок"
+        ),
+        VoiceCommand.DECLINE to listOf(
+            "нет", "отмена", "отмени", "удали", "не надо"
+        )
+    )
+
     /**
      * The confirmation step is a plain yes/no.
      *
@@ -207,14 +292,26 @@ object VoiceCommands {
         )
     )
 
+    private val RUSSIAN_CONFIRMATION: List<Pair<VoiceCommand, List<String>>> = listOf(
+        VoiceCommand.DECLINE to listOf(
+            "нет", "отмена", "отмени", "удали", "не надо", "не отправляй", "стоп"
+        ),
+        VoiceCommand.CONFIRM to listOf(
+            "да", "отправь", "отправить", "опубликуй", "подтверди", "хорошо", "ок",
+            "верно", "правильно"
+        )
+    )
+
     private val TABLES = mapOf(
         Language.ENGLISH to prepare(ENGLISH_TABLE),
-        Language.GERMAN to prepare(GERMAN_TABLE)
+        Language.GERMAN to prepare(GERMAN_TABLE),
+        Language.RUSSIAN to prepare(RUSSIAN_TABLE)
     )
 
     private val CONFIRMATIONS = mapOf(
         Language.ENGLISH to prepare(ENGLISH_CONFIRMATION),
-        Language.GERMAN to prepare(GERMAN_CONFIRMATION)
+        Language.GERMAN to prepare(GERMAN_CONFIRMATION),
+        Language.RUSSIAN to prepare(RUSSIAN_CONFIRMATION)
     )
 
     private fun prepare(

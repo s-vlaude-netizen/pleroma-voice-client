@@ -83,16 +83,12 @@ class MainActivity : AppCompatActivity() {
 
         languageToggle = findViewById(R.id.btnToggleLanguage)
         languageToggle.setOnClickListener {
-            val next = if (prefs.language == Language.GERMAN) {
-                Language.ENGLISH
-            } else {
-                Language.GERMAN
-            }
+            val next = prefs.language.next()
             prefs.language = next
             updateLanguageToggle()
             // The running session caches the language, so let it restart cleanly.
             VoiceService.send(this, VoiceService.ACTION_STOP_SESSION)
-            setStatus(next.strings.languageSwitched(next))
+            setStatus(next.strings.nowSpeakingThisLanguage)
         }
         updateLanguageToggle()
         findViewById<Button>(R.id.btnNext).setOnClickListener {
@@ -132,13 +128,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateLanguageToggle() {
-        languageToggle.setText(
-            if (prefs.language == Language.GERMAN) {
-                R.string.language_state_de
-            } else {
-                R.string.language_state_en
-            }
-        )
+        languageToggle.text = getString(R.string.language_state, prefs.language.displayName)
     }
 
     private fun updatePauseToggle() {

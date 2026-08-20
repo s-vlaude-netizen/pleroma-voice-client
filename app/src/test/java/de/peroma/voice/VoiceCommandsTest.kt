@@ -11,6 +11,9 @@ class VoiceCommandsTest {
     private fun parseDe(spoken: String) = VoiceCommands.parse(spoken, de)
     private fun parseEn(spoken: String) = VoiceCommands.parse(spoken, en)
 
+    private val ru = Language.RUSSIAN
+    private fun parseRu(spoken: String) = VoiceCommands.parse(spoken, ru)
+
     // ---- German -------------------------------------------------------------
 
     @Test
@@ -143,6 +146,98 @@ class VoiceCommandsTest {
         assertEquals(VoiceCommand.LANGUAGE_GERMAN, parseDe("sprich deutsch"))
         assertEquals(VoiceCommand.LANGUAGE_GERMAN, parseEn("speak german"))
         assertEquals(VoiceCommand.LANGUAGE_ENGLISH, parseEn("english"))
+    }
+
+    // ---- Russian ------------------------------------------------------------
+
+    @Test
+    fun russianRecognisesTimelineRequests() {
+        assertEquals(VoiceCommand.READ_TIMELINE, parseRu("читай ленту"))
+        assertEquals(VoiceCommand.READ_TIMELINE, parseRu("что нового"))
+        assertEquals(VoiceCommand.READ_TIMELINE, parseRu("новости"))
+    }
+
+    /** The same command arrives in different grammatical forms. */
+    @Test
+    fun russianAcceptsInflectedForms() {
+        assertEquals(VoiceCommand.NEXT, parseRu("следующий"))
+        assertEquals(VoiceCommand.NEXT, parseRu("следующая запись"))
+        assertEquals(VoiceCommand.PREVIOUS, parseRu("предыдущий пост"))
+        assertEquals(VoiceCommand.REPEAT, parseRu("повтори"))
+        assertEquals(VoiceCommand.REPEAT, parseRu("ещё раз"))
+        assertEquals(VoiceCommand.REPEAT, parseRu("еще раз"))
+    }
+
+    /** "следующий пост" must not be mistaken for "write a post". */
+    @Test
+    fun russianNavigationWinsOverPosting() {
+        assertEquals(VoiceCommand.NEXT, parseRu("следующий пост"))
+        assertEquals(VoiceCommand.NEW_POST, parseRu("новый пост"))
+        assertEquals(VoiceCommand.NEW_POST, parseRu("написать пост"))
+    }
+
+    @Test
+    fun russianRecognisesPlaybackControl() {
+        assertEquals(VoiceCommand.PAUSE, parseRu("пауза"))
+        assertEquals(VoiceCommand.RESUME, parseRu("продолжай"))
+        assertEquals(VoiceCommand.STOP_READING, parseRu("стоп"))
+        assertEquals(VoiceCommand.FASTER, parseRu("быстрее"))
+        assertEquals(VoiceCommand.SLOWER, parseRu("медленнее"))
+    }
+
+    /** "без пауз" switches the mode; it must not read as "пауза". */
+    @Test
+    fun russianReadingModeDoesNotCollideWithPause() {
+        assertEquals(VoiceCommand.PAUSES_OFF, parseRu("без пауз"))
+        assertEquals(VoiceCommand.PAUSES_OFF, parseRu("подряд"))
+        assertEquals(VoiceCommand.PAUSES_ON, parseRu("с паузами"))
+        assertEquals(VoiceCommand.PAUSE, parseRu("пауза"))
+    }
+
+    /** "не спрашивай" contains "спрашивай", so the negation must win. */
+    @Test
+    fun russianNegatedReadingModeWins() {
+        assertEquals(VoiceCommand.PAUSES_OFF, parseRu("не спрашивай"))
+        assertEquals(VoiceCommand.PAUSES_ON, parseRu("спрашивай"))
+    }
+
+    @Test
+    fun russianRecognisesSessionCommands() {
+        assertEquals(VoiceCommand.HELP, parseRu("помощь"))
+        assertEquals(VoiceCommand.END_SESSION, parseRu("завершить"))
+        assertEquals(VoiceCommand.LOGOUT, parseRu("выйти из аккаунта"))
+    }
+
+    @Test
+    fun russianConfirmationIsPlainYesNo() {
+        assertEquals(VoiceCommand.CONFIRM, VoiceCommands.parseConfirmation("да", ru))
+        assertEquals(VoiceCommand.CONFIRM, VoiceCommands.parseConfirmation("отправь", ru))
+        assertEquals(VoiceCommand.DECLINE, VoiceCommands.parseConfirmation("нет", ru))
+        assertEquals(VoiceCommand.DECLINE, VoiceCommands.parseConfirmation("нет, не отправляй", ru))
+    }
+
+    // ---- language selection --------------------------------------------------
+
+    @Test
+    fun everyLanguageCanBeSelectedFromEveryLanguage() {
+        assertEquals(VoiceCommand.LANGUAGE_RUSSIAN, parseEn("speak russian"))
+        assertEquals(VoiceCommand.LANGUAGE_RUSSIAN, parseDe("sprich russisch"))
+        assertEquals(VoiceCommand.LANGUAGE_ENGLISH, parseRu("английский"))
+        assertEquals(VoiceCommand.LANGUAGE_GERMAN, parseRu("немецкий"))
+        assertEquals(VoiceCommand.LANGUAGE_RUSSIAN, parseRu("русский"))
+    }
+
+    /** The button cycles through every language and comes back round. */
+    @Test
+    fun languageCycleVisitsAllAndWrapsAround() {
+        val seen = mutableListOf(Language.ENGLISH)
+        var current = Language.ENGLISH
+        repeat(Language.values().size - 1) {
+            current = current.next()
+            seen.add(current)
+        }
+        assertEquals(Language.values().toList(), seen)
+        assertEquals(Language.ENGLISH, current.next())
     }
 
     // ---- confirmations ------------------------------------------------------

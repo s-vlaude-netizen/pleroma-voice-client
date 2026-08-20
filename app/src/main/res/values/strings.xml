@@ -30,8 +30,7 @@
     <string name="pauses_state_off">Ask between posts: off — tap to turn on</string>
     <string name="pauses_on_status">I will ask between posts.</string>
     <string name="pauses_off_status">The timeline is read straight through.</string>
-    <string name="language_state_en">Language: English — tap for German</string>
-    <string name="language_state_de">Language: German — tap for English</string>
+    <string name="language_state">Language: %1$s — tap to switch</string>
     <string name="pause">Pause</string>
     <string name="next_post">Next post</string>
     <string name="previous_post">Previous post</string>

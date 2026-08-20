@@ -294,7 +294,7 @@ class VoiceService : Service() {
                 RecognizerIntent.EXTRA_LANGUAGE_MODEL,
                 RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
             )
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE, language.locale.toLanguageTag())
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, language.recognizerTag)
             putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
             putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, false)
             // Several recognition services, Google's among them, expect to be
@@ -544,6 +544,7 @@ class VoiceService : Service() {
 
             VoiceCommand.LANGUAGE_ENGLISH -> switchLanguage(Language.ENGLISH)
             VoiceCommand.LANGUAGE_GERMAN -> switchLanguage(Language.GERMAN)
+            VoiceCommand.LANGUAGE_RUSSIAN -> switchLanguage(Language.RUSSIAN)
 
             VoiceCommand.LOGOUT -> {
                 prefs.clearSession()
@@ -576,7 +577,7 @@ class VoiceService : Service() {
      */
     private fun switchLanguage(target: Language) {
         if (target == language) {
-            speak(strings.languageSwitched(target), After.LISTEN_COMMAND)
+            speak(strings.nowSpeakingThisLanguage, After.LISTEN_COMMAND)
             return
         }
         language = target
@@ -585,7 +586,7 @@ class VoiceService : Service() {
         posts = emptyList()
         index = 0
         tts?.let { TtsSetup.applyVoice(it, target.locale) }
-        speak(strings.languageSwitched(target), After.LISTEN_COMMAND)
+        speak(strings.nowSpeakingThisLanguage, After.LISTEN_COMMAND)
     }
 
     private fun changeRate(delta: Float, duringReading: Boolean) {

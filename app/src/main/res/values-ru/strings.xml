@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Peroma Voice</string>
+    <string name="login_title">Вход</string>
+
+    <string name="instance_hint">Сервер, например pleroma.example</string>
+    <string name="login_button">Войти через Pleroma</string>
+    <string name="login_intro">Введите адрес вашего сервера Pleroma. Затем откроется браузер для входа.</string>
+
+    <string name="login_invalid_instance">Введите корректный адрес сервера.</string>
+    <string name="login_registering">Регистрирую приложение на %1$s …</string>
+    <string name="login_opening_browser">Открываю браузер. Войдите и разрешите доступ.</string>
+    <string name="login_failed">Не удалось войти: %1$s</string>
+    <string name="login_no_browser">Не найден браузер для страницы входа.</string>
+    <string name="login_denied">Доступ не предоставлен (%1$s).</string>
+    <string name="login_no_code">Сервер ответил без кода входа.</string>
+    <string name="login_missing_credentials">Данные для входа отсутствуют. Начните заново с адреса сервера.</string>
+    <string name="login_signing_in">Выполняю вход …</string>
+    <string name="login_signed_in_as">Вы вошли как %1$s</string>
+
+    <string name="start_voice">Включить голосовое управление</string>
+    <string name="stop_voice">Выключить голосовое управление</string>
+    <string name="starting_voice">Запускаю голосовое управление …</string>
+    <string name="manual_hint">Дополнительно: те же функции кнопками, если распознавание речи недоступно.</string>
+    <string name="main_intro">Вы вошли как %1$s на %2$s.\n\nНажмите «Включить голосовое управление» — после этого можно выключить экран и управлять всем голосом.</string>
+    <string name="mic_denied">Без доступа к микрофону голосовое управление не работает. Кнопки ниже работают.</string>
+
+    <string name="read_timeline">Читать ленту</string>
+    <string name="pauses_state_on">Спрашивать между постами: да — нажмите, чтобы выключить</string>
+    <string name="pauses_state_off">Спрашивать между постами: нет — нажмите, чтобы включить</string>
+    <string name="pauses_on_status">Я буду спрашивать между постами.</string>
+    <string name="pauses_off_status">Лента читается подряд.</string>
+    <string name="language_state">Язык: %1$s — нажмите, чтобы сменить</string>
+    <string name="pause">Пауза</string>
+    <string name="next_post">Следующий пост</string>
+    <string name="previous_post">Предыдущий пост</string>
+    <string name="stop">Стоп</string>
+    <string name="dictate">Продиктовать пост</string>
+    <string name="repeat_post">Повторить пост</string>
+    <string name="logout">Выйти</string>
+    <string name="logged_out_toast">Вы вышли</string>
+
+    <string name="send">Отправить</string>
+    <string name="cancel">Отмена</string>
+    <string name="retry">Продиктовать заново</string>
+
+    <string name="notification_channel_name">Голосовая сессия</string>
+    <string name="idle">Готово</string>
+</resources>
