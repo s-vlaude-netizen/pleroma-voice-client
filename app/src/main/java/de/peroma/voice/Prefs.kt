@@ -45,6 +45,19 @@ class Prefs(context: Context) {
         get() = prefs.getBoolean(KEY_PAUSE_BETWEEN_POSTS, false)
         set(value) = prefs.edit().putBoolean(KEY_PAUSE_BETWEEN_POSTS, value).apply()
 
+    /**
+     * Language the app speaks and listens in.
+     *
+     * Defaults to the device language on first run, then sticks to whatever the
+     * user last chose, so switching does not get undone by the system locale.
+     */
+    var language: Language
+        get() {
+            val stored = prefs.getString(KEY_LANGUAGE, null)
+            return stored?.let { Language.fromTag(it) } ?: Language.fromDevice()
+        }
+        set(value) = prefs.edit().putString(KEY_LANGUAGE, Language.tagOf(value)).apply()
+
     val isLoggedIn: Boolean
         get() = instance.isNotBlank() && accessToken.isNotBlank()
 
@@ -64,5 +77,6 @@ class Prefs(context: Context) {
         private const val KEY_ACCOUNT = "account_name"
         private const val KEY_SPEECH_RATE = "speech_rate"
         private const val KEY_PAUSE_BETWEEN_POSTS = "pause_between_posts"
+        private const val KEY_LANGUAGE = "language"
     }
 }

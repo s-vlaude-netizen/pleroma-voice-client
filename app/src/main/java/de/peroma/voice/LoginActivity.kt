@@ -17,6 +17,9 @@ import androidx.appcompat.app.AppCompatActivity
 class LoginActivity : AppCompatActivity() {
 
     private lateinit var prefs: Prefs
+
+    /** Spoken-language wording for API errors shown on this screen. */
+    private val strings: Strings get() = prefs.language.strings
     private lateinit var instanceInput: EditText
     private lateinit var loginButton: Button
     private lateinit var statusView: TextView
@@ -49,12 +52,12 @@ class LoginActivity : AppCompatActivity() {
     private fun startLogin() {
         val instance = PleromaApi.normalizeInstance(instanceInput.text.toString())
         if (instance.isBlank() || !instance.contains(".")) {
-            setStatus("Bitte eine gültige Instanz-Adresse eingeben.")
+            setStatus(getString(R.string.login_invalid_instance))
             return
         }
 
         setBusy(true)
-        setStatus("Registriere App auf $instance …")
+        setStatus(getString(R.string.login_registering, instance))
 
         Background.run(
             work = { PleromaApi.registerApp(instance) },
@@ -63,12 +66,12 @@ class LoginActivity : AppCompatActivity() {
                 prefs.clientId = credentials.clientId
                 prefs.clientSecret = credentials.clientSecret
                 setBusy(false)
-                setStatus("Browser wird geöffnet. Bitte anmelden und Zugriff erlauben.")
+                setStatus(getString(R.string.login_opening_browser))
                 openAuthorizePage(instance, credentials.clientId)
             },
             onError = { error ->
                 setBusy(false)
-                setStatus("Anmeldung fehlgeschlagen: ${error.userMessage()}")
+                setStatus(getString(R.string.login_failed, error.userMessage(strings)))
             }
         )
     }
@@ -78,7 +81,7 @@ class LoginActivity : AppCompatActivity() {
         try {
             startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
         } catch (e: Exception) {
-            setStatus("Kein Browser gefunden, um die Anmeldung zu öffnen.")
+            setStatus(getString(R.string.login_no_browser))
         }
     }
 
@@ -88,13 +91,13 @@ class LoginActivity : AppCompatActivity() {
 
         val error = data.getQueryParameter("error")
         if (error != null) {
-            setStatus("Zugriff wurde nicht erteilt ($error).")
+            setStatus(getString(R.string.login_denied, error))
             return
         }
 
         val code = data.getQueryParameter("code")
         if (code.isNullOrBlank()) {
-            setStatus("Die Antwort der Instanz enthielt keinen Anmeldecode.")
+            setStatus(getString(R.string.login_no_code))
             return
         }
 
@@ -105,12 +108,12 @@ class LoginActivity : AppCompatActivity() {
         val clientId = prefs.clientId
         val clientSecret = prefs.clientSecret
         if (instance.isBlank() || clientId.isBlank() || clientSecret.isBlank()) {
-            setStatus("Anmeldedaten fehlen. Bitte erneut mit der Instanz beginnen.")
+            setStatus(getString(R.string.login_missing_credentials))
             return
         }
 
         setBusy(true)
-        setStatus("Melde an …")
+        setStatus(getString(R.string.login_signing_in))
 
         Background.run(
             work = {
@@ -122,7 +125,11 @@ class LoginActivity : AppCompatActivity() {
                 prefs.accessToken = token
                 prefs.accountName = name
                 setBusy(false)
-                Toast.makeText(this, "Angemeldet als $name", Toast.LENGTH_LONG).show()
+                Toast.makeText(
+                    this,
+                    getString(R.string.login_signed_in_as, name),
+                    Toast.LENGTH_LONG
+                ).show()
                 startActivity(
                     Intent(this, MainActivity::class.java)
                         .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
@@ -131,7 +138,7 @@ class LoginActivity : AppCompatActivity() {
             },
             onError = { e ->
                 setBusy(false)
-                setStatus("Anmeldung fehlgeschlagen: ${e.userMessage()}")
+                setStatus(getString(R.string.login_failed, e.userMessage(strings)))
             }
         )
     }

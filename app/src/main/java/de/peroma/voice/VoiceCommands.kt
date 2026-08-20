@@ -19,27 +19,107 @@ enum class VoiceCommand {
     SLOWER,
     STATUS,
     LOGOUT,
+    LANGUAGE_ENGLISH,
+    LANGUAGE_GERMAN,
     END_SESSION,
     UNKNOWN
 }
 
 /**
- * Maps spoken German to commands.
+ * Maps spoken English or German to commands.
  *
  * Matching is done on whole words rather than substrings, so "Jahr" does not
  * count as "ja" and "Beitrag" inside "nächster Beitrag" does not start a new
  * post. Where two commands share a word, the more specific one is listed
- * first — the table is evaluated in order.
+ * first — each table is evaluated in order.
+ *
+ * Punctuation is stripped before matching, which turns "don't" into two words,
+ * so contractions are spelled out that way in the tables below.
  */
 object VoiceCommands {
 
-    private val TABLE: List<Pair<VoiceCommand, List<String>>> = listOf(
+    private val ENGLISH_TABLE: List<Pair<VoiceCommand, List<String>>> = listOf(
+        VoiceCommand.END_SESSION to listOf(
+            "end voice control", "stop voice control", "end session", "end",
+            "goodbye", "good bye", "bye", "quit", "exit"
+        ),
+        VoiceCommand.HELP to listOf(
+            "help", "what can i say", "which commands", "commands"
+        ),
+        VoiceCommand.LANGUAGE_GERMAN to listOf(
+            "german", "speak german", "in german", "deutsch"
+        ),
+        VoiceCommand.LANGUAGE_ENGLISH to listOf(
+            "english", "speak english", "in english"
+        ),
+        VoiceCommand.NEXT to listOf(
+            "next", "skip", "forward"
+        ),
+        VoiceCommand.PREVIOUS to listOf(
+            "previous", "back", "go back", "before"
+        ),
+        VoiceCommand.REPEAT to listOf(
+            "repeat", "again", "once more", "say that again", "what was that"
+        ),
+        // Before PAUSE, so "no pauses" is never heard as "pause".
+        // Negations first: "do not ask" contains "ask".
+        VoiceCommand.PAUSES_OFF to listOf(
+            "straight through", "without pauses", "without stopping", "no pauses",
+            "pauses off", "do not ask", "don t ask", "do not interrupt", "continuous"
+        ),
+        VoiceCommand.PAUSES_ON to listOf(
+            "with pauses", "pauses on", "ask between", "ask me", "stop between"
+        ),
+        VoiceCommand.PAUSE to listOf(
+            "pause", "wait", "hold on", "one moment"
+        ),
+        VoiceCommand.RESUME to listOf(
+            "continue", "resume", "carry on", "keep reading", "go on"
+        ),
+        VoiceCommand.STOP_READING to listOf(
+            "stop", "halt", "be quiet", "silence"
+        ),
+        VoiceCommand.FASTER to listOf(
+            "faster", "speed up", "too slow"
+        ),
+        VoiceCommand.SLOWER to listOf(
+            "slower", "slow down", "too fast"
+        ),
+        VoiceCommand.READ_TIMELINE to listOf(
+            "read timeline", "read the timeline", "read my timeline", "timeline",
+            "what is new", "what s new", "news", "home"
+        ),
+        VoiceCommand.NEW_POST to listOf(
+            "new post", "write a post", "compose", "post something", "dictate",
+            "write", "post"
+        ),
+        VoiceCommand.STATUS to listOf(
+            "where am i", "what is playing", "what s playing", "status"
+        ),
+        VoiceCommand.LOGOUT to listOf(
+            "log out", "logout", "sign out", "switch account"
+        ),
+        VoiceCommand.CONFIRM to listOf(
+            "yes", "send", "publish", "confirm", "okay", "ok"
+        ),
+        VoiceCommand.DECLINE to listOf(
+            "no", "discard", "cancel", "delete"
+        )
+    )
+
+    private val GERMAN_TABLE: List<Pair<VoiceCommand, List<String>>> = listOf(
         VoiceCommand.END_SESSION to listOf(
             "sprachsteuerung beenden", "sitzung beenden", "beenden", "schlafen",
             "auf wiedersehen", "tschüss", "tschüss dann", "ende"
         ),
         VoiceCommand.HELP to listOf(
             "hilfe", "was kann ich sagen", "welche befehle", "befehle", "kommandos"
+        ),
+        VoiceCommand.LANGUAGE_ENGLISH to listOf(
+            "englisch", "sprich englisch", "auf englisch", "english"
+        ),
+        VoiceCommand.LANGUAGE_GERMAN to listOf(
+            "deutsch", "sprich deutsch", "auf deutsch"
         ),
         VoiceCommand.NEXT to listOf(
             "nächster", "nächste", "nächstes", "weiter zum nächsten",
@@ -100,30 +180,53 @@ object VoiceCommands {
         )
     )
 
-    private val PREPARED: List<Pair<VoiceCommand, List<List<String>>>> =
-        TABLE.map { (command, phrases) -> command to phrases.map { words(it) } }
-
     /**
      * The confirmation step is a plain yes/no.
      *
-     * "senden" has to read as yes here rather than as "write a post". There is
+     * "send" has to read as yes here rather than as "write a post". There is
      * deliberately no re-dictate option: it did the same thing as no from the
      * user's point of view, and it was unreliable anyway, since recognizers
      * write "nochmal" as two words about as often as one.
      */
-    private val CONFIRMATION: List<Pair<VoiceCommand, List<List<String>>>> = listOf(
+    private val ENGLISH_CONFIRMATION: List<Pair<VoiceCommand, List<String>>> = listOf(
+        VoiceCommand.DECLINE to listOf(
+            "no", "discard", "cancel", "delete", "stop", "do not send", "don t send"
+        ),
+        VoiceCommand.CONFIRM to listOf(
+            "yes", "send", "publish", "confirm", "okay", "ok", "correct", "right"
+        )
+    )
+
+    private val GERMAN_CONFIRMATION: List<Pair<VoiceCommand, List<String>>> = listOf(
         VoiceCommand.DECLINE to listOf(
             "nein", "verwerfen", "abbrechen", "löschen", "doch nicht", "stopp"
-        ).map { words(it) },
+        ),
         VoiceCommand.CONFIRM to listOf(
             "ja", "senden", "abschicken", "veröffentlichen", "bestätigen", "okay", "ok",
             "passt", "richtig"
-        ).map { words(it) }
+        )
     )
 
-    fun parse(spoken: String): VoiceCommand = match(spoken, PREPARED)
+    private val TABLES = mapOf(
+        Language.ENGLISH to prepare(ENGLISH_TABLE),
+        Language.GERMAN to prepare(GERMAN_TABLE)
+    )
 
-    fun parseConfirmation(spoken: String): VoiceCommand = match(spoken, CONFIRMATION)
+    private val CONFIRMATIONS = mapOf(
+        Language.ENGLISH to prepare(ENGLISH_CONFIRMATION),
+        Language.GERMAN to prepare(GERMAN_CONFIRMATION)
+    )
+
+    private fun prepare(
+        table: List<Pair<VoiceCommand, List<String>>>
+    ): List<Pair<VoiceCommand, List<List<String>>>> =
+        table.map { (command, phrases) -> command to phrases.map { words(it) } }
+
+    fun parse(spoken: String, language: Language): VoiceCommand =
+        match(spoken, TABLES.getValue(language))
+
+    fun parseConfirmation(spoken: String, language: Language): VoiceCommand =
+        match(spoken, CONFIRMATIONS.getValue(language))
 
     private fun match(
         spoken: String,
@@ -151,13 +254,4 @@ object VoiceCommands {
         }
         return false
     }
-
-    /** Spoken when the user asks for help. */
-    const val HELP_TEXT: String =
-        "Du kannst sagen: Timeline vorlesen. Nächster Beitrag. Vorheriger Beitrag. " +
-            "Wiederholen. Pause. Weiter. Stopp. Neuer Beitrag, um etwas zu diktieren. " +
-            "Schneller oder langsamer für das Sprechtempo. " +
-            "Mit Pausen, wenn ich zwischen den Beiträgen nachfragen soll, " +
-            "oder Am Stück, wenn ich durchlesen soll. Abmelden. " +
-            "Oder: Beenden, um die Sprachsteuerung zu schließen."
 }
