@@ -3,12 +3,23 @@ plugins {
     id 'org.jetbrains.kotlin.android'
 }
 
-// Release signing is taken from environment variables when they are present
-// (that is how the GitHub Actions release build signs the APK). When they are
-// absent — a plain local `./gradlew assembleRelease` — we fall back to the
-// debug keystore so the produced APK is still installable.
-def keystorePath = System.getenv("KEYSTORE_FILE")
-def hasReleaseKeystore = keystorePath != null && !keystorePath.isEmpty() && file(keystorePath).exists()
+// The signing key must stay identical across builds. Android identifies an
+// app by its signature, so signing an update with a different key makes it a
+// different app and the install is refused with "App not installed".
+//
+// The debug keystore cannot serve that purpose: a CI runner has none, so the
+// build tools mint a throwaway one on every run and no two releases could
+// ever replace one another. Hence a fixed keystore committed with the source.
+//
+// That key and its password are public. It gives releases one identity; it
+// proves nothing about who built them, and anyone can sign an APK that this
+// installation would accept as an update. Set the KEYSTORE_* environment
+// variables — the workflow fills them from repository secrets — to sign with
+// a private key instead; those take precedence whenever they are present.
+def envKeystore = System.getenv("KEYSTORE_FILE")
+def usingEnvKeystore = envKeystore != null && !envKeystore.isEmpty() && file(envKeystore).exists()
+def keystoreFile = usingEnvKeystore ? file(envKeystore) : file("peroma-release.jks")
+def hasReleaseKeystore = keystoreFile.exists()
 
 android {
     namespace 'de.peroma.voice'
@@ -18,17 +29,17 @@ android {
         applicationId "de.peroma.voice"
         minSdk 24
         targetSdk 34
-        versionCode 7
-        versionName "2.2.1"
+        versionCode 8
+        versionName "2.2.2"
     }
 
     signingConfigs {
         release {
             if (hasReleaseKeystore) {
-                storeFile file(keystorePath)
-                storePassword System.getenv("KEYSTORE_PASSWORD")
-                keyAlias System.getenv("KEY_ALIAS")
-                keyPassword System.getenv("KEY_PASSWORD")
+                storeFile keystoreFile
+                storePassword usingEnvKeystore ? System.getenv("KEYSTORE_PASSWORD") : "peromavoice"
+                keyAlias usingEnvKeystore ? System.getenv("KEY_ALIAS") : "peroma"
+                keyPassword usingEnvKeystore ? System.getenv("KEY_PASSWORD") : "peromavoice"
             }
         }
     }

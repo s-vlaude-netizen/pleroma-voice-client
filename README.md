@@ -130,6 +130,17 @@ nutzt aber dieselben Konto- und Anmeldedaten — ein Update behält die Anmeldun
 4. **Sprachsteuerung starten** antippen und Mikrofon freigeben.
 5. Bildschirm ausschalten. Ab hier geht alles per Stimme.
 
+### Aktualisieren
+
+Ab **2.2.2** lässt sich eine neue Version einfach über die alte installieren. Vorher
+wurde jeder Build mit einem zufälligen Debug-Schlüssel signiert, weshalb Android
+Updates mit „App wurde nicht installiert" ablehnte.
+
+**Einmalig nötig:** Der Wechsel von 2.2.1 oder älter auf 2.2.2 verlangt noch ein
+Deinstallieren, weil die installierte Version einen anderen Schlüssel trägt. Ab
+2.2.2 aufwärts geht es dann direkt. Deine Anmeldung geht beim Deinstallieren
+verloren — die Instanz einmal neu eingeben.
+
 ### Sprachausgabe verbessern
 
 Die Sprachqualität kommt vom **TTS-Dienst des Geräts**, nicht aus der App — Android
@@ -169,9 +180,21 @@ Benötigt JDK 17 und das Android SDK (Compile-SDK 34).
 
 ### Signierung
 
-Ohne konfigurierten Schlüssel wird die Release-APK mit dem Debug-Schlüssel
-signiert — installierbar, aber nicht für eine Veröffentlichung im Store gedacht.
-Für eigene signierte Builds setzt der CI-Workflow diese Repository-Secrets aus:
+Standardmäßig signiert jeder Build mit `app/peroma-release.jks` — einem
+Schlüssel, der **absichtlich im Repository liegt** (Alias `peroma`, Passwort
+`peromavoice`). Er sorgt dafür, dass aufeinanderfolgende Releases dieselbe
+Identität haben und einander ersetzen können. Ohne einen festen Schlüssel
+erzeugen die Build-Tools auf einem CI-Runner bei jedem Lauf einen neuen, und
+Android verweigert jedes Update.
+
+> **Was das bedeutet:** Der Schlüssel ist öffentlich. Er belegt nicht, wer eine
+> APK gebaut hat, und **jede** damit signierte APK wird von Android als Update
+> einer bestehenden Installation akzeptiert — samt Zugriff auf den dort
+> gespeicherten Pleroma-Token. Für eine selbst verteilte Privat-App ist das ein
+> bewusster Kompromiss; für eine Veröffentlichung an Dritte oder in einem Store
+> ist es keiner.
+
+Für einen privaten Schlüssel diese Repository-Secrets setzen — sie haben Vorrang:
 
 | Secret | Bedeutung |
 | --- | --- |
@@ -180,8 +203,8 @@ Für eigene signierte Builds setzt der CI-Workflow diese Repository-Secrets aus:
 | `KEY_ALIAS` | Alias des Schlüssels |
 | `KEY_PASSWORD` | Passwort des Schlüssels |
 
-Sind sie gesetzt, signiert der Workflow damit; sonst greift der Debug-Schlüssel.
 Lokal funktionieren dieselben Werte als Umgebungsvariablen (`KEYSTORE_FILE` als Pfad).
+Ein Wechsel des Schlüssels verlangt erneut ein Deinstallieren auf jedem Gerät.
 
 ## Aufbau
 

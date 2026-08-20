@@ -11,3 +11,6 @@ captures/
 *.aab
 *.keystore
 *.jks
+# Deliberately tracked: releases need one stable signing identity so that an
+# update can replace the version before it. See app/build.gradle.
+!app/peroma-release.jks
