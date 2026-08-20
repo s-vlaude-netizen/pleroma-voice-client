@@ -30,8 +30,7 @@
     <string name="pauses_state_off">Zwischenfragen: aus — tippen zum Einschalten</string>
     <string name="pauses_on_status">Zwischen den Beiträgen wird nachgefragt.</string>
     <string name="pauses_off_status">Die Timeline wird am Stück vorgelesen.</string>
-    <string name="language_state_en">Sprache: Englisch — tippen für Deutsch</string>
-    <string name="language_state_de">Sprache: Deutsch — tippen für Englisch</string>
+    <string name="language_state">Sprache: %1$s — tippen zum Wechseln</string>
     <string name="pause">Pause</string>
     <string name="next_post">Nächster Beitrag</string>
     <string name="previous_post">Vorheriger Beitrag</string>

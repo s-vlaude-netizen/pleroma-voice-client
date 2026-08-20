@@ -57,7 +57,7 @@
             <Button
                 android:id="@+id/btnToggleLanguage"
                 style="@style/VoiceButton"
-                android:text="@string/language_state_en" />
+                android:text="@string/language_state" />
 
             <Button
                 android:id="@+id/btnNext"

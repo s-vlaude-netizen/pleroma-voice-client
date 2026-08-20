@@ -3,28 +3,57 @@ package de.peroma.voice
 import java.util.Locale
 
 /** The languages the app can speak and listen in. */
-enum class Language {
-    ENGLISH,
-    GERMAN;
+enum class Language(val tag: String) {
+    ENGLISH("en"),
+    GERMAN("de"),
+    RUSSIAN("ru");
 
+    /**
+     * Used to pick a speech voice. Deliberately without a region: any installed
+     * voice for the language qualifies, and demanding en-GB over en-US would
+     * only push the engine onto its fallback.
+     */
     val locale: Locale
-        get() = if (this == GERMAN) Locale.GERMAN else Locale.ENGLISH
+        get() = Locale(tag)
 
-    val strings: Strings
-        get() = if (this == GERMAN) GermanStrings else EnglishStrings
-
-    companion object {
-        /** Device language, falling back to English for anything but German. */
-        fun fromDevice(): Language =
-            if (Locale.getDefault().language == Locale.GERMAN.language) GERMAN else ENGLISH
-
-        fun fromTag(tag: String): Language? = when (tag) {
-            "de" -> GERMAN
-            "en" -> ENGLISH
-            else -> null
+    /**
+     * Used to ask the recognizer for a language. Here the region is included,
+     * because several recognition services honour a full BCP-47 tag and quietly
+     * fall back to the system language when given a bare one.
+     */
+    val recognizerTag: String
+        get() = when (this) {
+            ENGLISH -> "en-US"
+            GERMAN -> "de-DE"
+            RUSSIAN -> "ru-RU"
         }
 
-        fun tagOf(language: Language): String = if (language == GERMAN) "de" else "en"
+    /** The language's own name, so the button reads the same in every locale. */
+    val displayName: String
+        get() = when (this) {
+            ENGLISH -> "English"
+            GERMAN -> "Deutsch"
+            RUSSIAN -> "Русский"
+        }
+
+    val strings: Strings
+        get() = when (this) {
+            ENGLISH -> EnglishStrings
+            GERMAN -> GermanStrings
+            RUSSIAN -> RussianStrings
+        }
+
+    /** The next language in the cycle, for the button on screen. */
+    fun next(): Language = values()[(ordinal + 1) % values().size]
+
+    companion object {
+        /** Device language, falling back to English for anything unsupported. */
+        fun fromDevice(): Language =
+            values().firstOrNull { it.tag == Locale.getDefault().language } ?: ENGLISH
+
+        fun fromTag(tag: String): Language? = values().firstOrNull { it.tag == tag }
+
+        fun tagOf(language: Language): String = language.tag
     }
 }
 
@@ -94,7 +123,8 @@ interface Strings {
     val helpText: String
     val pausesOn: String
     val pausesOff: String
-    fun languageSwitched(language: Language): String
+    /** Spoken after switching, in the language just switched to. */
+    val nowSpeakingThisLanguage: String
     fun speechRate(percent: Int): String
 
     // ---- timeline ----------------------------------------------------------
@@ -190,8 +220,7 @@ object EnglishStrings : Strings {
             "Or: end, to close voice control."
     override val pausesOn = "I will ask between posts from now on."
     override val pausesOff = "I will read the timeline straight through from now on."
-    override fun languageSwitched(language: Language) =
-        if (language == Language.GERMAN) "Ich spreche ab jetzt Deutsch." else "I will speak English."
+    override val nowSpeakingThisLanguage = "I will speak English from now on."
 
     override fun speechRate(percent: Int) = "Rate $percent percent."
 
@@ -310,8 +339,7 @@ object GermanStrings : Strings {
             "Abmelden. Oder: Beenden, um die Sprachsteuerung zu schließen."
     override val pausesOn = "Ich frage jetzt zwischen den Beiträgen nach."
     override val pausesOff = "Ich lese die Timeline jetzt am Stück vor."
-    override fun languageSwitched(language: Language) =
-        if (language == Language.GERMAN) "Ich spreche ab jetzt Deutsch." else "I will speak English."
+    override val nowSpeakingThisLanguage = "Ich spreche ab jetzt Deutsch."
 
     override fun speechRate(percent: Int) = "Tempo $percent Prozent."
 
@@ -368,4 +396,123 @@ object GermanStrings : Strings {
     }
 
     override val unknownError = "Unbekannter Fehler"
+}
+
+object RussianStrings : Strings {
+
+    override fun linkTo(host: String) = "ссылка на $host"
+    override val bareLink = "ссылка"
+    override fun hashtag(tag: String) = "хэштег $tag"
+    override val ampersand = " и "
+    override val unknownAuthor = "Неизвестный"
+
+    override fun postCounter(index: Int, total: Int) = "Пост $index из $total."
+    override fun boostedBy(booster: String, author: String) =
+        "$booster поделился постом автора $author."
+
+    override fun byAuthor(author: String) = "Автор: $author."
+    override fun contentWarning(warning: String) = "Предупреждение о содержании: $warning."
+    override val noReadableText = "В этом посте нет читаемого текста."
+    override fun oneAttachment(description: String) = "Одно вложение. $description"
+    override fun manyAttachments(count: Int) = "Вложений: $count."
+    override fun attachmentWith(type: String, description: String) = "$type: $description."
+    override fun attachmentWithout(type: String) = "$type без описания."
+    override val mediaImage = "Изображение"
+    override val mediaVideo = "Видео"
+    override val mediaAudio = "Аудио"
+    override val mediaAnimation = "Анимация"
+    override val mediaOther = "Вложение"
+
+    override val ready = "Готово."
+    override val ttsUnavailable = "Синтез речи недоступен."
+    override val preparingSpeech = "Подготовка синтеза речи …"
+    override val notLoggedIn = "Вы не вошли в аккаунт."
+    override val sessionStarted =
+        "Голосовое управление включено. Экран можно выключить. " +
+            "Скажите: читай ленту, новый пост или помощь."
+    override val sessionEnded = "Голосовое управление завершено. До встречи."
+    override val loggedOut = "Вы вышли из аккаунта."
+    override val noRecognizer =
+        "На этом устройстве не настроено распознавание речи. Голосовое управление остановлено."
+    override val missingMicPermission =
+        "У меня нет доступа к микрофону. Пожалуйста, разрешите его в приложении."
+    override val recognizerRefusedMic =
+        "Служба распознавания речи не даёт доступ к микрофону, хотя у приложения " +
+            "разрешение есть. Проверьте, есть ли доступ к микрофону у приложения " +
+            "голосового ввода — обычно это Google — или выберите другую службу " +
+            "голосового ввода в настройках системы."
+
+    override fun recognizerDiagnostic(packages: List<String>): String {
+        val listed = if (packages.isEmpty()) "не найдено" else packages.joinToString(", ")
+        return "Распознавание речи не даёт микрофон, хотя у приложения есть RECORD_AUDIO. " +
+            "Установленные службы распознавания: $listed."
+    }
+
+    override val nothingHeardEnding = "Я ничего не слышу и завершаю голосовое управление."
+    override val stillListening = "Я слушаю. Скажите «помощь», если нужны команды."
+    override val notUnderstood = "Я не понял. Скажите «помощь», чтобы услышать команды."
+    override val paused = "Пауза. Скажите «продолжай», чтобы читать дальше."
+    override val helpText =
+        "Вы можете сказать: читай ленту. Следующий пост. Предыдущий пост. Повтори. " +
+            "Пауза. Продолжай. Стоп. Новый пост, чтобы продиктовать. " +
+            "Быстрее или медленнее для скорости речи. " +
+            "Подряд, чтобы читать без остановок, или с паузами, чтобы я спрашивал " +
+            "между постами. Английский или немецкий, чтобы сменить язык. Выйти. " +
+            "Или: завершить, чтобы закрыть голосовое управление."
+    override val pausesOn = "Теперь я буду спрашивать между постами."
+    override val pausesOff = "Теперь я буду читать ленту подряд."
+    override val nowSpeakingThisLanguage = "Теперь я говорю по-русски."
+
+    override fun speechRate(percent: Int) = "Скорость $percent процентов."
+
+    override val loadingTimeline = "Загружаю ленту."
+    override val emptyTimeline = "В вашей ленте нет постов."
+    override fun timelineFailed(reason: String) = "Не удалось загрузить ленту. $reason"
+    override val noTimelineLoaded = "Лента не загружена. Скажите «читай ленту»."
+    override fun statusAt(index: Int, total: Int, summary: String) =
+        "Пост $index из $total. $summary"
+
+    override fun allPostsRead(total: Int) = "Это были все посты, всего $total."
+    override val noFurtherPost = "Следующего поста нет."
+    override val whatNow =
+        "Хотите написать пост? Скажите: новый пост, читай ленту или завершить."
+    override val alreadyFirstPost = "Это уже первый пост."
+
+    override val dictatePrompt = "Продиктуйте свой пост после сигнала."
+    override val nothingHeardRetry = "Я ничего не услышал. Продиктуйте пост после сигнала."
+    override val nothingHeardToMenu = "Я ничего не услышал. Возвращаюсь в главное меню."
+    override val dictationCancelled = "Отменено. Возвращаюсь в главное меню."
+    override fun confirmDraft(draft: String) =
+        "Ваш пост: $draft. Отправить? Скажите да или нет."
+
+    override val confirmAgain = "Отправить пост? Скажите да или нет."
+    override val sayYesOrNo = "Пожалуйста, скажите да или нет."
+    override val draftDiscarded = "Пост удалён. Возвращаюсь в главное меню."
+    override val draftDiscardedNotUnderstood =
+        "Я вас не понял. Пост удалён. Возвращаюсь в главное меню."
+    override val draftDiscardedSilence = "Удаляю пост. Возвращаюсь в главное меню."
+    override val noDraft = "Нет поста для отправки."
+    override val sending = "Отправляю."
+    override val published = "Пост опубликован. Что дальше?"
+    override fun sendFailed(reason: String) =
+        "Не удалось отправить. $reason. Попробовать ещё раз? Скажите да или нет."
+
+    override fun apiError(kind: ApiErrorKind, status: Int, detail: String): String {
+        val suffix = if (detail.isNotBlank()) ": $detail" else ""
+        return when (kind) {
+            ApiErrorKind.UNAUTHORIZED -> "Вы не вошли или доступ истёк$suffix"
+            ApiErrorKind.FORBIDDEN -> "Доступ запрещён$suffix"
+            ApiErrorKind.NOT_FOUND ->
+                "Адрес не найден — это действительно сервер Pleroma?$suffix"
+            ApiErrorKind.REJECTED -> "Пост отклонён$suffix"
+            ApiErrorKind.RATE_LIMITED -> "Слишком много запросов, подождите немного$suffix"
+            ApiErrorKind.SERVER -> "Ошибка сервера ($status)$suffix"
+            ApiErrorKind.UNREACHABLE -> "Сервер недоступен"
+            ApiErrorKind.NO_CREDENTIALS -> "Сервер не выдал данные OAuth"
+            ApiErrorKind.NO_TOKEN -> "Токен доступа не получен"
+            ApiErrorKind.OTHER -> "HTTP $status$suffix"
+        }
+    }
+
+    override val unknownError = "Неизвестная ошибка"
 }
