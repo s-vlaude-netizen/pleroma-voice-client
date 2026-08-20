@@ -1,5 +1,6 @@
 package de.peroma.voice
 
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -23,6 +24,10 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var instanceInput: EditText
     private lateinit var loginButton: Button
     private lateinit var statusView: TextView
+
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(Locales.wrap(newBase))
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

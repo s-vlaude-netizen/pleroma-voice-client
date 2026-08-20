@@ -93,6 +93,10 @@ class VoiceService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(Locales.wrap(newBase))
+    }
+
     override fun onCreate() {
         super.onCreate()
         prefs = Prefs(this)

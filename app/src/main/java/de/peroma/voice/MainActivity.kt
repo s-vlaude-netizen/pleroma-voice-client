@@ -1,6 +1,7 @@
 package de.peroma.voice
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
@@ -23,6 +24,16 @@ import androidx.core.content.ContextCompat
 class MainActivity : AppCompatActivity() {
 
     private lateinit var prefs: Prefs
+
+    /**
+     * Language this screen's resources were resolved for.
+     *
+     * A voice command can switch language while the screen sits in the
+     * background. The labels on it are then stale, because resources were
+     * picked when the context was attached — so [onStart] compares the two and
+     * recreates the screen if they have drifted apart.
+     */
+    private var attachedLanguage: Language? = null
     private lateinit var statusText: TextView
     private lateinit var startButton: Button
     private lateinit var pauseToggle: Button
@@ -41,6 +52,12 @@ class MainActivity : AppCompatActivity() {
     private val notificationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { /* The session runs either way; the notification is just nicer to have. */ }
+
+    override fun attachBaseContext(newBase: Context) {
+        val language = Prefs(newBase).language
+        attachedLanguage = language
+        super.attachBaseContext(Locales.wrap(newBase, language))
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -85,10 +102,13 @@ class MainActivity : AppCompatActivity() {
         languageToggle.setOnClickListener {
             val next = prefs.language.next()
             prefs.language = next
-            updateLanguageToggle()
             // The running session caches the language, so let it restart cleanly.
             VoiceService.send(this, VoiceService.ACTION_STOP_SESSION)
-            setStatus(next.strings.nowSpeakingThisLanguage)
+            // The labels are resources, and those were resolved when this
+            // screen was created. Rebuilding it is what puts them into the new
+            // language; the announcement is carried across the restart.
+            pendingStatus = next.strings.nowSpeakingThisLanguage
+            recreate()
         }
         updateLanguageToggle()
         findViewById<Button>(R.id.btnNext).setOnClickListener {
@@ -108,12 +128,20 @@ class MainActivity : AppCompatActivity() {
         findViewById<View>(R.id.manualControls).visibility = View.VISIBLE
 
         requestNotificationPermissionIfNeeded()
-        setStatus(getString(R.string.main_intro, prefs.accountName, prefs.instance))
+        setStatus(
+            pendingStatus
+                ?: getString(R.string.main_intro, prefs.accountName, prefs.instance)
+        )
+        pendingStatus = null
     }
 
     override fun onStart() {
         super.onStart()
         if (!prefs.isLoggedIn) return
+        if (attachedLanguage != prefs.language) {
+            recreate()
+            return
+        }
         VoiceService.State.listener = { state ->
             Background.onMain { statusText.text = state.statusText }
         }
@@ -179,5 +207,15 @@ class MainActivity : AppCompatActivity() {
     private fun setStatus(message: String) {
         statusText.text = message
         statusText.announceForAccessibility(message)
+    }
+
+    private companion object {
+        /**
+         * Message to show once the screen has been rebuilt.
+         *
+         * Recreating the activity throws its instance away, so the sentence
+         * announcing the new language is parked here rather than in a field.
+         */
+        var pendingStatus: String? = null
     }
 }
