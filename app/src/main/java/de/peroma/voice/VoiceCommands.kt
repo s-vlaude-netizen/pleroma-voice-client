@@ -241,9 +241,11 @@ object VoiceCommands {
         VoiceCommand.PAUSES_ON to listOf(
             "ポーズあり", "途中で聞", "間で聞", "間で止まって", "一つずつ", "毎回聞"
         ),
-        // Before STOP_READING: 一時停止 contains 停止.
+        // Before STOP_READING: 一時停止 contains 停止. The bare kana まって is
+        // deliberately absent — 止まって, which stops the reading altogether,
+        // ends in it.
         VoiceCommand.PAUSE to listOf(
-            "一時停止", "ちょっと待って", "待って", "まって"
+            "一時停止", "ちょっと待って", "ちょっとまって", "待って"
         ),
         VoiceCommand.RESUME to listOf(
             "続けて", "続き", "再開", "つづけて"
