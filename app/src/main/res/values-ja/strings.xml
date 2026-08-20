@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Peroma Voice</string>
+    <string name="login_title">ログイン</string>
+
+    <string name="instance_hint">サーバー（例: pleroma.example）</string>
+    <string name="login_button">Pleroma でログイン</string>
+    <string name="login_intro">お使いの Pleroma サーバーのアドレスを入力してください。続いてブラウザーが開きます。</string>
+
+    <string name="login_invalid_instance">正しいサーバーアドレスを入力してください。</string>
+    <string name="login_registering">%1$s にアプリを登録しています …</string>
+    <string name="login_opening_browser">ブラウザーを開きます。ログインしてアクセスを許可してください。</string>
+    <string name="login_failed">ログインできませんでした: %1$s</string>
+    <string name="login_no_browser">ログインページを開けるブラウザーが見つかりません。</string>
+    <string name="login_denied">アクセスが許可されませんでした (%1$s)。</string>
+    <string name="login_no_code">サーバーの応答にログインコードがありませんでした。</string>
+    <string name="login_missing_credentials">ログイン情報がありません。サーバーアドレスからやり直してください。</string>
+    <string name="login_signing_in">ログインしています …</string>
+    <string name="login_signed_in_as">%1$s としてログインしました</string>
+
+    <string name="start_voice">音声操作を開始</string>
+    <string name="stop_voice">音声操作を終了</string>
+    <string name="starting_voice">音声操作を開始しています …</string>
+    <string name="manual_hint">補助: 音声認識が使えないときのために、同じ機能をボタンでも用意しています。</string>
+    <string name="main_intro">%2$s に %1$s としてログインしています。\n\n「音声操作を開始」を押してください。そのあとは画面を消したまま、すべて音声で操作できます。</string>
+    <string name="mic_denied">マイクの許可がないと音声操作は使えません。下のボタンはそのまま使えます。</string>
+
+    <string name="read_timeline">タイムラインを読む</string>
+    <string name="pauses_state_on">投稿ごとに尋ねる: オン — 押すとオフ</string>
+    <string name="pauses_state_off">投稿ごとに尋ねる: オフ — 押すとオン</string>
+    <string name="pauses_on_status">投稿ごとに尋ねます。</string>
+    <string name="pauses_off_status">タイムラインを続けて読みます。</string>
+    <!-- language_state is deliberately not translated. The button has to stay
+         findable once the app speaks a language its user may not read, so the
+         word "Language" stays English in every locale; only the language name
+         it shows changes. -->
+    <string name="pause">一時停止</string>
+    <string name="next_post">次の投稿</string>
+    <string name="previous_post">前の投稿</string>
+    <string name="stop">停止</string>
+    <string name="dictate">投稿を口述する</string>
+    <string name="repeat_post">投稿をもう一度</string>
+    <string name="logout">ログアウト</string>
+    <string name="logged_out_toast">ログアウトしました</string>
+
+    <string name="send">送信</string>
+    <string name="cancel">キャンセル</string>
+    <string name="retry">もう一度口述する</string>
+
+    <string name="notification_channel_name">音声セッション</string>
+    <string name="idle">準備完了</string>
+</resources>

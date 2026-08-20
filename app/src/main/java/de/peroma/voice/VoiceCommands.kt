@@ -21,18 +21,24 @@ enum class VoiceCommand {
     LOGOUT,
     LANGUAGE_ENGLISH,
     LANGUAGE_GERMAN,
-    LANGUAGE_RUSSIAN,
+    LANGUAGE_JAPANESE,
     END_SESSION,
     UNKNOWN
 }
 
 /**
- * Maps spoken English, German or Russian to commands.
+ * Maps spoken English, German or Japanese to commands.
  *
- * Matching is done on whole words rather than substrings, so "Jahr" does not
- * count as "ja" and "Beitrag" inside "nächster Beitrag" does not start a new
- * post. Where two commands share a word, the more specific one is listed
- * first — each table is evaluated in order.
+ * In English and German, matching is done on whole words rather than
+ * substrings, so "Jahr" does not count as "ja" and "Beitrag" inside "nächster
+ * Beitrag" does not start a new post. Japanese is written without spaces, so
+ * there are no word boundaries to match on and its phrases are looked for as
+ * substrings instead.
+ *
+ * Either way, where two commands share a phrase the more specific one is
+ * listed first — each table is evaluated in order. Substring matching makes
+ * that ordering matter far more, so the Japanese table is commented where a
+ * phrase contains another.
  *
  * Punctuation is stripped before matching, which turns "don't" into two words,
  * so contractions are spelled out that way in the tables below.
@@ -59,8 +65,8 @@ object VoiceCommands {
         VoiceCommand.LANGUAGE_ENGLISH to listOf(
             "english", "speak english", "in english"
         ),
-        VoiceCommand.LANGUAGE_RUSSIAN to listOf(
-            "russian", "speak russian", "in russian"
+        VoiceCommand.LANGUAGE_JAPANESE to listOf(
+            "japanese", "speak japanese", "in japanese", "nihongo"
         ),
         VoiceCommand.NEXT to listOf(
             "next", "skip", "forward"
@@ -131,8 +137,8 @@ object VoiceCommands {
         VoiceCommand.LANGUAGE_GERMAN to listOf(
             "deutsch", "sprich deutsch", "auf deutsch"
         ),
-        VoiceCommand.LANGUAGE_RUSSIAN to listOf(
-            "russisch", "sprich russisch", "auf russisch"
+        VoiceCommand.LANGUAGE_JAPANESE to listOf(
+            "japanisch", "sprich japanisch", "auf japanisch", "japanese"
         ),
         VoiceCommand.NEXT to listOf(
             "nächster", "nächste", "nächstes", "weiter zum nächsten",
@@ -193,81 +199,85 @@ object VoiceCommands {
         )
     )
 
-
     /**
-     * Russian inflects heavily, so a command can arrive in several forms:
-     * "следующий пост" but "следующая запись". Rather than stem the input,
-     * the common endings are simply listed — the tables stay readable and the
-     * matcher stays the same one the other languages use.
+     * Japanese is matched on substrings, so a short phrase swallows every
+     * longer one that contains it. The order below is therefore load-bearing,
+     * and each phrase is kept to the invariant part of the expression: 続けて
+     * covers 続けて and 続けてください alike, so politeness endings need no
+     * entries of their own.
      */
-    private val RUSSIAN_TABLE: List<Pair<VoiceCommand, List<String>>> = listOf(
+    private val JAPANESE_TABLE: List<Pair<VoiceCommand, List<String>>> = listOf(
         VoiceCommand.END_SESSION to listOf(
-            "завершить", "заверши", "закончить", "закончи", "выключи голосовое управление",
-            "до свидания", "пока"
+            "終了", "終わり", "おわり", "さようなら", "さよなら", "バイバイ",
+            "おしまい", "やめる"
         ),
         VoiceCommand.HELP to listOf(
-            "помощь", "помоги", "что я могу сказать", "команды"
+            "ヘルプ", "助けて", "たすけて", "使い方", "何が言える", "コマンド"
         ),
         VoiceCommand.LANGUAGE_ENGLISH to listOf(
-            "английский", "по английски", "английском"
+            "英語", "えいご", "イングリッシュ"
         ),
         VoiceCommand.LANGUAGE_GERMAN to listOf(
-            "немецкий", "по немецки", "немецком"
+            "ドイツ語", "どいつご"
         ),
-        VoiceCommand.LANGUAGE_RUSSIAN to listOf(
-            "русский", "по русски", "русском"
+        VoiceCommand.LANGUAGE_JAPANESE to listOf(
+            "日本語", "にほんご"
         ),
         VoiceCommand.NEXT to listOf(
-            "следующий", "следующая", "следующее", "дальше", "пропусти", "пропустить"
+            "次", "つぎ", "スキップ", "飛ばして"
         ),
         VoiceCommand.PREVIOUS to listOf(
-            "предыдущий", "предыдущая", "предыдущее", "назад", "вернись"
+            "前", "まえ", "戻", "もどって"
         ),
         VoiceCommand.REPEAT to listOf(
-            "повтори", "повторить", "ещё раз", "еще раз", "что это было"
+            "もう一度", "もういちど", "繰り返", "くりかえ", "何だって"
         ),
-        // Before PAUSE, so "без пауз" is not heard as "пауза".
-        // Negations first: "не спрашивай" contains "спрашивай".
+        // Before RESUME (続けて読 contains 続けて) and before STOP_READING and
+        // PAUSES_ON (間で止まって contains 止まって).
         VoiceCommand.PAUSES_OFF to listOf(
-            "подряд", "без пауз", "без остановок", "не спрашивай", "не перебивай"
+            "続けて読", "通しで", "止めないで", "聞かないで", "中断しないで",
+            "ポーズなし", "最後まで"
         ),
         VoiceCommand.PAUSES_ON to listOf(
-            "с паузами", "спрашивай", "спрашивай между"
+            "ポーズあり", "途中で聞", "間で聞", "間で止まって", "一つずつ", "毎回聞"
         ),
+        // Before STOP_READING: 一時停止 contains 停止.
         VoiceCommand.PAUSE to listOf(
-            "пауза", "подожди", "погоди", "минуту"
+            "一時停止", "ちょっと待って", "待って", "まって"
         ),
         VoiceCommand.RESUME to listOf(
-            "продолжай", "продолжи", "продолжить", "читай дальше"
+            "続けて", "続き", "再開", "つづけて"
         ),
         VoiceCommand.STOP_READING to listOf(
-            "стоп", "хватит", "прекрати", "останови"
+            "停止", "ストップ", "止まって", "やめて", "静かに"
         ),
         VoiceCommand.FASTER to listOf(
-            "быстрее", "слишком медленно"
+            "速く", "はやく", "早く"
         ),
         VoiceCommand.SLOWER to listOf(
-            "медленнее", "слишком быстро"
+            "ゆっくり", "遅く", "おそく"
         ),
         VoiceCommand.READ_TIMELINE to listOf(
-            "читай ленту", "прочитай ленту", "лента", "ленту", "новости",
-            "что нового", "главная"
+            "タイムライン", "読んで", "よんで", "ホーム", "新着", "ニュース"
         ),
         VoiceCommand.NEW_POST to listOf(
-            "новый пост", "написать пост", "написать", "продиктовать", "опубликовать пост",
-            "пост", "запись"
+            "新しい投稿", "投稿", "ポスト", "書く", "書きたい", "口述"
         ),
         VoiceCommand.STATUS to listOf(
-            "где я", "что сейчас", "текущий статус"
+            "今どこ", "いまどこ", "状態", "ステータス"
         ),
         VoiceCommand.LOGOUT to listOf(
-            "выйти из аккаунта", "выйти", "выход", "сменить аккаунт"
+            "ログアウト", "サインアウト", "アカウント切り替え"
         ),
+        // 投稿して is deliberately absent here: it would be caught by NEW_POST
+        // above. It is offered in the confirmation table, where no such
+        // command competes for it.
         VoiceCommand.CONFIRM to listOf(
-            "да", "отправь", "отправить", "опубликуй", "подтверди", "хорошо", "ок"
+            "はい", "送信", "送って", "オーケー", "オッケー", "いいよ"
         ),
+        // Last: やめ is contained in END_SESSION's やめる and STOP_READING's やめて.
         VoiceCommand.DECLINE to listOf(
-            "нет", "отмена", "отмени", "удали", "не надо"
+            "いいえ", "キャンセル", "取り消", "削除", "だめ", "やめ"
         )
     )
 
@@ -298,63 +308,90 @@ object VoiceCommands {
         )
     )
 
-    private val RUSSIAN_CONFIRMATION: List<Pair<VoiceCommand, List<String>>> = listOf(
+    // 送らない has to be tested before 送 in any form, so DECLINE stays first
+    // here just as it does in the other languages.
+    private val JAPANESE_CONFIRMATION: List<Pair<VoiceCommand, List<String>>> = listOf(
         VoiceCommand.DECLINE to listOf(
-            "нет", "отмена", "отмени", "удали", "не надо", "не отправляй", "стоп"
+            "いいえ", "送らない", "送りません", "キャンセル", "取り消", "削除",
+            "だめ", "やめ", "違う", "ちがう"
         ),
         VoiceCommand.CONFIRM to listOf(
-            "да", "отправь", "отправить", "опубликуй", "подтверди", "хорошо", "ок",
-            "верно", "правильно"
+            "はい", "送信", "送って", "投稿して", "オーケー", "オッケー", "いいよ",
+            "そのまま", "合ってる", "正しい"
         )
     )
 
     private val TABLES = mapOf(
-        Language.ENGLISH to prepare(ENGLISH_TABLE),
-        Language.GERMAN to prepare(GERMAN_TABLE),
-        Language.RUSSIAN to prepare(RUSSIAN_TABLE)
+        Language.ENGLISH to Prepared(Language.ENGLISH, ENGLISH_TABLE),
+        Language.GERMAN to Prepared(Language.GERMAN, GERMAN_TABLE),
+        Language.JAPANESE to Prepared(Language.JAPANESE, JAPANESE_TABLE)
     )
 
     private val CONFIRMATIONS = mapOf(
-        Language.ENGLISH to prepare(ENGLISH_CONFIRMATION),
-        Language.GERMAN to prepare(GERMAN_CONFIRMATION),
-        Language.RUSSIAN to prepare(RUSSIAN_CONFIRMATION)
+        Language.ENGLISH to Prepared(Language.ENGLISH, ENGLISH_CONFIRMATION),
+        Language.GERMAN to Prepared(Language.GERMAN, GERMAN_CONFIRMATION),
+        Language.JAPANESE to Prepared(Language.JAPANESE, JAPANESE_CONFIRMATION)
     )
 
-    private fun prepare(
-        table: List<Pair<VoiceCommand, List<String>>>
-    ): List<Pair<VoiceCommand, List<List<String>>>> =
-        table.map { (command, phrases) -> command to phrases.map { words(it) } }
-
     fun parse(spoken: String, language: Language): VoiceCommand =
-        match(spoken, TABLES.getValue(language))
+        TABLES.getValue(language).match(spoken)
 
     fun parseConfirmation(spoken: String, language: Language): VoiceCommand =
-        match(spoken, CONFIRMATIONS.getValue(language))
+        CONFIRMATIONS.getValue(language).match(spoken)
 
-    private fun match(
-        spoken: String,
-        table: List<Pair<VoiceCommand, List<List<String>>>>
-    ): VoiceCommand {
-        val said = words(spoken)
-        if (said.isEmpty()) return VoiceCommand.UNKNOWN
-        for ((command, phrases) in table) {
-            if (phrases.any { contains(said, it) }) return command
+    /**
+     * A table with its phrases normalised once, ahead of any recognition.
+     *
+     * Both matching modes start from the same word split, which is what strips
+     * the punctuation a recognizer adds. Languages written with spaces then
+     * compare word by word; the others compare the words joined back together,
+     * which for Japanese simply means the utterance with its punctuation and
+     * any stray spaces removed.
+     */
+    private class Prepared(
+        language: Language,
+        table: List<Pair<VoiceCommand, List<String>>>
+    ) {
+        private val byWord = language.hasWordBoundaries
+
+        private val entries: List<Pair<VoiceCommand, List<List<String>>>> =
+            table.map { (command, phrases) -> command to phrases.map { words(it) } }
+
+        private val joined: List<Pair<VoiceCommand, List<String>>> =
+            if (byWord) emptyList()
+            else entries.map { (command, phrases) ->
+                command to phrases.map { it.joinToString("") }
+            }
+
+        fun match(spoken: String): VoiceCommand {
+            val said = words(spoken)
+            if (said.isEmpty()) return VoiceCommand.UNKNOWN
+            if (byWord) {
+                for ((command, phrases) in entries) {
+                    if (phrases.any { contains(said, it) }) return command
+                }
+            } else {
+                val text = said.joinToString("")
+                for ((command, phrases) in joined) {
+                    if (phrases.any { it.isNotEmpty() && text.contains(it) }) return command
+                }
+            }
+            return VoiceCommand.UNKNOWN
         }
-        return VoiceCommand.UNKNOWN
     }
+}
 
-    private fun words(input: String): List<String> =
-        input.lowercase()
-            .replace(Regex("[^\\p{L}0-9]+"), " ")
-            .split(' ')
-            .filter { it.isNotBlank() }
+private fun words(input: String): List<String> =
+    input.lowercase()
+        .replace(Regex("[^\\p{L}0-9]+"), " ")
+        .split(' ')
+        .filter { it.isNotBlank() }
 
-    /** True when [phrase] occurs as a consecutive run of words inside [said]. */
-    private fun contains(said: List<String>, phrase: List<String>): Boolean {
-        if (phrase.isEmpty() || phrase.size > said.size) return false
-        for (start in 0..said.size - phrase.size) {
-            if (phrase.indices.all { said[start + it] == phrase[it] }) return true
-        }
-        return false
+/** True when [phrase] occurs as a consecutive run of words inside [said]. */
+private fun contains(said: List<String>, phrase: List<String>): Boolean {
+    if (phrase.isEmpty() || phrase.size > said.size) return false
+    for (start in 0..said.size - phrase.size) {
+        if (phrase.indices.all { said[start + it] == phrase[it] }) return true
     }
+    return false
 }

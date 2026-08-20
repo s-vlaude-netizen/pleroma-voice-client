@@ -1,6 +1,6 @@
 # Peroma Voice — Audio-Client für Pleroma
 
-*English, German and Russian. The app speaks whichever language you pick — see
+*English, German and Japanese. The app speaks whichever language you pick — see
 [Sprache / Language](#sprache--language).*
 
 Ein reiner **Audio-Client** für das Fediverse-Netzwerk [Pleroma](https://pleroma.social)
@@ -28,9 +28,11 @@ vorlesen lassen und Beiträge diktieren, ohne einmal hinzusehen.
 - **Sprechtempo per Stimme** — „schneller" / „langsamer", wird dauerhaft gemerkt.
 - **Knöpfe bleiben optional** — dieselben Funktionen sind weiterhin antippbar, falls
   die Spracherkennung mal nicht verfügbar ist.
-- **Dreisprachig** — Englisch, Deutsch und Russisch, jeweils komplett: Oberfläche,
+- **Dreisprachig** — Englisch, Deutsch und Japanisch, jeweils komplett: Oberfläche,
   gesprochene Ansagen und Sprachbefehle. Umschaltbar per Stimme („English",
-  „Deutsch", „Русский") oder über den Knopf, der reihum durchschaltet.
+  „Deutsch", „日本語") oder über den Knopf, der reihum durchschaltet. Nur die
+  Beschriftung „Language" bleibt in jeder Sprache englisch, damit der Knopf auch
+  dann auffindbar ist, wenn die App gerade Japanisch spricht.
 - **Anmeldung per OAuth** — kein Passwort in der App, die Anmeldung läuft über die
   Weboberfläche deiner Instanz.
 
@@ -50,7 +52,7 @@ vorlesen lassen und Beiträge diktieren, ohne einmal hinzusehen.
 | „Wo bin ich" | aktuellen Stand ansagen |
 | „Hilfe" | alle Befehle vorlesen |
 | „Abmelden" | Konto abmelden |
-| „English" / „Deutsch" / „Russisch" | Sprache umschalten |
+| „English" / „Deutsch" / „Japanisch" | Sprache umschalten |
 | „Beenden", „Tschüss" | Sprachsitzung beenden |
 
 Auf Englisch ist **„quit" oder „goodbye"** zuverlässiger als „end": Erkenner hören
@@ -71,19 +73,41 @@ weiterhin, wenn es denn richtig ankommt.
 | "faster" / "slower" | change the speaking rate |
 | "where am I" | say the current position |
 | "help" | read out all commands |
-| "German" / "English" / "Russian" | switch language |
+| "German" / "English" / "Japanese" | switch language |
 | "sign out" | log out of the account |
 | "quit", "goodbye", "finished" | end the voice session |
+
+### 日本語のコマンド
+
+| 言う | 動作 |
+| --- | --- |
+| タイムライン、新着 | ホームタイムラインを読み上げる |
+| 次 / 前、戻って | 投稿を移動する |
+| もう一度 | 今の投稿をもう一度読む |
+| 一時停止 / 続けて | 止める・再開する |
+| 続けて読んで / 間で聞いて | 止まらずに読む・投稿ごとに尋ねる |
+| 新しい投稿、口述 | 投稿を口述する |
+| はい、送信 / いいえ、キャンセル | 下書きを送る・破棄する |
+| 速く / ゆっくり | 読み上げの速さを変える |
+| 今どこ | 現在の位置を言う |
+| ヘルプ | コマンドを読み上げる |
+| 英語 / ドイツ語 / 日本語 | 言語を切り替える |
+| ログアウト | アカウントからログアウトする |
+| 終了、さようなら | 音声操作を終了する |
+
+日本語は分かち書きをしないため、コマンドは単語単位ではなく**部分一致**で
+判定します。長い言い回しが短いものを飲み込まないよう、表の順序が意味を
+持ちます（例: 「一時停止」は「停止」より先）。
 
 ## Sprache / Language
 
 Beim ersten Start folgt die App der Gerätesprache: Deutsch auf einem deutschen
-Gerät, Russisch auf einem russischen, sonst Englisch. Damit bekommen internationale
+Gerät, Japanisch auf einem japanischen, sonst Englisch. Damit bekommen internationale
 Nutzer ohne Zutun ihre Sprache. Danach gilt, was du zuletzt gewählt hast — per
-Sprachbefehl („English", „Deutsch", „Русский") oder über den Knopf in der App.
+Sprachbefehl („English", „Deutsch", „日本語") oder über den Knopf in der App.
 
 **Diktieren folgt dieser Wahl automatisch.** Die App teilt dem Erkennungsdienst bei
-jeder Aufnahme die gewünschte Sprache mit (`en-US`, `de-DE`, `ru-RU`) — in den
+jeder Aufnahme die gewünschte Sprache mit (`en-US`, `de-DE`, `ja-JP`) — in den
 Systemeinstellungen ist dafür nichts zu tun. Zwei Vorbehalte: Der Dienst muss die
 Sprache beherrschen (offline braucht es das jeweilige Sprachpaket, nachzuladen unter
 *Spracheingabe → Google → Offline-Spracherkennung*), und einzelne Dienste ignorieren

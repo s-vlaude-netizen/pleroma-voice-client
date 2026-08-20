@@ -544,7 +544,7 @@ class VoiceService : Service() {
 
             VoiceCommand.LANGUAGE_ENGLISH -> switchLanguage(Language.ENGLISH)
             VoiceCommand.LANGUAGE_GERMAN -> switchLanguage(Language.GERMAN)
-            VoiceCommand.LANGUAGE_RUSSIAN -> switchLanguage(Language.RUSSIAN)
+            VoiceCommand.LANGUAGE_JAPANESE -> switchLanguage(Language.JAPANESE)
 
             VoiceCommand.LOGOUT -> {
                 prefs.clearSession()

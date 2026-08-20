@@ -11,8 +11,8 @@ class VoiceCommandsTest {
     private fun parseDe(spoken: String) = VoiceCommands.parse(spoken, de)
     private fun parseEn(spoken: String) = VoiceCommands.parse(spoken, en)
 
-    private val ru = Language.RUSSIAN
-    private fun parseRu(spoken: String) = VoiceCommands.parse(spoken, ru)
+    private val ja = Language.JAPANESE
+    private fun parseJa(spoken: String) = VoiceCommands.parse(spoken, ja)
 
     // ---- German -------------------------------------------------------------
 
@@ -171,83 +171,107 @@ class VoiceCommandsTest {
         assertEquals(VoiceCommand.LANGUAGE_ENGLISH, parseEn("english"))
     }
 
-    // ---- Russian ------------------------------------------------------------
+    // ---- Japanese -----------------------------------------------------------
+    //
+    // Japanese has no word boundaries, so these also cover the substring
+    // matcher: every phrase below is looked for inside the utterance rather
+    // than compared word by word.
 
     @Test
-    fun russianRecognisesTimelineRequests() {
-        assertEquals(VoiceCommand.READ_TIMELINE, parseRu("читай ленту"))
-        assertEquals(VoiceCommand.READ_TIMELINE, parseRu("что нового"))
-        assertEquals(VoiceCommand.READ_TIMELINE, parseRu("новости"))
+    fun japaneseRecognisesTimelineRequests() {
+        assertEquals(VoiceCommand.READ_TIMELINE, parseJa("タイムライン"))
+        assertEquals(VoiceCommand.READ_TIMELINE, parseJa("タイムラインを読んでください"))
+        assertEquals(VoiceCommand.READ_TIMELINE, parseJa("新着は"))
     }
 
-    /** The same command arrives in different grammatical forms. */
+    /** A phrase must be found inside a longer sentence, not only on its own. */
     @Test
-    fun russianAcceptsInflectedForms() {
-        assertEquals(VoiceCommand.NEXT, parseRu("следующий"))
-        assertEquals(VoiceCommand.NEXT, parseRu("следующая запись"))
-        assertEquals(VoiceCommand.PREVIOUS, parseRu("предыдущий пост"))
-        assertEquals(VoiceCommand.REPEAT, parseRu("повтори"))
-        assertEquals(VoiceCommand.REPEAT, parseRu("ещё раз"))
-        assertEquals(VoiceCommand.REPEAT, parseRu("еще раз"))
+    fun japaneseMatchesInsideASentence() {
+        assertEquals(VoiceCommand.NEXT, parseJa("次の投稿をお願いします"))
+        assertEquals(VoiceCommand.PREVIOUS, parseJa("前の投稿に戻ってください"))
+        assertEquals(VoiceCommand.REPEAT, parseJa("もう一度お願いします"))
     }
 
-    /** "следующий пост" must not be mistaken for "write a post". */
+    /** Recognizers punctuate; the marks must not stop a phrase from matching. */
     @Test
-    fun russianNavigationWinsOverPosting() {
-        assertEquals(VoiceCommand.NEXT, parseRu("следующий пост"))
-        assertEquals(VoiceCommand.NEW_POST, parseRu("новый пост"))
-        assertEquals(VoiceCommand.NEW_POST, parseRu("написать пост"))
+    fun japaneseIgnoresPunctuationAndSpaces() {
+        assertEquals(VoiceCommand.READ_TIMELINE, parseJa("タイムライン。"))
+        assertEquals(VoiceCommand.NEW_POST, parseJa("新しい 投稿、"))
     }
 
+    /** "次の投稿" must not be mistaken for "write a post". */
     @Test
-    fun russianRecognisesPlaybackControl() {
-        assertEquals(VoiceCommand.PAUSE, parseRu("пауза"))
-        assertEquals(VoiceCommand.RESUME, parseRu("продолжай"))
-        assertEquals(VoiceCommand.STOP_READING, parseRu("стоп"))
-        assertEquals(VoiceCommand.FASTER, parseRu("быстрее"))
-        assertEquals(VoiceCommand.SLOWER, parseRu("медленнее"))
-    }
-
-    /** "без пауз" switches the mode; it must not read as "пауза". */
-    @Test
-    fun russianReadingModeDoesNotCollideWithPause() {
-        assertEquals(VoiceCommand.PAUSES_OFF, parseRu("без пауз"))
-        assertEquals(VoiceCommand.PAUSES_OFF, parseRu("подряд"))
-        assertEquals(VoiceCommand.PAUSES_ON, parseRu("с паузами"))
-        assertEquals(VoiceCommand.PAUSE, parseRu("пауза"))
-    }
-
-    /** "не спрашивай" contains "спрашивай", so the negation must win. */
-    @Test
-    fun russianNegatedReadingModeWins() {
-        assertEquals(VoiceCommand.PAUSES_OFF, parseRu("не спрашивай"))
-        assertEquals(VoiceCommand.PAUSES_ON, parseRu("спрашивай"))
+    fun japaneseNavigationWinsOverPosting() {
+        assertEquals(VoiceCommand.NEXT, parseJa("次の投稿"))
+        assertEquals(VoiceCommand.NEW_POST, parseJa("新しい投稿"))
+        assertEquals(VoiceCommand.NEW_POST, parseJa("投稿したい"))
     }
 
     @Test
-    fun russianRecognisesSessionCommands() {
-        assertEquals(VoiceCommand.HELP, parseRu("помощь"))
-        assertEquals(VoiceCommand.END_SESSION, parseRu("завершить"))
-        assertEquals(VoiceCommand.LOGOUT, parseRu("выйти из аккаунта"))
+    fun japaneseRecognisesPlaybackControl() {
+        assertEquals(VoiceCommand.PAUSE, parseJa("一時停止"))
+        assertEquals(VoiceCommand.RESUME, parseJa("続けて"))
+        assertEquals(VoiceCommand.STOP_READING, parseJa("停止"))
+        assertEquals(VoiceCommand.FASTER, parseJa("もっと速く"))
+        assertEquals(VoiceCommand.SLOWER, parseJa("ゆっくり"))
+    }
+
+    /** 一時停止 contains 停止, so the longer phrase has to be tested first. */
+    @Test
+    fun japanesePauseIsNotSwallowedByStop() {
+        assertEquals(VoiceCommand.PAUSE, parseJa("一時停止して"))
+        assertEquals(VoiceCommand.STOP_READING, parseJa("停止して"))
+    }
+
+    /** 続けて読む contains 続けて, and 間で止まって contains 止まって. */
+    @Test
+    fun japaneseReadingModeWinsOverPlayback() {
+        assertEquals(VoiceCommand.PAUSES_OFF, parseJa("続けて読んで"))
+        assertEquals(VoiceCommand.PAUSES_ON, parseJa("間で止まって"))
+        assertEquals(VoiceCommand.RESUME, parseJa("続けて"))
+        assertEquals(VoiceCommand.STOP_READING, parseJa("止まって"))
     }
 
     @Test
-    fun russianConfirmationIsPlainYesNo() {
-        assertEquals(VoiceCommand.CONFIRM, VoiceCommands.parseConfirmation("да", ru))
-        assertEquals(VoiceCommand.CONFIRM, VoiceCommands.parseConfirmation("отправь", ru))
-        assertEquals(VoiceCommand.DECLINE, VoiceCommands.parseConfirmation("нет", ru))
-        assertEquals(VoiceCommand.DECLINE, VoiceCommands.parseConfirmation("нет, не отправляй", ru))
+    fun japaneseRecognisesSessionCommands() {
+        assertEquals(VoiceCommand.HELP, parseJa("ヘルプ"))
+        assertEquals(VoiceCommand.END_SESSION, parseJa("終了"))
+        assertEquals(VoiceCommand.END_SESSION, parseJa("さようなら"))
+        assertEquals(VoiceCommand.LOGOUT, parseJa("ログアウト"))
+    }
+
+    /** やめ is inside both やめる and やめて, so it is matched last. */
+    @Test
+    fun japaneseShortestQuitPhraseIsMatchedLast() {
+        assertEquals(VoiceCommand.END_SESSION, parseJa("やめる"))
+        assertEquals(VoiceCommand.STOP_READING, parseJa("やめて"))
+        assertEquals(VoiceCommand.DECLINE, parseJa("やめ"))
+    }
+
+    @Test
+    fun japaneseConfirmationIsPlainYesNo() {
+        assertEquals(VoiceCommand.CONFIRM, VoiceCommands.parseConfirmation("はい", ja))
+        assertEquals(VoiceCommand.CONFIRM, VoiceCommands.parseConfirmation("送信して", ja))
+        assertEquals(VoiceCommand.CONFIRM, VoiceCommands.parseConfirmation("投稿してください", ja))
+        assertEquals(VoiceCommand.DECLINE, VoiceCommands.parseConfirmation("いいえ", ja))
+        assertEquals(VoiceCommand.DECLINE, VoiceCommands.parseConfirmation("送らないで", ja))
+    }
+
+    @Test
+    fun japaneseUnknownStaysUnknown() {
+        assertEquals(VoiceCommand.UNKNOWN, parseJa("明日の天気はどうですか"))
+        assertEquals(VoiceCommand.UNKNOWN, parseJa(""))
     }
 
     // ---- language selection --------------------------------------------------
 
     @Test
     fun everyLanguageCanBeSelectedFromEveryLanguage() {
-        assertEquals(VoiceCommand.LANGUAGE_RUSSIAN, parseEn("speak russian"))
-        assertEquals(VoiceCommand.LANGUAGE_RUSSIAN, parseDe("sprich russisch"))
-        assertEquals(VoiceCommand.LANGUAGE_ENGLISH, parseRu("английский"))
-        assertEquals(VoiceCommand.LANGUAGE_GERMAN, parseRu("немецкий"))
-        assertEquals(VoiceCommand.LANGUAGE_RUSSIAN, parseRu("русский"))
+        assertEquals(VoiceCommand.LANGUAGE_JAPANESE, parseEn("speak japanese"))
+        assertEquals(VoiceCommand.LANGUAGE_JAPANESE, parseDe("sprich japanisch"))
+        assertEquals(VoiceCommand.LANGUAGE_ENGLISH, parseJa("英語"))
+        assertEquals(VoiceCommand.LANGUAGE_GERMAN, parseJa("ドイツ語"))
+        assertEquals(VoiceCommand.LANGUAGE_JAPANESE, parseJa("日本語にして"))
     }
 
     /** The button cycles through every language and comes back round. */

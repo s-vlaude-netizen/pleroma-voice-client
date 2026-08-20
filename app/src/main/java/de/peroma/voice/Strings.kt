@@ -6,7 +6,7 @@ import java.util.Locale
 enum class Language(val tag: String) {
     ENGLISH("en"),
     GERMAN("de"),
-    RUSSIAN("ru");
+    JAPANESE("ja");
 
     /**
      * Used to pick a speech voice. Deliberately without a region: any installed
@@ -17,7 +17,15 @@ enum class Language(val tag: String) {
         get() = Locale(tag)
 
     /**
-     * Used to ask the recognizer for a language. Here the region is included,
+     * Japanese is written without spaces, so commands cannot be matched word by
+     * word the way English and German are. Such languages are matched on
+     * substrings instead.
+     */
+    val hasWordBoundaries: Boolean
+        get() = this != JAPANESE
+
+    /**
+     * Used to ask the recognizer for a language. The region is included,
      * because several recognition services honour a full BCP-47 tag and quietly
      * fall back to the system language when given a bare one.
      */
@@ -25,7 +33,7 @@ enum class Language(val tag: String) {
         get() = when (this) {
             ENGLISH -> "en-US"
             GERMAN -> "de-DE"
-            RUSSIAN -> "ru-RU"
+            JAPANESE -> "ja-JP"
         }
 
     /** The language's own name, so the button reads the same in every locale. */
@@ -33,14 +41,14 @@ enum class Language(val tag: String) {
         get() = when (this) {
             ENGLISH -> "English"
             GERMAN -> "Deutsch"
-            RUSSIAN -> "Русский"
+            JAPANESE -> "日本語"
         }
 
     val strings: Strings
         get() = when (this) {
             ENGLISH -> EnglishStrings
             GERMAN -> GermanStrings
-            RUSSIAN -> RussianStrings
+            JAPANESE -> JapaneseStrings
         }
 
     /** The next language in the cycle, for the button on screen. */
@@ -216,7 +224,7 @@ object EnglishStrings : Strings {
         "You can say: read timeline. Next post. Previous post. Repeat. Pause. Continue. " +
             "Stop. New post, to dictate something. Faster or slower for the speaking rate. " +
             "With pauses, if I should ask between posts, or straight through, if I should " +
-            "read without stopping. Say German or Russian to switch language. " +
+            "read without stopping. Say German or Japanese to switch language. " +
             "Say log out to sign out of your account. " +
             "Say quit, or goodbye, to close voice control."
     override val pausesOn = "I will ask between posts from now on."
@@ -337,7 +345,7 @@ object GermanStrings : Strings {
             "Schneller oder langsamer für das Sprechtempo. " +
             "Mit Pausen, wenn ich zwischen den Beiträgen nachfragen soll, " +
             "oder Am Stück, wenn ich durchlesen soll. " +
-            "Sag Englisch oder Russisch, um die Sprache zu wechseln. " +
+            "Sag Englisch oder Japanisch, um die Sprache zu wechseln. " +
             "Sag Abmelden, um dich vom Konto abzumelden. " +
             "Sag Beenden, um die Sprachsteuerung zu schließen."
     override val pausesOn = "Ich frage jetzt zwischen den Beiträgen nach."
@@ -401,122 +409,120 @@ object GermanStrings : Strings {
     override val unknownError = "Unbekannter Fehler"
 }
 
-object RussianStrings : Strings {
 
-    override fun linkTo(host: String) = "ссылка на $host"
-    override val bareLink = "ссылка"
-    override fun hashtag(tag: String) = "хэштег $tag"
-    override val ampersand = " и "
-    override val unknownAuthor = "Неизвестный"
+object JapaneseStrings : Strings {
 
-    override fun postCounter(index: Int, total: Int) = "Пост $index из $total."
+    override fun linkTo(host: String) = "$host へのリンク"
+    override val bareLink = "リンク"
+    override fun hashtag(tag: String) = "ハッシュタグ $tag"
+    override val ampersand = "と"
+    override val unknownAuthor = "不明"
+
+    override fun postCounter(index: Int, total: Int) = "$total 件中 $index 件目。"
     override fun boostedBy(booster: String, author: String) =
-        "$booster поделился постом автора $author."
+        "$booster さんが $author さんの投稿をシェアしました。"
 
-    override fun byAuthor(author: String) = "Автор: $author."
-    override fun contentWarning(warning: String) = "Предупреждение о содержании: $warning."
-    override val noReadableText = "В этом посте нет читаемого текста."
-    override fun oneAttachment(description: String) = "Одно вложение. $description"
-    override fun manyAttachments(count: Int) = "Вложений: $count."
-    override fun attachmentWith(type: String, description: String) = "$type: $description."
-    override fun attachmentWithout(type: String) = "$type без описания."
-    override val mediaImage = "Изображение"
-    override val mediaVideo = "Видео"
-    override val mediaAudio = "Аудио"
-    override val mediaAnimation = "Анимация"
-    override val mediaOther = "Вложение"
+    override fun byAuthor(author: String) = "$author さんの投稿。"
+    override fun contentWarning(warning: String) = "内容の警告: $warning。"
+    override val noReadableText = "この投稿には読み上げられる本文がありません。"
+    override fun oneAttachment(description: String) = "添付が一件。$description"
+    override fun manyAttachments(count: Int) = "添付が $count 件。"
+    override fun attachmentWith(type: String, description: String) = "$type: $description。"
+    override fun attachmentWithout(type: String) = "説明のない$type。"
+    override val mediaImage = "画像"
+    override val mediaVideo = "動画"
+    override val mediaAudio = "音声"
+    override val mediaAnimation = "アニメーション"
+    override val mediaOther = "添付"
 
-    override val ready = "Готово."
-    override val ttsUnavailable = "Синтез речи недоступен."
-    override val preparingSpeech = "Подготовка синтеза речи …"
-    override val notLoggedIn = "Вы не вошли в аккаунт."
+    override val ready = "準備完了。"
+    override val ttsUnavailable = "音声合成が利用できません。"
+    override val preparingSpeech = "音声合成を準備しています …"
+    override val notLoggedIn = "ログインしていません。"
     override val sessionStarted =
-        "Голосовое управление включено. Экран можно выключить. " +
-            "Скажите: читай ленту, новый пост или помощь."
-    override val sessionEnded = "Голосовое управление завершено. До встречи."
-    override val loggedOut = "Вы вышли из аккаунта."
+        "音声操作を開始しました。画面を消してかまいません。" +
+            "タイムライン、新しい投稿、またはヘルプと言ってください。"
+    override val sessionEnded = "音声操作を終了します。またどうぞ。"
+    override val loggedOut = "ログアウトしました。"
     override val noRecognizer =
-        "На этом устройстве не настроено распознавание речи. Голосовое управление остановлено."
+        "この端末では音声認識が設定されていません。音声操作を終了します。"
     override val missingMicPermission =
-        "У меня нет доступа к микрофону. Пожалуйста, разрешите его в приложении."
+        "マイクの許可がありません。アプリで許可してください。"
     override val recognizerRefusedMic =
-        "Служба распознавания речи не даёт доступ к микрофону, хотя у приложения " +
-            "разрешение есть. Проверьте, есть ли доступ к микрофону у приложения " +
-            "голосового ввода — обычно это Google — или выберите другую службу " +
-            "голосового ввода в настройках системы."
+        "アプリには許可があるのに、音声認識サービスがマイクを拒否しています。" +
+            "音声入力アプリ、通常は Google にマイクの許可があるか確認するか、" +
+            "システム設定で別の音声入力サービスを選んでください。"
 
     override fun recognizerDiagnostic(packages: List<String>): String {
-        val listed = if (packages.isEmpty()) "не найдено" else packages.joinToString(", ")
-        return "Распознавание речи не даёт микрофон, хотя у приложения есть RECORD_AUDIO. " +
-            "Установленные службы распознавания: $listed."
+        val listed = if (packages.isEmpty()) "見つかりません" else packages.joinToString(", ")
+        return "アプリは RECORD_AUDIO を持っていますが、音声認識がマイクを拒否しました。" +
+            "インストール済みの音声認識サービス: $listed。"
     }
 
-    override val nothingHeardEnding = "Я ничего не слышу и завершаю голосовое управление."
-    override val stillListening = "Я слушаю. Скажите «помощь», если нужны команды."
-    override val notUnderstood = "Я не понял. Скажите «помощь», чтобы услышать команды."
-    override val paused = "Пауза. Скажите «продолжай», чтобы читать дальше."
+    override val nothingHeardEnding = "何も聞こえないので音声操作を終了します。"
+    override val stillListening = "聞いています。コマンドが必要ならヘルプと言ってください。"
+    override val notUnderstood = "聞き取れませんでした。ヘルプと言うとコマンドを読み上げます。"
+    override val paused = "一時停止しました。続けると言うと再開します。"
     override val helpText =
-        "Вы можете сказать: читай ленту. Следующий пост. Предыдущий пост. Повтори. " +
-            "Пауза. Продолжай. Стоп. Новый пост, чтобы продиктовать. " +
-            "Быстрее или медленнее для скорости речи. " +
-            "Подряд, чтобы читать без остановок, или с паузами, чтобы я спрашивал " +
-            "между постами. Скажите «английский» или «немецкий», чтобы сменить язык. " +
-            "Скажите «выйти», чтобы выйти из аккаунта. " +
-            "Скажите «завершить», чтобы закрыть голосовое управление."
-    override val pausesOn = "Теперь я буду спрашивать между постами."
-    override val pausesOff = "Теперь я буду читать ленту подряд."
-    override val nowSpeakingThisLanguage = "Теперь я говорю по-русски."
+        "次のように言えます。タイムライン。次の投稿。前の投稿。もう一度。一時停止。続けて。" +
+            "停止。新しい投稿、と言うと口述できます。速く、または遅く、で読み上げの速さを変えます。" +
+            "続けて読む、と言うと止まらずに読みます。間で聞く、と言うと投稿ごとに尋ねます。" +
+            "英語、またはドイツ語、と言うと言語を切り替えます。" +
+            "ログアウト、と言うとアカウントから出ます。" +
+            "終了、と言うと音声操作を閉じます。"
+    override val pausesOn = "これからは投稿ごとに尋ねます。"
+    override val pausesOff = "これからはタイムラインを続けて読みます。"
+    override val nowSpeakingThisLanguage = "これからは日本語で話します。"
 
-    override fun speechRate(percent: Int) = "Скорость $percent процентов."
+    override fun speechRate(percent: Int) = "速さは $percent パーセントです。"
 
-    override val loadingTimeline = "Загружаю ленту."
-    override val emptyTimeline = "В вашей ленте нет постов."
-    override fun timelineFailed(reason: String) = "Не удалось загрузить ленту. $reason"
-    override val noTimelineLoaded = "Лента не загружена. Скажите «читай ленту»."
+    override val loadingTimeline = "タイムラインを読み込んでいます。"
+    override val emptyTimeline = "タイムラインに投稿がありません。"
+    override fun timelineFailed(reason: String) = "タイムラインを読み込めませんでした。$reason"
+    override val noTimelineLoaded = "タイムラインが読み込まれていません。タイムラインと言ってください。"
     override fun statusAt(index: Int, total: Int, summary: String) =
-        "Пост $index из $total. $summary"
+        "$total 件中 $index 件目。$summary"
 
-    override fun allPostsRead(total: Int) = "Это были все посты, всего $total."
-    override val noFurtherPost = "Следующего поста нет."
+    override fun allPostsRead(total: Int) = "以上、$total 件すべてです。"
+    override val noFurtherPost = "次の投稿はありません。"
     override val whatNow =
-        "Хотите написать пост? Скажите: новый пост, читай ленту или завершить."
-    override val alreadyFirstPost = "Это уже первый пост."
+        "投稿を書きますか。新しい投稿、タイムライン、または終了、と言ってください。"
+    override val alreadyFirstPost = "これが最初の投稿です。"
 
-    override val dictatePrompt = "Продиктуйте свой пост после сигнала."
-    override val nothingHeardRetry = "Я ничего не услышал. Продиктуйте пост после сигнала."
-    override val nothingHeardToMenu = "Я ничего не услышал. Возвращаюсь в главное меню."
-    override val dictationCancelled = "Отменено. Возвращаюсь в главное меню."
+    override val dictatePrompt = "音のあとに投稿を話してください。"
+    override val nothingHeardRetry = "何も聞こえませんでした。音のあとに投稿を話してください。"
+    override val nothingHeardToMenu = "何も聞こえませんでした。メインメニューに戻ります。"
+    override val dictationCancelled = "取り消しました。メインメニューに戻ります。"
     override fun confirmDraft(draft: String) =
-        "Ваш пост: $draft. Отправить? Скажите да или нет."
+        "投稿の内容は、$draft。送信しますか。はい、またはいいえ、と言ってください。"
 
-    override val confirmAgain = "Отправить пост? Скажите да или нет."
-    override val sayYesOrNo = "Пожалуйста, скажите да или нет."
-    override val draftDiscarded = "Пост удалён. Возвращаюсь в главное меню."
+    override val confirmAgain = "投稿を送信しますか。はい、またはいいえ、と言ってください。"
+    override val sayYesOrNo = "はい、またはいいえ、と言ってください。"
+    override val draftDiscarded = "投稿を破棄しました。メインメニューに戻ります。"
     override val draftDiscardedNotUnderstood =
-        "Я вас не понял. Пост удалён. Возвращаюсь в главное меню."
-    override val draftDiscardedSilence = "Удаляю пост. Возвращаюсь в главное меню."
-    override val noDraft = "Нет поста для отправки."
-    override val sending = "Отправляю."
-    override val published = "Пост опубликован. Что дальше?"
+        "聞き取れませんでした。投稿を破棄してメインメニューに戻ります。"
+    override val draftDiscardedSilence = "投稿を破棄します。メインメニューに戻ります。"
+    override val noDraft = "送信する投稿がありません。"
+    override val sending = "送信しています。"
+    override val published = "投稿しました。次はどうしますか。"
     override fun sendFailed(reason: String) =
-        "Не удалось отправить. $reason. Попробовать ещё раз? Скажите да или нет."
+        "送信できませんでした。$reason。もう一度試しますか。はい、またはいいえ、と言ってください。"
 
     override fun apiError(kind: ApiErrorKind, status: Int, detail: String): String {
         val suffix = if (detail.isNotBlank()) ": $detail" else ""
         return when (kind) {
-            ApiErrorKind.UNAUTHORIZED -> "Вы не вошли или доступ истёк$suffix"
-            ApiErrorKind.FORBIDDEN -> "Доступ запрещён$suffix"
-            ApiErrorKind.NOT_FOUND ->
-                "Адрес не найден — это действительно сервер Pleroma?$suffix"
-            ApiErrorKind.REJECTED -> "Пост отклонён$suffix"
-            ApiErrorKind.RATE_LIMITED -> "Слишком много запросов, подождите немного$suffix"
-            ApiErrorKind.SERVER -> "Ошибка сервера ($status)$suffix"
-            ApiErrorKind.UNREACHABLE -> "Сервер недоступен"
-            ApiErrorKind.NO_CREDENTIALS -> "Сервер не выдал данные OAuth"
-            ApiErrorKind.NO_TOKEN -> "Токен доступа не получен"
+            ApiErrorKind.UNAUTHORIZED -> "ログインしていないか、アクセス権限が失効しています$suffix"
+            ApiErrorKind.FORBIDDEN -> "アクセスが拒否されました$suffix"
+            ApiErrorKind.NOT_FOUND -> "宛先が見つかりません。本当に Pleroma のサーバーですか$suffix"
+            ApiErrorKind.REJECTED -> "投稿が拒否されました$suffix"
+            ApiErrorKind.RATE_LIMITED -> "リクエストが多すぎます。少し待ってください$suffix"
+            ApiErrorKind.SERVER -> "サーバーエラー ($status)$suffix"
+            ApiErrorKind.UNREACHABLE -> "サーバーに接続できません"
+            ApiErrorKind.NO_CREDENTIALS -> "サーバーが OAuth の情報を返しませんでした"
+            ApiErrorKind.NO_TOKEN -> "アクセストークンを取得できませんでした"
             ApiErrorKind.OTHER -> "HTTP $status$suffix"
         }
     }
 
-    override val unknownError = "Неизвестная ошибка"
+    override val unknownError = "不明なエラー"
 }

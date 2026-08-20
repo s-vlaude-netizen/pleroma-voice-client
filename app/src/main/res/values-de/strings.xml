@@ -30,7 +30,10 @@
     <string name="pauses_state_off">Zwischenfragen: aus — tippen zum Einschalten</string>
     <string name="pauses_on_status">Zwischen den Beiträgen wird nachgefragt.</string>
     <string name="pauses_off_status">Die Timeline wird am Stück vorgelesen.</string>
-    <string name="language_state">Sprache: %1$s — tippen zum Wechseln</string>
+    <!-- language_state is deliberately not translated. The button has to stay
+         findable once the app speaks a language its user may not read, so the
+         word "Language" stays English in every locale; only the language name
+         it shows changes. -->
     <string name="pause">Pause</string>
     <string name="next_post">Nächster Beitrag</string>
     <string name="previous_post">Vorheriger Beitrag</string>
