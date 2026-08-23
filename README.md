@@ -52,6 +52,8 @@ vorlesen lassen und Beiträge diktieren, ohne einmal hinzusehen.
 | „Wo bin ich" | aktuellen Stand ansagen |
 | „Hilfe" | alle Befehle vorlesen |
 | „Abmelden" | Konto abmelden |
+| „Trotzdem vorlesen" | den Beitrag hinter der Inhaltswarnung doch hören |
+| „Inhalte immer vorlesen" / „Nur die Warnung" | Inhaltswarnungen dauerhaft öffnen oder zulassen |
 | „English" / „Deutsch" / „Japanisch" | Sprache umschalten |
 | „Beenden", „Tschüss" | Sprachsitzung beenden |
 
@@ -73,6 +75,8 @@ weiterhin, wenn es denn richtig ankommt.
 | "faster" / "slower" | change the speaking rate |
 | "where am I" | say the current position |
 | "help" | read out all commands |
+| "read anyway" | hear the post behind the content warning |
+| "always read content" / "only the warning" | open content warnings for good, or keep them closed |
 | "German" / "English" / "Japanese" | switch language |
 | "sign out" | log out of the account |
 | "quit", "goodbye", "finished" | end the voice session |
@@ -91,6 +95,8 @@ weiterhin, wenn es denn richtig ankommt.
 | 速く / ゆっくり | 読み上げの速さを変える |
 | 今どこ | 現在の位置を言う |
 | ヘルプ | コマンドを読み上げる |
+| それでも読んで | 警告の内容を今の投稿だけ聞く |
+| 内容も読んで / 警告だけ | 警告の内容を常に読む・読まない |
 | 英語 / ドイツ語 / 日本語 | 言語を切り替える |
 | ログアウト | アカウントからログアウトする |
 | 終了、さようなら | 音声操作を終了する |
@@ -98,6 +104,21 @@ weiterhin, wenn es denn richtig ankommt.
 日本語は分かち書きをしないため、コマンドは単語単位ではなく**部分一致**で
 判定します。長い言い回しが短いものを飲み込まないよう、表の順序が意味を
 持ちます（例: 「一時停止」は「停止」より先）。
+
+## Inhaltswarnungen und Anhänge
+
+Ein Beitrag mit **Inhaltswarnung** wird nur mit seiner Warnung vorgelesen — der
+Text dahinter und seine Anhänge bleiben zu. Genau dafür ist die Warnung da: sie
+soll ihre Leserin entscheiden lassen. Zwei Wege führen dahinter:
+
+- „Trotzdem vorlesen" öffnet **den einen** Beitrag, bei dem die App gerade ist.
+- „Inhalte immer vorlesen" schaltet es dauerhaft um; „Nur die Warnung" zurück.
+  Denselben Schalter gibt es als Knopf in der App.
+
+**Anhänge ohne Beschreibung werden gezählt statt aufgezählt.** Zwölf Fotos, die
+niemand beschrieben hat, ergeben einen Satz — „Zwölf Bilder ohne Beschreibung." —
+statt zwölfmal derselben Ansage. Anhänge **mit** Beschreibung werden weiterhin
+einzeln vorgelesen: wer eine geschrieben hat, wollte sie gehört wissen.
 
 ## Sprache / Language
 

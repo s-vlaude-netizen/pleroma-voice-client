@@ -12,6 +12,9 @@ enum class VoiceCommand {
     PAUSES_OFF,
     PAUSES_ON,
     STOP_READING,
+    REVEAL,
+    WARNINGS_READ,
+    WARNINGS_SKIP,
     NEW_POST,
     CONFIRM,
     DECLINE,
@@ -67,6 +70,20 @@ object VoiceCommands {
         ),
         VoiceCommand.LANGUAGE_JAPANESE to listOf(
             "japanese", "speak japanese", "in japanese", "nihongo"
+        ),
+        // Before NEXT, whose "skip" would otherwise swallow "skip warnings",
+        // and before READ_TIMELINE, which owns "read".
+        VoiceCommand.WARNINGS_READ to listOf(
+            "always read content", "always read warnings", "read hidden content",
+            "hidden content on"
+        ),
+        VoiceCommand.WARNINGS_SKIP to listOf(
+            "only the warning", "warnings only", "hide content", "skip warnings",
+            "hidden content off"
+        ),
+        VoiceCommand.REVEAL to listOf(
+            "read anyway", "read it anyway", "reveal", "show content",
+            "ignore the warning", "read behind the warning"
         ),
         VoiceCommand.NEXT to listOf(
             "next", "skip", "forward"
@@ -139,6 +156,20 @@ object VoiceCommands {
         ),
         VoiceCommand.LANGUAGE_JAPANESE to listOf(
             "japanisch", "sprich japanisch", "auf japanisch", "japanese"
+        ),
+        // Vor NEXT und READ_TIMELINE, deren "überspringen" bzw. "vorlesen"
+        // sonst diese längeren Wendungen aufsaugen würden.
+        VoiceCommand.WARNINGS_READ to listOf(
+            "inhalte immer vorlesen", "warnungen immer vorlesen", "immer alles vorlesen",
+            "versteckte inhalte vorlesen"
+        ),
+        VoiceCommand.WARNINGS_SKIP to listOf(
+            "nur die warnung", "nur die warnungen", "inhalte verstecken",
+            "warnungen überspringen", "inhalte überspringen"
+        ),
+        VoiceCommand.REVEAL to listOf(
+            "trotzdem vorlesen", "trotzdem lesen", "inhalt vorlesen",
+            "warnung ignorieren", "hinter der warnung"
         ),
         VoiceCommand.NEXT to listOf(
             "nächster", "nächste", "nächstes", "weiter zum nächsten",
@@ -222,6 +253,16 @@ object VoiceCommands {
         ),
         VoiceCommand.LANGUAGE_JAPANESE to listOf(
             "日本語", "にほんご"
+        ),
+        // READ_TIMELINE の 読んで を含むため、ここに置く。
+        VoiceCommand.WARNINGS_READ to listOf(
+            "内容も読", "警告も読", "全部読", "隠れた内容"
+        ),
+        VoiceCommand.WARNINGS_SKIP to listOf(
+            "警告だけ", "内容は読まない", "内容を読まないで", "内容を隠"
+        ),
+        VoiceCommand.REVEAL to listOf(
+            "それでも読", "内容を読んで", "警告を無視"
         ),
         VoiceCommand.NEXT to listOf(
             "次", "つぎ", "スキップ", "飛ばして"

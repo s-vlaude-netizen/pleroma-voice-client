@@ -263,6 +263,41 @@ class VoiceCommandsTest {
         assertEquals(VoiceCommand.UNKNOWN, parseJa(""))
     }
 
+    // ---- content warnings ---------------------------------------------------
+
+    @Test
+    fun contentWarningCommandsAreRecognisedInEveryLanguage() {
+        assertEquals(VoiceCommand.REVEAL, parseEn("read anyway"))
+        assertEquals(VoiceCommand.REVEAL, parseDe("trotzdem vorlesen"))
+        assertEquals(VoiceCommand.REVEAL, parseJa("それでも読んで"))
+
+        assertEquals(VoiceCommand.WARNINGS_READ, parseEn("always read content"))
+        assertEquals(VoiceCommand.WARNINGS_READ, parseDe("inhalte immer vorlesen"))
+        assertEquals(VoiceCommand.WARNINGS_READ, parseJa("内容も読んで"))
+
+        assertEquals(VoiceCommand.WARNINGS_SKIP, parseEn("only the warning"))
+        assertEquals(VoiceCommand.WARNINGS_SKIP, parseDe("nur die warnung"))
+        assertEquals(VoiceCommand.WARNINGS_SKIP, parseJa("警告だけ読んで"))
+    }
+
+    /**
+     * These phrases share words with commands that would otherwise win:
+     * "skip" is next, "vorlesen" and 読んで are the timeline.
+     */
+    @Test
+    fun contentWarningCommandsBeatTheCommandsTheyOverlapWith() {
+        assertEquals(VoiceCommand.WARNINGS_SKIP, parseEn("skip warnings"))
+        assertEquals(VoiceCommand.NEXT, parseEn("skip"))
+
+        assertEquals(VoiceCommand.WARNINGS_SKIP, parseDe("warnungen überspringen"))
+        assertEquals(VoiceCommand.NEXT, parseDe("überspringen"))
+
+        assertEquals(VoiceCommand.REVEAL, parseDe("inhalt vorlesen"))
+        assertEquals(VoiceCommand.READ_TIMELINE, parseDe("timeline vorlesen"))
+
+        assertEquals(VoiceCommand.READ_TIMELINE, parseJa("タイムラインを読んで"))
+    }
+
     // ---- language selection --------------------------------------------------
 
     @Test

@@ -37,6 +37,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var statusText: TextView
     private lateinit var startButton: Button
     private lateinit var pauseToggle: Button
+    private lateinit var warningsToggle: Button
     private lateinit var languageToggle: Button
 
     private val micPermissionLauncher = registerForActivityResult(
@@ -98,6 +99,20 @@ class MainActivity : AppCompatActivity() {
         }
         updatePauseToggle()
 
+        warningsToggle = findViewById(R.id.btnToggleWarnings)
+        warningsToggle.setOnClickListener {
+            prefs.readSensitiveContent = !prefs.readSensitiveContent
+            updateWarningsToggle()
+            setStatus(
+                if (prefs.readSensitiveContent) {
+                    prefs.language.strings.warningsRead
+                } else {
+                    prefs.language.strings.warningsSkipped
+                }
+            )
+        }
+        updateWarningsToggle()
+
         languageToggle = findViewById(R.id.btnToggleLanguage)
         languageToggle.setOnClickListener {
             val next = prefs.language.next()
@@ -157,6 +172,16 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateLanguageToggle() {
         languageToggle.text = getString(R.string.language_state, prefs.language.displayName)
+    }
+
+    private fun updateWarningsToggle() {
+        warningsToggle.setText(
+            if (prefs.readSensitiveContent) {
+                R.string.warnings_state_on
+            } else {
+                R.string.warnings_state_off
+            }
+        )
     }
 
     private fun updatePauseToggle() {

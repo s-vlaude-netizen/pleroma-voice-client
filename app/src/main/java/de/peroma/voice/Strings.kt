@@ -101,16 +101,28 @@ interface Strings {
     fun boostedBy(booster: String, author: String): String
     fun byAuthor(author: String): String
     fun contentWarning(warning: String): String
+
+    /**
+     * Stands in for the body of a post that carries a content warning.
+     *
+     * A warning is there to let its reader decide, so only the warning itself
+     * is read out and the post behind it stays unopened.
+     */
+    val contentHidden: String
     val noReadableText: String
-    fun oneAttachment(description: String): String
-    fun manyAttachments(count: Int): String
-    fun attachmentWith(type: String, description: String): String
-    fun attachmentWithout(type: String): String
-    val mediaImage: String
-    val mediaVideo: String
-    val mediaAudio: String
-    val mediaAnimation: String
-    val mediaOther: String
+    fun attachmentWith(kind: MediaKind, description: String): String
+
+    /**
+     * Attachments of one kind that carry no description, given as a count.
+     *
+     * A post can hold a dozen images that nobody described. Saying "image
+     * without a description" a dozen times tells the listener nothing the
+     * number does not, and takes far longer.
+     */
+    fun attachmentsWithout(kind: MediaKind, count: Int): String
+    fun mediaName(kind: MediaKind): String
+    val warningsRead: String
+    val warningsSkipped: String
 
     // ---- session -----------------------------------------------------------
     val ready: String
@@ -181,16 +193,29 @@ object EnglishStrings : Strings {
 
     override fun byAuthor(author: String) = "By $author."
     override fun contentWarning(warning: String) = "Content warning: $warning."
+    override val contentHidden = "Content skipped."
     override val noReadableText = "This post has no readable text."
-    override fun oneAttachment(description: String) = "One attachment. $description"
-    override fun manyAttachments(count: Int) = "$count attachments."
-    override fun attachmentWith(type: String, description: String) = "$type: $description."
-    override fun attachmentWithout(type: String) = "$type without a description."
-    override val mediaImage = "Image"
-    override val mediaVideo = "Video"
-    override val mediaAudio = "Audio"
-    override val mediaAnimation = "Animation"
-    override val mediaOther = "Attachment"
+    override fun mediaName(kind: MediaKind) = when (kind) {
+        MediaKind.IMAGE -> "Image"
+        MediaKind.VIDEO -> "Video"
+        MediaKind.AUDIO -> "Audio"
+        MediaKind.ANIMATION -> "Animation"
+        MediaKind.OTHER -> "Attachment"
+    }
+    override fun attachmentWith(kind: MediaKind, description: String) =
+        "${mediaName(kind)}: $description."
+    override fun attachmentsWithout(kind: MediaKind, count: Int): String {
+        val what = when (kind) {
+            MediaKind.IMAGE -> if (count == 1) "One image" else "$count images"
+            MediaKind.VIDEO -> if (count == 1) "One video" else "$count videos"
+            MediaKind.AUDIO -> if (count == 1) "One audio file" else "$count audio files"
+            MediaKind.ANIMATION -> if (count == 1) "One animation" else "$count animations"
+            MediaKind.OTHER -> if (count == 1) "One attachment" else "$count attachments"
+        }
+        return "$what without a description."
+    }
+    override val warningsRead = "I will read what is behind content warnings from now on."
+    override val warningsSkipped = "I will read only the warning itself from now on."
 
     override val ready = "Ready."
     override val ttsUnavailable = "Speech output is not available."
@@ -224,7 +249,9 @@ object EnglishStrings : Strings {
         "You can say: read timeline. Next post. Previous post. Repeat. Pause. Continue. " +
             "Stop. New post, to dictate something. Faster or slower for the speaking rate. " +
             "With pauses, if I should ask between posts, or straight through, if I should " +
-            "read without stopping. Say German or Japanese to switch language. " +
+            "read without stopping. Behind a content warning I read only the warning. " +
+            "Say read anyway for the post I am on, or always read content, to hear every one. " +
+            "Say German or Japanese to switch language. " +
             "Say log out to sign out of your account. " +
             "Say quit, or goodbye, to close voice control."
     override val pausesOn = "I will ask between posts from now on."
@@ -298,16 +325,29 @@ object GermanStrings : Strings {
 
     override fun byAuthor(author: String) = "Von $author."
     override fun contentWarning(warning: String) = "Inhaltswarnung: $warning."
+    override val contentHidden = "Inhalt übersprungen."
     override val noReadableText = "Dieser Beitrag enthält keinen lesbaren Text."
-    override fun oneAttachment(description: String) = "Ein Anhang. $description"
-    override fun manyAttachments(count: Int) = "$count Anhänge."
-    override fun attachmentWith(type: String, description: String) = "$type: $description."
-    override fun attachmentWithout(type: String) = "$type ohne Beschreibung."
-    override val mediaImage = "Bild"
-    override val mediaVideo = "Video"
-    override val mediaAudio = "Audio"
-    override val mediaAnimation = "Animation"
-    override val mediaOther = "Anhang"
+    override fun mediaName(kind: MediaKind) = when (kind) {
+        MediaKind.IMAGE -> "Bild"
+        MediaKind.VIDEO -> "Video"
+        MediaKind.AUDIO -> "Audio"
+        MediaKind.ANIMATION -> "Animation"
+        MediaKind.OTHER -> "Anhang"
+    }
+    override fun attachmentWith(kind: MediaKind, description: String) =
+        "${mediaName(kind)}: $description."
+    override fun attachmentsWithout(kind: MediaKind, count: Int): String {
+        val what = when (kind) {
+            MediaKind.IMAGE -> if (count == 1) "Ein Bild" else "$count Bilder"
+            MediaKind.VIDEO -> if (count == 1) "Ein Video" else "$count Videos"
+            MediaKind.AUDIO -> if (count == 1) "Eine Audiodatei" else "$count Audiodateien"
+            MediaKind.ANIMATION -> if (count == 1) "Eine Animation" else "$count Animationen"
+            MediaKind.OTHER -> if (count == 1) "Ein Anhang" else "$count Anhänge"
+        }
+        return "$what ohne Beschreibung."
+    }
+    override val warningsRead = "Ich lese Inhalte hinter Warnungen ab jetzt mit vor."
+    override val warningsSkipped = "Ich lese ab jetzt nur noch die Warnung selbst vor."
 
     override val ready = "Bereit."
     override val ttsUnavailable = "Sprachausgabe nicht verfügbar."
@@ -345,6 +385,9 @@ object GermanStrings : Strings {
             "Schneller oder langsamer für das Sprechtempo. " +
             "Mit Pausen, wenn ich zwischen den Beiträgen nachfragen soll, " +
             "oder Am Stück, wenn ich durchlesen soll. " +
+            "Bei einer Inhaltswarnung lese ich nur die Warnung vor. " +
+            "Sag Trotzdem vorlesen für den Beitrag, bei dem ich gerade bin, " +
+            "oder Inhalte immer vorlesen, um sie alle zu hören. " +
             "Sag Englisch oder Japanisch, um die Sprache zu wechseln. " +
             "Sag Abmelden, um dich vom Konto abzumelden. " +
             "Sag Beenden, um die Sprachsteuerung zu schließen."
@@ -424,16 +467,21 @@ object JapaneseStrings : Strings {
 
     override fun byAuthor(author: String) = "$author さんの投稿。"
     override fun contentWarning(warning: String) = "内容の警告: $warning。"
+    override val contentHidden = "内容は省略しました。"
     override val noReadableText = "この投稿には読み上げられる本文がありません。"
-    override fun oneAttachment(description: String) = "添付が一件。$description"
-    override fun manyAttachments(count: Int) = "添付が $count 件。"
-    override fun attachmentWith(type: String, description: String) = "$type: $description。"
-    override fun attachmentWithout(type: String) = "説明のない$type。"
-    override val mediaImage = "画像"
-    override val mediaVideo = "動画"
-    override val mediaAudio = "音声"
-    override val mediaAnimation = "アニメーション"
-    override val mediaOther = "添付"
+    override fun mediaName(kind: MediaKind) = when (kind) {
+        MediaKind.IMAGE -> "画像"
+        MediaKind.VIDEO -> "動画"
+        MediaKind.AUDIO -> "音声"
+        MediaKind.ANIMATION -> "アニメーション"
+        MediaKind.OTHER -> "添付"
+    }
+    override fun attachmentWith(kind: MediaKind, description: String) =
+        "${mediaName(kind)}: $description。"
+    override fun attachmentsWithout(kind: MediaKind, count: Int) =
+        "説明のない${mediaName(kind)}が $count 件。"
+    override val warningsRead = "これからは警告の内容も読み上げます。"
+    override val warningsSkipped = "これからは警告だけを読み上げます。"
 
     override val ready = "準備完了。"
     override val ttsUnavailable = "音声合成が利用できません。"
@@ -467,6 +515,8 @@ object JapaneseStrings : Strings {
         "次のように言えます。タイムライン。次の投稿。前の投稿。もう一度。一時停止。続けて。" +
             "停止。新しい投稿、と言うと口述できます。速く、または遅く、で読み上げの速さを変えます。" +
             "続けて読む、と言うと止まらずに読みます。間で聞く、と言うと投稿ごとに尋ねます。" +
+            "内容の警告がある投稿は警告だけを読み上げます。" +
+            "それでも読んで、と言うと今の投稿を、内容も読む、と言うとこれからすべてを読み上げます。" +
             "英語、またはドイツ語、と言うと言語を切り替えます。" +
             "ログアウト、と言うとアカウントから出ます。" +
             "終了、と言うと音声操作を閉じます。"

@@ -523,6 +523,20 @@ class VoiceService : Service() {
             VoiceCommand.REPEAT -> speakCurrentPost()
             VoiceCommand.RESUME -> speakCurrentPost()
 
+            // Reads the post the session is on, warning and all, without
+            // changing what happens to the ones after it.
+            VoiceCommand.REVEAL -> speakCurrentPost(reveal = true)
+
+            VoiceCommand.WARNINGS_READ -> {
+                prefs.readSensitiveContent = true
+                speak(strings.warningsRead, After.LISTEN_COMMAND)
+            }
+
+            VoiceCommand.WARNINGS_SKIP -> {
+                prefs.readSensitiveContent = false
+                speak(strings.warningsSkipped, After.LISTEN_COMMAND)
+            }
+
             VoiceCommand.PAUSE, VoiceCommand.STOP_READING -> {
                 stage = Stage.MENU
                 speak(strings.paused, After.LISTEN_COMMAND)
@@ -645,7 +659,7 @@ class VoiceService : Service() {
     private fun afterPost(): After =
         if (prefs.pauseBetweenPosts) After.LISTEN_BETWEEN_POSTS else After.NEXT_POST
 
-    private fun speakCurrentPost() {
+    private fun speakCurrentPost(reveal: Boolean = false) {
         if (posts.isEmpty()) {
             speak(strings.noTimelineLoaded, After.LISTEN_COMMAND)
             return
@@ -653,8 +667,18 @@ class VoiceService : Service() {
         if (index !in posts.indices) index = 0
         stage = Stage.READING
         val post = posts[index]
-        speak(post.toSpeech(index + 1, posts.size, strings), afterPost())
+        speak(post.toSpeech(index + 1, posts.size, strings, revealSensitive(reveal)), afterPost())
     }
+
+    /**
+     * Whether the content behind a warning is read for the post coming up.
+     *
+     * Either the listener asked for warnings to be read in general, or they
+     * asked for this one post — [reveal] is set by the "read anyway" command
+     * and lasts exactly as long as the sentence it triggers.
+     */
+    private fun revealSensitive(reveal: Boolean): Boolean =
+        reveal || prefs.readSensitiveContent
 
     private fun nextPost(auto: Boolean) {
         if (posts.isEmpty()) {
@@ -679,7 +703,8 @@ class VoiceService : Service() {
             // Re-read the first post rather than falling through to the second.
             stage = Stage.READING
             speak(
-                strings.alreadyFirstPost + " " + posts[0].toSpeech(1, posts.size, strings),
+                strings.alreadyFirstPost + " " +
+                    posts[0].toSpeech(1, posts.size, strings, revealSensitive(false)),
                 afterPost()
             )
             return

@@ -15,12 +15,26 @@ data class Post(
     val acct: String,
     val body: String,
     val spoiler: String,
-    val mediaDescriptions: List<String>,
+    val media: List<Media>,
     val boostedBy: String?
 ) {
 
-    /** The full text the speech engine reads for this post. */
-    fun toSpeech(index: Int, total: Int, strings: Strings): String {
+    /** True when the author put this post behind a content warning. */
+    val isSensitive: Boolean get() = spoiler.isNotBlank()
+
+    /**
+     * The full text the speech engine reads for this post.
+     *
+     * A post behind a content warning stops after the warning unless
+     * [revealSensitive] says otherwise: the point of the warning is to let its
+     * reader decide, and reading on regardless would take that decision away.
+     */
+    fun toSpeech(
+        index: Int,
+        total: Int,
+        strings: Strings,
+        revealSensitive: Boolean = false
+    ): String {
         val parts = ArrayList<String>()
         parts.add(strings.postCounter(index, total))
 
@@ -30,28 +44,50 @@ data class Post(
             parts.add(strings.byAuthor(author))
         }
 
-        if (spoiler.isNotBlank()) {
+        if (isSensitive) {
             parts.add(strings.contentWarning(spoiler))
+            if (!revealSensitive) {
+                parts.add(strings.contentHidden)
+                return parts.joinToString(" ")
+            }
         }
 
         if (body.isNotBlank()) {
             parts.add(body)
         }
 
-        when (mediaDescriptions.size) {
-            0 -> Unit
-            1 -> parts.add(strings.oneAttachment(mediaDescriptions[0]))
-            else -> {
-                parts.add(strings.manyAttachments(mediaDescriptions.size))
-                mediaDescriptions.forEach { parts.add(it) }
-            }
-        }
+        parts.addAll(describeMedia(strings))
 
-        if (body.isBlank() && mediaDescriptions.isEmpty() && spoiler.isBlank()) {
+        if (body.isBlank() && media.isEmpty() && !isSensitive) {
             parts.add(strings.noReadableText)
         }
 
         return parts.joinToString(" ")
+    }
+
+    /**
+     * Attachments as spoken sentences.
+     *
+     * Whoever wrote a description meant it to be heard, so those are read one
+     * by one. The rest carry nothing to read, and posts routinely hold several
+     * of them — they are counted per kind instead, in the order the kinds first
+     * appear, which keeps a gallery of twelve undescribed photos to a single
+     * sentence.
+     */
+    private fun describeMedia(strings: Strings): List<String> {
+        val spoken = ArrayList<String>()
+        val undescribed = LinkedHashMap<MediaKind, Int>()
+        for (item in media) {
+            if (item.description != null) {
+                spoken.add(strings.attachmentWith(item.kind, item.description))
+            } else {
+                undescribed[item.kind] = (undescribed[item.kind] ?: 0) + 1
+            }
+        }
+        undescribed.forEach { (kind, count) ->
+            spoken.add(strings.attachmentsWithout(kind, count))
+        }
+        return spoken
     }
 
     /** Short label for the notification and the screen. */
@@ -73,28 +109,24 @@ data class Post(
                 null
             }
 
-            val media = ArrayList<String>()
+            val media = ArrayList<Media>()
             val attachments = source.optJSONArray("media_attachments")
             if (attachments != null) {
                 for (i in 0 until attachments.length()) {
                     val item = attachments.optJSONObject(i) ?: continue
-                    val type = when (item.optString("type")) {
-                        "image" -> strings.mediaImage
-                        "video" -> strings.mediaVideo
-                        "audio" -> strings.mediaAudio
-                        "gifv" -> strings.mediaAnimation
-                        else -> strings.mediaOther
+                    val kind = when (item.optString("type")) {
+                        "image" -> MediaKind.IMAGE
+                        "video" -> MediaKind.VIDEO
+                        "audio" -> MediaKind.AUDIO
+                        "gifv" -> MediaKind.ANIMATION
+                        else -> MediaKind.OTHER
                     }
+                    // A missing description arrives as an empty string or as
+                    // the four letters "null", depending on the instance.
                     val description = item.optString("description").takeIf {
                         it.isNotBlank() && it != "null"
                     }
-                    media.add(
-                        if (description != null) {
-                            strings.attachmentWith(type, description)
-                        } else {
-                            strings.attachmentWithout(type)
-                        }
-                    )
+                    media.add(Media(kind, description))
                 }
             }
 
@@ -104,7 +136,7 @@ data class Post(
                 acct = source.optJSONObject("account")?.optString("acct").orEmpty(),
                 body = SpeechText.fromHtml(source.optString("content"), strings),
                 spoiler = SpeechText.fromHtml(source.optString("spoiler_text"), strings),
-                mediaDescriptions = media,
+                media = media,
                 boostedBy = boostedBy
             )
         }

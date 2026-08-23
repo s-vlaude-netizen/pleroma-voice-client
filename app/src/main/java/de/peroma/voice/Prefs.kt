@@ -46,6 +46,17 @@ class Prefs(context: Context) {
         set(value) = prefs.edit().putBoolean(KEY_PAUSE_BETWEEN_POSTS, value).apply()
 
     /**
+     * Whether the text behind a content warning is read out as well.
+     *
+     * Off by default: a warning exists so its reader can decide, and reading on
+     * regardless would take that decision away. Single posts can still be heard
+     * with the "read anyway" command without changing this.
+     */
+    var readSensitiveContent: Boolean
+        get() = prefs.getBoolean(KEY_READ_SENSITIVE, false)
+        set(value) = prefs.edit().putBoolean(KEY_READ_SENSITIVE, value).apply()
+
+    /**
      * Language the app speaks and listens in.
      *
      * Defaults to the device language on first run, then sticks to whatever the
@@ -78,5 +89,6 @@ class Prefs(context: Context) {
         private const val KEY_SPEECH_RATE = "speech_rate"
         private const val KEY_PAUSE_BETWEEN_POSTS = "pause_between_posts"
         private const val KEY_LANGUAGE = "language"
+        private const val KEY_READ_SENSITIVE = "read_sensitive_content"
     }
 }
