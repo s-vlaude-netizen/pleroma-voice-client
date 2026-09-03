@@ -13,6 +13,7 @@ enum class VoiceCommand {
     PAUSES_ON,
     STOP_READING,
     REVEAL,
+    REDICTATE,
     WARNINGS_READ,
     WARNINGS_SKIP,
     NEW_POST,
@@ -90,6 +91,11 @@ object VoiceCommands {
         ),
         VoiceCommand.PREVIOUS to listOf(
             "previous", "back", "go back", "before"
+        ),
+        // Before REPEAT, which owns the bare "again": with a second word it is
+        // about the draft, not about the post being read.
+        VoiceCommand.REDICTATE to listOf(
+            "dictate again", "record again", "say it again", "start over"
         ),
         VoiceCommand.REPEAT to listOf(
             "repeat", "again", "once more", "say that again", "what was that"
@@ -177,6 +183,12 @@ object VoiceCommands {
         ),
         VoiceCommand.PREVIOUS to listOf(
             "vorheriger", "vorherige", "vorheriges", "zurück", "davor", "nochmal zurück"
+        ),
+        // Vor REPEAT, dem das blanke "nochmal" gehört: mit "diktieren" dahinter
+        // geht es um den Entwurf, nicht um den vorgelesenen Beitrag.
+        VoiceCommand.REDICTATE to listOf(
+            "neu diktieren", "nochmal diktieren", "noch mal diktieren",
+            "neu aufnehmen", "von vorne"
         ),
         VoiceCommand.REPEAT to listOf(
             // Recognizers write this as one word or two, so accept both.
@@ -270,6 +282,10 @@ object VoiceCommands {
         VoiceCommand.PREVIOUS to listOf(
             "前", "まえ", "戻", "もどって"
         ),
+        // REPEAT の もう一度 より前に。言い直す、は下書きのことを指す。
+        VoiceCommand.REDICTATE to listOf(
+            "言い直", "録り直", "やり直"
+        ),
         VoiceCommand.REPEAT to listOf(
             "もう一度", "もういちど", "繰り返", "くりかえ", "何だって"
         ),
@@ -325,14 +341,21 @@ object VoiceCommands {
     )
 
     /**
-     * The confirmation step is a plain yes/no.
+     * The confirmation step: send, discard, or dictate the post again.
      *
-     * "send" has to read as yes here rather than as "write a post". There is
-     * deliberately no re-dictate option: it did the same thing as no from the
-     * user's point of view, and it was unreliable anyway, since recognizers
-     * write "nochmal" as two words about as often as one.
+     * "send" has to read as yes here rather than as "write a post".
+     *
+     * The third answer is listed first, and its wording is chosen for the
+     * recognizer rather than for elegance: one short everyday word, spelled
+     * every way a recognizer writes it. An earlier attempt offered only
+     * "nochmal", which recognizers write as two words about as often as one,
+     * so the answer that saves a dictated post was the one that never worked.
      */
     private val ENGLISH_CONFIRMATION: List<Pair<VoiceCommand, List<String>>> = listOf(
+        VoiceCommand.REDICTATE to listOf(
+            "again", "repeat", "redo", "retry", "try again", "once more",
+            "say again", "record again", "dictate again", "start over"
+        ),
         VoiceCommand.DECLINE to listOf(
             "no", "discard", "cancel", "delete", "stop", "do not send", "don t send"
         ),
@@ -342,6 +365,12 @@ object VoiceCommands {
     )
 
     private val GERMAN_CONFIRMATION: List<Pair<VoiceCommand, List<String>>> = listOf(
+        // Kein blankes "neu": das klingt für einen Erkenner wie "nein" und
+        // würde den Beitrag löschen statt ihn neu aufzunehmen.
+        VoiceCommand.REDICTATE to listOf(
+            "wiederholen", "wiederhole", "nochmal", "noch mal", "noch einmal",
+            "neu diktieren", "neu aufnehmen", "nochmal diktieren", "von vorne"
+        ),
         VoiceCommand.DECLINE to listOf(
             "nein", "verwerfen", "abbrechen", "löschen", "doch nicht", "stopp"
         ),
@@ -354,6 +383,9 @@ object VoiceCommands {
     // 送らない has to be tested before 送 in any form, so DECLINE stays first
     // here just as it does in the other languages.
     private val JAPANESE_CONFIRMATION: List<Pair<VoiceCommand, List<String>>> = listOf(
+        VoiceCommand.REDICTATE to listOf(
+            "もう一度", "もういちど", "もう一回", "やり直", "言い直", "録り直"
+        ),
         VoiceCommand.DECLINE to listOf(
             "いいえ", "送らない", "送りません", "キャンセル", "取り消", "削除",
             "だめ", "やめ", "違う", "ちがう"

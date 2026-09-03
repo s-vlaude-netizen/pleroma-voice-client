@@ -85,7 +85,17 @@ class VoiceService : Service() {
     private var dictationRetries = 0
     private var confirmMisses = 0
     private var recognizerRefusals = 0
-    private var draft: String = ""
+    /**
+     * The post waiting to be sent, stored rather than held.
+     *
+     * Every path that can lose a session — a silence timeout, "quit", Android
+     * stopping the service — would otherwise take the dictated text with it.
+     */
+    private var draft: String
+        get() = prefs.pendingDraft
+        set(value) {
+            prefs.pendingDraft = value
+        }
 
     private var utteranceCounter = 0
     private var awaitedUtterance: String? = null
@@ -202,6 +212,19 @@ class VoiceService : Service() {
     private fun startSession() {
         acquireWakeLock()
         silenceStreak = 0
+        confirmMisses = 0
+        // A post dictated in an earlier session is picked up where it was left,
+        // rather than quietly dropped.
+        val waiting = draft
+        if (waiting.isNotBlank()) {
+            stage = Stage.CONFIRMING
+            speak(
+                strings.sessionStarted + " " + strings.draftWaiting + " " +
+                    strings.confirmDraft(waiting),
+                After.LISTEN_CONFIRM
+            )
+            return
+        }
         stage = Stage.MENU
         speak(strings.sessionStarted, After.LISTEN_COMMAND)
     }
@@ -478,8 +501,9 @@ class VoiceService : Service() {
                 silenceStreak++
                 if (silenceStreak >= 2) {
                     silenceStreak = 0
-                    draft = ""
-                    speak(strings.draftDiscardedSilence, After.LISTEN_COMMAND)
+                    // The draft stays. Silence here usually means the question
+                    // was not heard, not that the post should be thrown away.
+                    speak(strings.draftKept, After.LISTEN_COMMAND)
                 } else {
                     speak(strings.confirmAgain, After.LISTEN_CONFIRM)
                 }
@@ -572,14 +596,32 @@ class VoiceService : Service() {
 
             VoiceCommand.END_SESSION -> endSession(spokenFarewell = true)
 
-            VoiceCommand.CONFIRM, VoiceCommand.DECLINE, VoiceCommand.UNKNOWN -> {
-                if (duringReading) {
-                    // Don't nag in the middle of the timeline — just carry on.
-                    nextPost(auto = true)
+            VoiceCommand.REDICTATE -> promptForDictation()
+
+            // A draft that survived a misunderstood confirmation is still
+            // waiting here, so yes and no keep the meaning they had in it.
+            VoiceCommand.CONFIRM ->
+                if (draft.isNotBlank()) publishDraft() else shrug(duringReading)
+
+            VoiceCommand.DECLINE ->
+                if (draft.isNotBlank()) {
+                    draft = ""
+                    speak(strings.draftDiscarded, After.LISTEN_COMMAND)
                 } else {
-                    speak(strings.notUnderstood, After.LISTEN_COMMAND)
+                    shrug(duringReading)
                 }
-            }
+
+            VoiceCommand.UNKNOWN -> shrug(duringReading)
+        }
+    }
+
+    /** Nothing here matches what was heard. */
+    private fun shrug(duringReading: Boolean) {
+        if (duringReading) {
+            // Don't nag in the middle of the timeline — just carry on.
+            nextPost(auto = true)
+        } else {
+            speak(strings.notUnderstood, After.LISTEN_COMMAND)
         }
     }
 
@@ -723,14 +765,24 @@ class VoiceService : Service() {
     }
 
     private fun handleDictationResult(spoken: String) {
-        // A bare "abbrechen" cancels; longer text is taken as the post itself,
-        // so the word can still appear inside a real message.
+        // A bare "abbrechen" cancels and a bare "nochmal" starts over; longer
+        // text is taken as the post itself, so either word can still appear
+        // inside a real message.
         val wordCount = spoken.trim().split(Regex("\\s+")).size
-        val cancelled =
-            VoiceCommands.parseConfirmation(spoken, language) == VoiceCommand.DECLINE
-        if (wordCount <= 2 && cancelled) {
-            speak(strings.dictationCancelled, After.LISTEN_COMMAND)
-            return
+        if (wordCount <= 2) {
+            when (VoiceCommands.parseConfirmation(spoken, language)) {
+                VoiceCommand.DECLINE -> {
+                    speak(strings.dictationCancelled, After.LISTEN_COMMAND)
+                    return
+                }
+
+                VoiceCommand.REDICTATE -> {
+                    promptForDictation()
+                    return
+                }
+
+                else -> Unit
+            }
         }
 
         draft = spoken.trim()
@@ -752,16 +804,24 @@ class VoiceService : Service() {
                 speak(strings.draftDiscarded, After.LISTEN_COMMAND)
             }
 
-            // Anything else is neither yes nor no. Give the user a couple of
-            // tries, but never loop forever: without a cap, a recognizer that
-            // keeps mishearing would keep asking the same question and the
-            // session could not be left by voice at all.
+            VoiceCommand.REDICTATE -> {
+                confirmMisses = 0
+                promptForDictation()
+            }
+
+            // Anything else is none of the three. Ask again a couple of times,
+            // but never loop forever: without a cap, a recognizer that keeps
+            // mishearing would keep asking the same question and the session
+            // could not be left by voice at all.
+            //
+            // Giving up returns to the menu but KEEPS the draft. Mishearing is
+            // the normal case in voice control, and throwing away what someone
+            // just dictated is the one answer to it that cannot be undone.
             else -> {
                 confirmMisses++
                 if (confirmMisses >= MAX_CONFIRM_MISSES) {
                     confirmMisses = 0
-                    draft = ""
-                    speak(strings.draftDiscardedNotUnderstood, After.LISTEN_COMMAND)
+                    speak(strings.draftKept, After.LISTEN_COMMAND)
                 } else {
                     speak(strings.sayYesOrNo, After.LISTEN_CONFIRM)
                 }

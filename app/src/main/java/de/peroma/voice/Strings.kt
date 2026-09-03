@@ -167,8 +167,19 @@ interface Strings {
     val confirmAgain: String
     val sayYesOrNo: String
     val draftDiscarded: String
-    val draftDiscardedNotUnderstood: String
-    val draftDiscardedSilence: String
+
+    /**
+     * Said when the confirmation cannot be understood, or goes unanswered.
+     *
+     * A dictated post is never thrown away because the recognizer failed —
+     * mishearing is the normal case in voice control, and losing what someone
+     * just spoke is the worst possible answer to it. The draft is kept and the
+     * session falls back to the menu, where the same three answers still work.
+     */
+    val draftKept: String
+
+    /** Said when a session opens on a post dictated in an earlier one. */
+    val draftWaiting: String
     val noDraft: String
     val sending: String
     val published: String
@@ -277,14 +288,15 @@ object EnglishStrings : Strings {
     override val nothingHeardToMenu = "I did not hear anything. Back to the main menu."
     override val dictationCancelled = "Cancelled. Back to the main menu."
     override fun confirmDraft(draft: String) =
-        "Your post reads: $draft. Should I send it? Say yes or no."
+        "Your post reads: $draft. Should I send it? Say yes, no, or again."
 
-    override val confirmAgain = "Should I send the post? Say yes or no."
-    override val sayYesOrNo = "Please say yes or no."
+    override val confirmAgain = "Should I send the post? Say yes, no, or again."
+    override val sayYesOrNo = "Please say yes to send, no to discard, or again to dictate anew."
     override val draftDiscarded = "Post discarded. Back to the main menu."
-    override val draftDiscardedNotUnderstood =
-        "I did not understand you. The post is discarded. Back to the main menu."
-    override val draftDiscardedSilence = "I am discarding the post. Back to the main menu."
+    override val draftWaiting = "A post you dictated earlier is still waiting."
+    override val draftKept =
+        "I am not following you. Your post is kept. " +
+            "Say send to send it, discard to drop it, or new post to dictate it again."
     override val noDraft = "There is no post to send."
     override val sending = "Sending."
     override val published = "Post published. What would you like to do?"
@@ -418,14 +430,17 @@ object GermanStrings : Strings {
     override val nothingHeardToMenu = "Ich habe nichts gehört. Zurück zum Hauptmenü."
     override val dictationCancelled = "Abgebrochen. Zurück zum Hauptmenü."
     override fun confirmDraft(draft: String) =
-        "Dein Beitrag lautet: $draft. Soll ich das senden? Sag Ja oder Nein."
+        "Dein Beitrag lautet: $draft. Soll ich das senden? Sag Ja, Nein, oder Wiederholen."
 
-    override val confirmAgain = "Soll ich den Beitrag senden? Sag Ja oder Nein."
-    override val sayYesOrNo = "Bitte sag Ja oder Nein."
+    override val confirmAgain = "Soll ich den Beitrag senden? Sag Ja, Nein, oder Wiederholen."
+    override val sayYesOrNo =
+        "Bitte sag Ja zum Senden, Nein zum Verwerfen, oder Wiederholen zum neu Diktieren."
     override val draftDiscarded = "Beitrag verworfen. Zurück zum Hauptmenü."
-    override val draftDiscardedNotUnderstood =
-        "Ich habe dich nicht verstanden. Der Beitrag wird verworfen. Zurück zum Hauptmenü."
-    override val draftDiscardedSilence = "Ich verwerfe den Beitrag. Zurück zum Hauptmenü."
+    override val draftWaiting = "Ein Beitrag von vorhin liegt noch bereit."
+    override val draftKept =
+        "Ich verstehe dich gerade nicht. Dein Beitrag bleibt erhalten. " +
+            "Sag Senden zum Senden, Verwerfen zum Löschen, " +
+            "oder Neuer Beitrag zum neu Diktieren."
     override val noDraft = "Es liegt kein Beitrag vor."
     override val sending = "Wird gesendet."
     override val published = "Beitrag veröffentlicht. Was möchtest du tun?"
@@ -544,14 +559,18 @@ object JapaneseStrings : Strings {
     override val nothingHeardToMenu = "何も聞こえませんでした。メインメニューに戻ります。"
     override val dictationCancelled = "取り消しました。メインメニューに戻ります。"
     override fun confirmDraft(draft: String) =
-        "投稿の内容は、$draft。送信しますか。はい、またはいいえ、と言ってください。"
+        "投稿の内容は、$draft。送信しますか。はい、いいえ、またはもう一度、と言ってください。"
 
-    override val confirmAgain = "投稿を送信しますか。はい、またはいいえ、と言ってください。"
-    override val sayYesOrNo = "はい、またはいいえ、と言ってください。"
+    override val confirmAgain =
+        "投稿を送信しますか。はい、いいえ、またはもう一度、と言ってください。"
+    override val sayYesOrNo =
+        "送信するなら、はい。破棄するなら、いいえ。言い直すなら、もう一度、と言ってください。"
     override val draftDiscarded = "投稿を破棄しました。メインメニューに戻ります。"
-    override val draftDiscardedNotUnderstood =
-        "聞き取れませんでした。投稿を破棄してメインメニューに戻ります。"
-    override val draftDiscardedSilence = "投稿を破棄します。メインメニューに戻ります。"
+    override val draftWaiting = "前に口述した投稿がまだ残っています。"
+    override val draftKept =
+        "うまく聞き取れません。投稿はそのまま残してあります。" +
+            "送信、と言えば送ります。破棄、と言えば消します。" +
+            "新しい投稿、と言えば言い直せます。"
     override val noDraft = "送信する投稿がありません。"
     override val sending = "送信しています。"
     override val published = "投稿しました。次はどうしますか。"

@@ -263,6 +263,58 @@ class VoiceCommandsTest {
         assertEquals(VoiceCommand.UNKNOWN, parseJa(""))
     }
 
+    // ---- re-dictating ---------------------------------------------------------
+
+    /**
+     * The answer that saves a dictated post has to be understood on the first
+     * try, so every everyday wording of it is accepted.
+     */
+    @Test
+    fun theConfirmationTakesAThirdAnswerForDictatingAnew() {
+        for (said in listOf("again", "repeat", "redo", "retry", "try again", "once more")) {
+            assertEquals(said, VoiceCommand.REDICTATE, VoiceCommands.parseConfirmation(said, en))
+        }
+        for (said in listOf("wiederholen", "nochmal", "noch mal", "noch einmal", "neu diktieren")) {
+            assertEquals(said, VoiceCommand.REDICTATE, VoiceCommands.parseConfirmation(said, de))
+        }
+        for (said in listOf("もう一度", "もう一回", "やり直して", "言い直したい")) {
+            assertEquals(said, VoiceCommand.REDICTATE, VoiceCommands.parseConfirmation(said, ja))
+        }
+    }
+
+    /** Yes and no must keep working next to it. */
+    @Test
+    fun theThirdAnswerDoesNotSwallowYesOrNo() {
+        assertEquals(VoiceCommand.CONFIRM, VoiceCommands.parseConfirmation("yes", en))
+        assertEquals(VoiceCommand.DECLINE, VoiceCommands.parseConfirmation("no", en))
+        assertEquals(VoiceCommand.CONFIRM, VoiceCommands.parseConfirmation("ja", de))
+        assertEquals(VoiceCommand.DECLINE, VoiceCommands.parseConfirmation("nein", de))
+        assertEquals(VoiceCommand.CONFIRM, VoiceCommands.parseConfirmation("はい", ja))
+        assertEquals(VoiceCommand.DECLINE, VoiceCommands.parseConfirmation("いいえ", ja))
+    }
+
+    /**
+     * "neu" alone is not offered: a recognizer hears it as "nein" often enough,
+     * and that answer deletes the post instead of re-recording it.
+     */
+    @Test
+    fun theGermanThirdAnswerAvoidsTheWordThatSoundsLikeNo() {
+        assertEquals(VoiceCommand.DECLINE, VoiceCommands.parseConfirmation("nein", de))
+        assertEquals(VoiceCommand.UNKNOWN, VoiceCommands.parseConfirmation("neu", de))
+    }
+
+    /** In the menu the bare word still means "read that post again". */
+    @Test
+    fun inTheMenuTheBareWordStillMeansRepeatThePost() {
+        assertEquals(VoiceCommand.REPEAT, parseEn("again"))
+        assertEquals(VoiceCommand.REPEAT, parseDe("nochmal"))
+        assertEquals(VoiceCommand.REPEAT, parseJa("もう一度"))
+
+        assertEquals(VoiceCommand.REDICTATE, parseEn("dictate again"))
+        assertEquals(VoiceCommand.REDICTATE, parseDe("nochmal diktieren"))
+        assertEquals(VoiceCommand.REDICTATE, parseJa("言い直したい"))
+    }
+
     // ---- content warnings ---------------------------------------------------
 
     @Test

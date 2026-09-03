@@ -46,6 +46,18 @@ class Prefs(context: Context) {
         set(value) = prefs.edit().putBoolean(KEY_PAUSE_BETWEEN_POSTS, value).apply()
 
     /**
+     * A dictated post that has not been sent or discarded yet.
+     *
+     * Kept here rather than in the session so that ending the session — by a
+     * command, by a silence timeout, or by Android reclaiming the service —
+     * cannot lose what someone has already spoken. The next session offers it
+     * back.
+     */
+    var pendingDraft: String
+        get() = prefs.getString(KEY_PENDING_DRAFT, "").orEmpty()
+        set(value) = prefs.edit().putString(KEY_PENDING_DRAFT, value).apply()
+
+    /**
      * Whether opening the app starts a voice session straight away.
      *
      * On by default: this is an audio client, and having to find a button
@@ -102,5 +114,6 @@ class Prefs(context: Context) {
         private const val KEY_LANGUAGE = "language"
         private const val KEY_READ_SENSITIVE = "read_sensitive_content"
         private const val KEY_START_ON_LAUNCH = "start_voice_on_launch"
+        private const val KEY_PENDING_DRAFT = "pending_draft"
     }
 }

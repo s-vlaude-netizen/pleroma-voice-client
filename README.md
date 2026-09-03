@@ -47,7 +47,7 @@ vorlesen lassen und Beiträge diktieren, ohne einmal hinzusehen.
 | „Pause" / „Weiter" | anhalten / fortsetzen |
 | „Am Stück" / „Mit Pausen" | ohne bzw. mit Nachfrage zwischen den Beiträgen |
 | „Neuer Beitrag", „Diktieren", „Posten" | Beitrag diktieren |
-| „Ja", „Senden" / „Nein", „Verwerfen" | Entwurf senden oder verwerfen |
+| „Ja", „Senden" / „Nein", „Verwerfen" / „Wiederholen" | Entwurf senden, verwerfen oder neu diktieren |
 | „Schneller" / „Langsamer" | Sprechtempo ändern |
 | „Wo bin ich" | aktuellen Stand ansagen |
 | „Hilfe" | alle Befehle vorlesen |
@@ -71,7 +71,7 @@ weiterhin, wenn es denn richtig ankommt.
 | "pause" / "continue" | stop and resume |
 | "straight through" / "with pauses" | read without or with a prompt between posts |
 | "new post", "dictate", "post something" | dictate a post |
-| "yes", "send" / "no", "discard" | send or discard the draft |
+| "yes", "send" / "no", "discard" / "again" | send, discard, or dictate the draft anew |
 | "faster" / "slower" | change the speaking rate |
 | "where am I" | say the current position |
 | "help" | read out all commands |
@@ -91,7 +91,7 @@ weiterhin, wenn es denn richtig ankommt.
 | 一時停止 / 続けて | 止める・再開する |
 | 続けて読んで / 間で聞いて | 止まらずに読む・投稿ごとに尋ねる |
 | 新しい投稿、口述 | 投稿を口述する |
-| はい、送信 / いいえ、キャンセル | 下書きを送る・破棄する |
+| はい、送信 / いいえ、キャンセル / もう一度 | 下書きを送る・破棄する・言い直す |
 | 速く / ゆっくり | 読み上げの速さを変える |
 | 今どこ | 現在の位置を言う |
 | ヘルプ | コマンドを読み上げる |
@@ -115,6 +115,24 @@ Zwei Einschränkungen: Beim allerersten Mal wartet sie auf den Knopf, weil erst
 die Mikrofonfreigabe erteilt sein muss; ab dann startet sie allein. Und läuft
 bereits eine Sitzung, wird sie nicht ein zweites Mal begrüßt, sondern liest
 weiter. Abschalten lässt sich das über „Sprachsteuerung beim Start" in der App.
+
+## Ein diktierter Beitrag geht nicht verloren
+
+Spracherkennung versteht regelmäßig etwas falsch — das ist der Normalfall, nicht
+die Ausnahme. Deshalb wirft die App einen diktierten Beitrag **niemals** weg,
+weil sie die Rückfrage nicht verstanden hat. Verworfen wird er nur, wenn du es
+ausdrücklich sagst.
+
+Auf die Frage „Soll ich das senden?" gibt es drei Antworten: **Ja**, **Nein**
+und **Wiederholen** (englisch „again", japanisch 「もう一度」) zum neu Diktieren.
+Das Wort ist bewusst kurz und in jeder üblichen Schreibweise hinterlegt —
+„wiederholen", „nochmal", „noch mal", „noch einmal", „neu diktieren".
+
+Versteht die App dich mehrmals nicht oder hört sie nichts, geht sie zurück ins
+Menü und **behält den Entwurf**; dort gelten „Senden", „Verwerfen" und „Neuer
+Beitrag" weiter. Und weil auch das Ende einer Sitzung den Entwurf sonst mitnähme,
+liegt er außerhalb der Sitzung: Beim nächsten Start liest die App ihn wieder vor
+und fragt erneut.
 
 ## Inhaltswarnungen und Anhänge
 
@@ -155,8 +173,8 @@ Im Standardmodus („am Stück") hört das Mikrofon während des Vorlesens **nic
 zum Abbrechen dienen die Benachrichtigung oder der Knopf in der App. Wer mitten im
 Vorlesen per Stimme steuern will, schaltet „Mit Pausen" ein.
 
-Die Bestätigung eines Entwurfs ist bewusst ein reines Ja/Nein. Nach „Nein" ist der
-Entwurf weg — für einen neuen Anlauf sagst du wieder „Neuer Beitrag".
+Verworfen wird ein Entwurf nur nach einem ausdrücklichen „Nein" — siehe
+[Ein diktierter Beitrag geht nicht verloren](#ein-diktierter-beitrag-geht-nicht-verloren).
 
 Befehle werden auf **ganze Wörter** geprüft, nicht auf Teilzeichenketten — „Jahr"
 gilt also nicht als „ja", und „nächster Beitrag" startet keinen neuen Beitrag.
