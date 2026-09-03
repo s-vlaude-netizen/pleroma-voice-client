@@ -32,6 +32,10 @@
     <string name="pauses_off_status">The timeline is read straight through.</string>
     <string name="warnings_state_on">Read behind content warnings: on — tap to turn off</string>
     <string name="warnings_state_off">Read behind content warnings: off — tap to turn on</string>
+    <string name="auto_start_state_on">Start voice control on launch: on — tap to turn off</string>
+    <string name="auto_start_state_off">Start voice control on launch: off — tap to turn on</string>
+    <string name="auto_start_on_status">Voice control will start when the app opens.</string>
+    <string name="auto_start_off_status">Voice control waits for the button from now on.</string>
     <string name="language_state">Language: %1$s — tap to switch</string>
     <string name="pause">Pause</string>
     <string name="next_post">Next post</string>

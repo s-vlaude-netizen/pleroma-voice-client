@@ -105,6 +105,17 @@ weiterhin, wenn es denn richtig ankommt.
 判定します。長い言い回しが短いものを飲み込まないよう、表の順序が意味を
 持ちます（例: 「一時停止」は「停止」より先）。
 
+## Start
+
+Die App **startet die Sprachsteuerung beim Öffnen von selbst** — dafür ist sie
+da, und der Griff zum Knopf ist genau der Schritt, den sie sparen soll. App
+öffnen, Handy einstecken, zuhören.
+
+Zwei Einschränkungen: Beim allerersten Mal wartet sie auf den Knopf, weil erst
+die Mikrofonfreigabe erteilt sein muss; ab dann startet sie allein. Und läuft
+bereits eine Sitzung, wird sie nicht ein zweites Mal begrüßt, sondern liest
+weiter. Abschalten lässt sich das über „Sprachsteuerung beim Start" in der App.
+
 ## Inhaltswarnungen und Anhänge
 
 Ein Beitrag mit **Inhaltswarnung** wird nur mit seiner Warnung vorgelesen — der

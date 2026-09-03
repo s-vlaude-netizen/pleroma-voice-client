@@ -55,6 +55,11 @@
                 android:text="@string/pauses_state_off" />
 
             <Button
+                android:id="@+id/btnToggleAutoStart"
+                style="@style/VoiceButton"
+                android:text="@string/auto_start_state_on" />
+
+            <Button
                 android:id="@+id/btnToggleWarnings"
                 style="@style/VoiceButton"
                 android:text="@string/warnings_state_off" />

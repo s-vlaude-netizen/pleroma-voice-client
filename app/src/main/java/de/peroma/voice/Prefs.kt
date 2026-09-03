@@ -46,6 +46,17 @@ class Prefs(context: Context) {
         set(value) = prefs.edit().putBoolean(KEY_PAUSE_BETWEEN_POSTS, value).apply()
 
     /**
+     * Whether opening the app starts a voice session straight away.
+     *
+     * On by default: this is an audio client, and having to find a button
+     * first is exactly the step it exists to save. It only takes effect once
+     * the microphone has been granted — see MainActivity.
+     */
+    var startVoiceOnLaunch: Boolean
+        get() = prefs.getBoolean(KEY_START_ON_LAUNCH, true)
+        set(value) = prefs.edit().putBoolean(KEY_START_ON_LAUNCH, value).apply()
+
+    /**
      * Whether the text behind a content warning is read out as well.
      *
      * Off by default: a warning exists so its reader can decide, and reading on
@@ -90,5 +101,6 @@ class Prefs(context: Context) {
         private const val KEY_PAUSE_BETWEEN_POSTS = "pause_between_posts"
         private const val KEY_LANGUAGE = "language"
         private const val KEY_READ_SENSITIVE = "read_sensitive_content"
+        private const val KEY_START_ON_LAUNCH = "start_voice_on_launch"
     }
 }

@@ -38,6 +38,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var startButton: Button
     private lateinit var pauseToggle: Button
     private lateinit var warningsToggle: Button
+    private lateinit var autoStartToggle: Button
     private lateinit var languageToggle: Button
 
     private val micPermissionLauncher = registerForActivityResult(
@@ -99,6 +100,22 @@ class MainActivity : AppCompatActivity() {
         }
         updatePauseToggle()
 
+        autoStartToggle = findViewById(R.id.btnToggleAutoStart)
+        autoStartToggle.setOnClickListener {
+            prefs.startVoiceOnLaunch = !prefs.startVoiceOnLaunch
+            updateAutoStartToggle()
+            setStatus(
+                getString(
+                    if (prefs.startVoiceOnLaunch) {
+                        R.string.auto_start_on_status
+                    } else {
+                        R.string.auto_start_off_status
+                    }
+                )
+            )
+        }
+        updateAutoStartToggle()
+
         warningsToggle = findViewById(R.id.btnToggleWarnings)
         warningsToggle.setOnClickListener {
             prefs.readSensitiveContent = !prefs.readSensitiveContent
@@ -148,6 +165,27 @@ class MainActivity : AppCompatActivity() {
                 ?: getString(R.string.main_intro, prefs.accountName, prefs.instance)
         )
         pendingStatus = null
+        startVoiceOnLaunchIfWanted(savedInstanceState)
+    }
+
+    /**
+     * Starts a session as soon as the app opens, which is the whole point of an
+     * audio client — having to find a button first is the step it exists to save.
+     *
+     * Three things hold it back. A non-null [savedInstanceState] means the screen
+     * was rebuilt rather than opened, after a language switch say, and a rebuild
+     * is not an arrival. A session that is already live must not be greeted a
+     * second time, which would cut off whatever it is reading. And without the
+     * microphone permission this would open a permission dialog on top of the one
+     * for notifications; the listener grants it once through the button, and every
+     * launch after that starts on its own.
+     */
+    private fun startVoiceOnLaunchIfWanted(savedInstanceState: Bundle?) {
+        if (savedInstanceState != null) return
+        if (!prefs.startVoiceOnLaunch) return
+        if (VoiceService.State.running) return
+        if (!hasPermission(Manifest.permission.RECORD_AUDIO)) return
+        startVoiceSession()
     }
 
     override fun onStart() {
@@ -172,6 +210,16 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateLanguageToggle() {
         languageToggle.text = getString(R.string.language_state, prefs.language.displayName)
+    }
+
+    private fun updateAutoStartToggle() {
+        autoStartToggle.setText(
+            if (prefs.startVoiceOnLaunch) {
+                R.string.auto_start_state_on
+            } else {
+                R.string.auto_start_state_off
+            }
+        )
     }
 
     private fun updateWarningsToggle() {

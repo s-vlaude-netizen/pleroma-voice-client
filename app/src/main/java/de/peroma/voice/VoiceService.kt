@@ -99,6 +99,7 @@ class VoiceService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        State.running = true
         prefs = Prefs(this)
         language = prefs.language
         strings = language.strings
@@ -943,6 +944,7 @@ class VoiceService : Service() {
     }
 
     override fun onDestroy() {
+        State.running = false
         cancelListening()
         recognizer?.destroy()
         recognizer = null
@@ -961,6 +963,16 @@ class VoiceService : Service() {
     data class State(val statusText: String, val stage: Stage) {
         companion object {
             var current = State("", Stage.IDLE)
+
+            /**
+             * Whether a session is live right now.
+             *
+             * The screen asks before starting one on its own, so that opening
+             * the app on top of a running session does not greet the listener
+             * a second time and cut off what is being read.
+             */
+            var running = false
+                internal set
 
             /** Set by MainActivity while it is on screen. */
             var listener: ((State) -> Unit)? = null
