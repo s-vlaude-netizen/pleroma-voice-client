@@ -392,12 +392,18 @@ class VoiceCommandsTest {
         assertEquals(VoiceCommand.DECLINE, VoiceCommands.parseConfirmation("discard", en))
     }
 
-    /** Confirming a post is a plain yes/no — re-dictating is not an option. */
+    /**
+     * Both spellings of the German word have to work.
+     *
+     * This is what went wrong the first time round: the table held "nochmal" as
+     * one word, recognizers write it as two about as often, and so the answer
+     * that saves a dictated post was the one answer that never matched.
+     */
     @Test
-    fun confirmationHasNoRedictateOption() {
-        assertEquals(VoiceCommand.UNKNOWN, VoiceCommands.parseConfirmation("nochmal", de))
-        assertEquals(VoiceCommand.UNKNOWN, VoiceCommands.parseConfirmation("noch mal", de))
-        assertEquals(VoiceCommand.UNKNOWN, VoiceCommands.parseConfirmation("again", en))
+    fun confirmationTakesBothSpellingsOfTheGermanWord() {
+        assertEquals(VoiceCommand.REDICTATE, VoiceCommands.parseConfirmation("nochmal", de))
+        assertEquals(VoiceCommand.REDICTATE, VoiceCommands.parseConfirmation("noch mal", de))
+        assertEquals(VoiceCommand.REDICTATE, VoiceCommands.parseConfirmation("again", en))
     }
 
     /** A rejection is checked before acceptance so "no, don't send" is a no. */
