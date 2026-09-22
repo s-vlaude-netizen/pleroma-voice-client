@@ -156,6 +156,14 @@ Gerät, Japanisch auf einem japanischen, sonst Englisch. Damit bekommen internat
 Nutzer ohne Zutun ihre Sprache. Danach gilt, was du zuletzt gewählt hast — per
 Sprachbefehl („English", „Deutsch", „日本語") oder über den Knopf in der App.
 
+**Befehle der anderen Sprachen gelten weiterhin.** Die Wahl bestimmt, was die
+App spricht — nicht, welche Wörter du vergessen haben musst. Steht sie auf
+Deutsch und du antwortest „yes", zählt das als Ja; steht sie auf Englisch und du
+sagst „Hilfe", bekommst du Hilfe. Die eingestellte Sprache wird immer zuerst und
+vollständig geprüft, sodass ihr nichts weggenommen werden kann. Erst wenn sie mit
+der Äußerung nichts anfangen kann, kommen die anderen zum Zug, und dort muss die
+ganze Äußerung der Befehl sein — ein „bye" mitten im Satz beendet also nichts.
+
 **Diktieren folgt dieser Wahl automatisch.** Die App teilt dem Erkennungsdienst bei
 jeder Aufnahme die gewünschte Sprache mit (`en-US`, `de-DE`, `ja-JP`) — in den
 Systemeinstellungen ist dafür nichts zu tun. Zwei Vorbehalte: Der Dienst muss die

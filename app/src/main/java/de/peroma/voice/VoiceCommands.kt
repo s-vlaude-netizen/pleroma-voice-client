@@ -46,6 +46,9 @@ enum class VoiceCommand {
  *
  * Punctuation is stripped before matching, which turns "don't" into two words,
  * so contractions are spelled out that way in the tables below.
+ *
+ * All three tables are consulted whatever language is set, the chosen one
+ * first; see [VoiceCommands.matchAcrossLanguages].
  */
 object VoiceCommands {
 
@@ -409,10 +412,41 @@ object VoiceCommands {
     )
 
     fun parse(spoken: String, language: Language): VoiceCommand =
-        TABLES.getValue(language).match(spoken)
+        matchAcrossLanguages(spoken, language, TABLES)
 
     fun parseConfirmation(spoken: String, language: Language): VoiceCommand =
-        CONFIRMATIONS.getValue(language).match(spoken)
+        matchAcrossLanguages(spoken, language, CONFIRMATIONS)
+
+    /**
+     * Understands the other languages' commands too.
+     *
+     * Choosing German for the app is a choice about what it says, not a promise
+     * to forget every other word one knows. "Yes" is the answer that comes out
+     * of a lot of people under a German prompt, and refusing it teaches nothing
+     * except that the app is fussy.
+     *
+     * The chosen language is always tried first and in full, so nothing it
+     * knows can be taken over by another language. Only if it makes nothing of
+     * the utterance do the others get a turn, and there the whole utterance has
+     * to be the command — not merely contain it. That guard matters because a
+     * recognizer set to German returns German spellings: a sentence that
+     * happens to contain "bye" should not end the session, while a bare "bye"
+     * plainly means it.
+     */
+    private fun matchAcrossLanguages(
+        spoken: String,
+        language: Language,
+        tables: Map<Language, Prepared>
+    ): VoiceCommand {
+        val own = tables.getValue(language).match(spoken)
+        if (own != VoiceCommand.UNKNOWN) return own
+        for (other in Language.values()) {
+            if (other == language) continue
+            val borrowed = tables.getValue(other).matchWholeUtterance(spoken)
+            if (borrowed != VoiceCommand.UNKNOWN) return borrowed
+        }
+        return VoiceCommand.UNKNOWN
+    }
 
     /**
      * A table with its phrases normalised once, ahead of any recognition.
@@ -438,17 +472,29 @@ object VoiceCommands {
                 command to phrases.map { it.joinToString("") }
             }
 
-        fun match(spoken: String): VoiceCommand {
+        /** A phrase anywhere in the utterance counts. */
+        fun match(spoken: String): VoiceCommand = match(spoken, whole = false)
+
+        /** Only an utterance that is nothing but the phrase counts. */
+        fun matchWholeUtterance(spoken: String): VoiceCommand = match(spoken, whole = true)
+
+        private fun match(spoken: String, whole: Boolean): VoiceCommand {
             val said = words(spoken)
             if (said.isEmpty()) return VoiceCommand.UNKNOWN
             if (byWord) {
                 for ((command, phrases) in entries) {
-                    if (phrases.any { contains(said, it) }) return command
+                    val hit = phrases.any {
+                        if (whole) said == it else contains(said, it)
+                    }
+                    if (hit) return command
                 }
             } else {
                 val text = said.joinToString("")
                 for ((command, phrases) in joined) {
-                    if (phrases.any { it.isNotEmpty() && text.contains(it) }) return command
+                    val hit = phrases.any {
+                        it.isNotEmpty() && if (whole) text == it else text.contains(it)
+                    }
+                    if (hit) return command
                 }
             }
             return VoiceCommand.UNKNOWN

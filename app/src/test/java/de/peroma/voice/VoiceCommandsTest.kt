@@ -350,6 +350,53 @@ class VoiceCommandsTest {
         assertEquals(VoiceCommand.READ_TIMELINE, parseJa("タイムラインを読んで"))
     }
 
+    // ---- borrowing another language's words -----------------------------------
+
+    /**
+     * Setting the app to German says what it should speak, not what its user
+     * has forgotten. A short answer in another language is still an answer.
+     */
+    @Test
+    fun anotherLanguagesWordIsAcceptedWhenOwnLanguageMakesNothingOfIt() {
+        assertEquals(VoiceCommand.CONFIRM, VoiceCommands.parseConfirmation("yes", de))
+        assertEquals(VoiceCommand.DECLINE, VoiceCommands.parseConfirmation("no", de))
+        assertEquals(VoiceCommand.CONFIRM, VoiceCommands.parseConfirmation("ja", en))
+        assertEquals(VoiceCommand.DECLINE, VoiceCommands.parseConfirmation("nein", en))
+        assertEquals(VoiceCommand.CONFIRM, VoiceCommands.parseConfirmation("はい", de))
+    }
+
+    @Test
+    fun theSameHoldsForOrdinaryCommands() {
+        assertEquals(VoiceCommand.READ_TIMELINE, parseDe("timeline"))
+        assertEquals(VoiceCommand.NEXT, parseDe("next"))
+        assertEquals(VoiceCommand.HELP, parseEn("hilfe"))
+        assertEquals(VoiceCommand.NEXT, parseJa("next"))
+    }
+
+    /** The chosen language is asked first, so nothing of its own is taken over. */
+    @Test
+    fun theChosenLanguageKeepsItsOwnMeanings() {
+        // "Beitrag" is a new post in German; English "post" means the same, so
+        // the interesting case is a word the two languages disagree about.
+        assertEquals(VoiceCommand.PAUSE, parseDe("moment"))
+        assertEquals(VoiceCommand.PAUSE, parseEn("one moment"))
+        assertEquals(VoiceCommand.REPEAT, parseDe("nochmal"))
+    }
+
+    /**
+     * Borrowed words count only as the whole utterance.
+     *
+     * A recognizer set to German returns German spellings, so a stray English
+     * word inside a sentence is more likely a misheard German one than a
+     * command — and "bye" ending a session by accident is expensive.
+     */
+    @Test
+    fun aBorrowedWordInsideASentenceIsNotACommand() {
+        assertEquals(VoiceCommand.END_SESSION, parseDe("bye"))
+        assertEquals(VoiceCommand.UNKNOWN, parseDe("ich war bye dem arzt"))
+        assertEquals(VoiceCommand.UNKNOWN, VoiceCommands.parseConfirmation("yes maybe later", de))
+    }
+
     // ---- language selection --------------------------------------------------
 
     @Test
