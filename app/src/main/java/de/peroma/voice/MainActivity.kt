@@ -4,13 +4,16 @@ import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 
@@ -41,14 +44,29 @@ class MainActivity : AppCompatActivity() {
     private lateinit var autoStartToggle: Button
     private lateinit var languageToggle: Button
 
+    /** What the microphone was wanted for, so the answer can continue it. */
+    private var micWantedFor: (() -> Unit)? = null
+
     private val micPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
         if (granted) {
-            startVoiceSession()
+            continueWithMicrophone()
         } else {
             setStatus(getString(R.string.mic_denied))
+            // Refusing a second time means Android will not ask again. Say so
+            // now rather than letting the next attempt fail in silence.
+            if (!shouldShowRequestPermissionRationale(Manifest.permission.RECORD_AUDIO)) {
+                showMicrophoneBlockedDialog()
+            }
         }
+    }
+
+    /** Returning from the system settings: pick up where the block interrupted. */
+    private val settingsLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) {
+        if (hasPermission(Manifest.permission.RECORD_AUDIO)) continueWithMicrophone()
     }
 
     private val notificationPermissionLauncher = registerForActivityResult(
@@ -184,8 +202,25 @@ class MainActivity : AppCompatActivity() {
         if (savedInstanceState != null) return
         if (!prefs.startVoiceOnLaunch) return
         if (VoiceService.State.running) return
-        if (!hasPermission(Manifest.permission.RECORD_AUDIO)) return
-        startVoiceSession()
+        if (hasPermission(Manifest.permission.RECORD_AUDIO)) {
+            startVoiceSession()
+            return
+        }
+        // Without the microphone there is nothing to start. A first run waits
+        // for the button, so the request does not collide with the one for
+        // notifications; a microphone switched off in the settings, though, is
+        // worth saying out loud — nothing about this screen would otherwise
+        // explain why the app has gone quiet.
+        val blocked = MicPermissionStep.decide(
+            granted = false,
+            everAsked = prefs.micPermissionAsked,
+            canShowRationale =
+                shouldShowRequestPermissionRationale(Manifest.permission.RECORD_AUDIO)
+        ) == MicPermissionStep.SEND_TO_SETTINGS
+        if (blocked) {
+            micWantedFor = { startVoiceSession() }
+            showMicrophoneBlockedDialog()
+        }
     }
 
     override fun onStart() {
@@ -249,10 +284,69 @@ class MainActivity : AppCompatActivity() {
         ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED
 
     private fun onStartVoiceClicked() {
-        if (hasPermission(Manifest.permission.RECORD_AUDIO)) {
-            startVoiceSession()
-        } else {
-            micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+        withMicrophone { startVoiceSession() }
+    }
+
+    /**
+     * Runs [action] once the microphone is available, or explains why it is not.
+     *
+     * The case worth handling is the third one: the permission was refused for
+     * good, or switched off later in the system settings. Android then denies
+     * every further request outright, without showing anything, so an app that
+     * just asks again looks broken. The way back leads through the settings,
+     * and only the app can point at them.
+     */
+    private fun withMicrophone(action: () -> Unit) {
+        micWantedFor = action
+        val step = MicPermissionStep.decide(
+            granted = hasPermission(Manifest.permission.RECORD_AUDIO),
+            everAsked = prefs.micPermissionAsked,
+            canShowRationale =
+                shouldShowRequestPermissionRationale(Manifest.permission.RECORD_AUDIO)
+        )
+        when (step) {
+            MicPermissionStep.READY -> continueWithMicrophone()
+
+            MicPermissionStep.ASK -> {
+                prefs.micPermissionAsked = true
+                micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+            }
+
+            MicPermissionStep.SEND_TO_SETTINGS -> showMicrophoneBlockedDialog()
+        }
+    }
+
+    private fun continueWithMicrophone() {
+        val action = micWantedFor ?: return
+        micWantedFor = null
+        action()
+    }
+
+    private fun showMicrophoneBlockedDialog() {
+        val message = getString(R.string.mic_blocked_message)
+        // Also on screen, so a screen reader reads it even if the dialog is
+        // dismissed, and so the reason stays visible afterwards.
+        setStatus(message)
+        AlertDialog.Builder(this)
+            .setTitle(R.string.mic_blocked_title)
+            .setMessage(message)
+            .setPositiveButton(R.string.mic_blocked_open_settings) { _, _ ->
+                openAppSettings()
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
+    private fun openAppSettings() {
+        val intent = Intent(
+            Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+            Uri.fromParts("package", packageName, null)
+        )
+        try {
+            settingsLauncher.launch(intent)
+        } catch (e: Exception) {
+            // No settings screen to open: nothing left but to say so.
+            setStatus(getString(R.string.mic_blocked_no_settings))
         }
     }
 
@@ -262,11 +356,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun onDictateClicked() {
-        if (hasPermission(Manifest.permission.RECORD_AUDIO)) {
-            VoiceService.send(this, VoiceService.ACTION_NEW_POST)
-        } else {
-            micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
-        }
+        withMicrophone { VoiceService.send(this, VoiceService.ACTION_NEW_POST) }
     }
 
     private fun logout() {

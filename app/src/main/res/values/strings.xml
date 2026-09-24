@@ -24,6 +24,10 @@
     <string name="manual_hint">Optional: the same functions as buttons, for when speech recognition is unavailable.</string>
     <string name="main_intro">Signed in as %1$s on %2$s.\n\nTap Start voice control — after that you can switch the screen off and do everything by voice.</string>
     <string name="mic_denied">Voice control does not work without microphone permission. The buttons below still do.</string>
+    <string name="mic_blocked_title">Microphone blocked</string>
+    <string name="mic_blocked_message">Voice control needs the microphone, and Android is refusing it without asking again. Open the app settings and allow Microphone, then come back — the session starts by itself.</string>
+    <string name="mic_blocked_open_settings">Open settings</string>
+    <string name="mic_blocked_no_settings">The app settings could not be opened. Allow Microphone for Peroma Voice under Settings, Apps.</string>
 
     <string name="read_timeline">Read timeline</string>
     <string name="pauses_state_on">Ask between posts: on — tap to turn off</string>

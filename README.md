@@ -105,6 +105,24 @@ weiterhin, wenn es denn richtig ankommt.
 判定します。長い言い回しが短いものを飲み込まないよう、表の順序が意味を
 持ちます（例: 「一時停止」は「停止」より先）。
 
+## Wenn das Mikrofon gesperrt ist
+
+Wird die Mikrofonfreigabe entzogen — dauerhaft abgelehnt oder später in den
+Android-Einstellungen ausgeschaltet —, verweigert Android jede weitere Anfrage
+kommentarlos. Eine App, die dann einfach noch einmal fragt, wirkt kaputt: es
+passiert schlicht nichts.
+
+Peroma Voice zeigt in dem Fall einen Hinweis mit dem Knopf **Einstellungen
+öffnen**, der direkt auf die Berechtigungsseite der App führt. Nach der Rückkehr
+wird die Freigabe erneut geprüft und das, was du angestoßen hattest, von selbst
+fortgesetzt. Der Hinweis erscheint auch beim Öffnen der App, wenn die
+Sprachsteuerung eigentlich starten sollte — sonst bliebe die App ohne Erklärung
+stumm.
+
+Beim allerersten Start wartet die App dagegen auf den Knopf und fragt dann ganz
+normal; ein erstmaliges Ablehnen führt beim nächsten Versuch noch einmal zur
+regulären Abfrage, nicht zum Hinweis.
+
 ## Start
 
 Die App **startet die Sprachsteuerung beim Öffnen von selbst** — dafür ist sie

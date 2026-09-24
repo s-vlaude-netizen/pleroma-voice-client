@@ -24,6 +24,10 @@
     <string name="manual_hint">補助: 音声認識が使えないときのために、同じ機能をボタンでも用意しています。</string>
     <string name="main_intro">%2$s に %1$s としてログインしています。\n\n「音声操作を開始」を押してください。そのあとは画面を消したまま、すべて音声で操作できます。</string>
     <string name="mic_denied">マイクの許可がないと音声操作は使えません。下のボタンはそのまま使えます。</string>
+    <string name="mic_blocked_title">マイクがブロックされています</string>
+    <string name="mic_blocked_message">音声操作にはマイクが必要ですが、Android は再度たずねることなく拒否しています。アプリの設定を開いてマイクを許可し、戻ってきてください。そのままセッションが始まります。</string>
+    <string name="mic_blocked_open_settings">設定を開く</string>
+    <string name="mic_blocked_no_settings">アプリの設定を開けませんでした。設定のアプリから Peroma Voice のマイクを許可してください。</string>
 
     <string name="read_timeline">タイムラインを読む</string>
     <string name="pauses_state_on">投稿ごとに尋ねる: オン — 押すとオフ</string>

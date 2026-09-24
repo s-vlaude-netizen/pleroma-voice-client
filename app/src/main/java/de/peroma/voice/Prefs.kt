@@ -46,6 +46,16 @@ class Prefs(context: Context) {
         set(value) = prefs.edit().putBoolean(KEY_PAUSE_BETWEEN_POSTS, value).apply()
 
     /**
+     * Whether Android has ever been asked for the microphone.
+     *
+     * Needed to tell a first run apart from a refusal that has become
+     * permanent: the system reports both the same way. See [MicPermissionStep].
+     */
+    var micPermissionAsked: Boolean
+        get() = prefs.getBoolean(KEY_MIC_ASKED, false)
+        set(value) = prefs.edit().putBoolean(KEY_MIC_ASKED, value).apply()
+
+    /**
      * A dictated post that has not been sent or discarded yet.
      *
      * Kept here rather than in the session so that ending the session — by a
@@ -115,5 +125,6 @@ class Prefs(context: Context) {
         private const val KEY_READ_SENSITIVE = "read_sensitive_content"
         private const val KEY_START_ON_LAUNCH = "start_voice_on_launch"
         private const val KEY_PENDING_DRAFT = "pending_draft"
+        private const val KEY_MIC_ASKED = "mic_permission_asked"
     }
 }
