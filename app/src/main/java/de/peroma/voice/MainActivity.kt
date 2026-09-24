@@ -47,17 +47,23 @@ class MainActivity : AppCompatActivity() {
     /** What the microphone was wanted for, so the answer can continue it. */
     private var micWantedFor: (() -> Unit)? = null
 
+    /** Keeps the notification request to one per visit to this screen. */
+    private var notificationPermissionHandled = false
+
     private val micPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
         if (granted) {
             continueWithMicrophone()
+            requestNotificationPermissionIfNeeded()
         } else {
             setStatus(getString(R.string.mic_denied))
             // Refusing a second time means Android will not ask again. Say so
             // now rather than letting the next attempt fail in silence.
             if (!shouldShowRequestPermissionRationale(Manifest.permission.RECORD_AUDIO)) {
                 showMicrophoneBlockedDialog()
+            } else {
+                requestNotificationPermissionIfNeeded()
             }
         }
     }
@@ -177,50 +183,42 @@ class MainActivity : AppCompatActivity() {
 
         findViewById<View>(R.id.manualControls).visibility = View.VISIBLE
 
-        requestNotificationPermissionIfNeeded()
         setStatus(
             pendingStatus
                 ?: getString(R.string.main_intro, prefs.accountName, prefs.instance)
         )
         pendingStatus = null
-        startVoiceOnLaunchIfWanted(savedInstanceState)
+        // The microphone goes first: it is what the app is for, and asking for
+        // two permissions at once leaves one of the dialogs unanswered. The
+        // notification request follows once the microphone is settled.
+        if (!startVoiceOnLaunchIfWanted(savedInstanceState)) {
+            requestNotificationPermissionIfNeeded()
+        }
     }
 
     /**
      * Starts a session as soon as the app opens, which is the whole point of an
      * audio client — having to find a button first is the step it exists to save.
      *
-     * Three things hold it back. A non-null [savedInstanceState] means the screen
-     * was rebuilt rather than opened, after a language switch say, and a rebuild
-     * is not an arrival. A session that is already live must not be greeted a
-     * second time, which would cut off whatever it is reading. And without the
-     * microphone permission this would open a permission dialog on top of the one
-     * for notifications; the listener grants it once through the button, and every
-     * launch after that starts on its own.
+     * Two things hold it back, both meaning this is not an arrival: a non-null
+     * [savedInstanceState], so the screen was rebuilt rather than opened, after
+     * a language switch say; and a session that is already live, which must not
+     * be greeted a second time in the middle of reading.
+     *
+     * Otherwise the microphone is settled first, whatever state it is in.
+     * Returns whether it took that question on, since the notification request
+     * has to wait for the answer.
      */
-    private fun startVoiceOnLaunchIfWanted(savedInstanceState: Bundle?) {
-        if (savedInstanceState != null) return
-        if (!prefs.startVoiceOnLaunch) return
-        if (VoiceService.State.running) return
-        if (hasPermission(Manifest.permission.RECORD_AUDIO)) {
-            startVoiceSession()
-            return
-        }
-        // Without the microphone there is nothing to start. A first run waits
-        // for the button, so the request does not collide with the one for
-        // notifications; a microphone switched off in the settings, though, is
-        // worth saying out loud — nothing about this screen would otherwise
-        // explain why the app has gone quiet.
-        val blocked = MicPermissionStep.decide(
-            granted = false,
-            everAsked = prefs.micPermissionAsked,
-            canShowRationale =
-                shouldShowRequestPermissionRationale(Manifest.permission.RECORD_AUDIO)
-        ) == MicPermissionStep.SEND_TO_SETTINGS
-        if (blocked) {
-            micWantedFor = { startVoiceSession() }
-            showMicrophoneBlockedDialog()
-        }
+    private fun startVoiceOnLaunchIfWanted(savedInstanceState: Bundle?): Boolean {
+        if (savedInstanceState != null) return false
+        if (!prefs.startVoiceOnLaunch) return false
+        if (VoiceService.State.running) return false
+        // Settle the microphone here and now: ask for it if it is missing, and
+        // show the way to the settings if Android will no longer ask. Doing
+        // nothing was the bug — the app opened, stayed silent, and gave no hint
+        // that a permission was in the way.
+        withMicrophone { startVoiceSession() }
+        return true
     }
 
     override fun onStart() {
@@ -274,6 +272,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun requestNotificationPermissionIfNeeded() {
+        if (notificationPermissionHandled) return
+        notificationPermissionHandled = true
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
         if (!hasPermission(Manifest.permission.POST_NOTIFICATIONS)) {
             notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
@@ -305,7 +305,10 @@ class MainActivity : AppCompatActivity() {
                 shouldShowRequestPermissionRationale(Manifest.permission.RECORD_AUDIO)
         )
         when (step) {
-            MicPermissionStep.READY -> continueWithMicrophone()
+            MicPermissionStep.READY -> {
+                continueWithMicrophone()
+                requestNotificationPermissionIfNeeded()
+            }
 
             MicPermissionStep.ASK -> {
                 prefs.micPermissionAsked = true
@@ -334,6 +337,7 @@ class MainActivity : AppCompatActivity() {
                 openAppSettings()
             }
             .setNegativeButton(R.string.cancel, null)
+            .setOnDismissListener { requestNotificationPermissionIfNeeded() }
             .show()
     }
 

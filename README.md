@@ -119,9 +119,10 @@ fortgesetzt. Der Hinweis erscheint auch beim Öffnen der App, wenn die
 Sprachsteuerung eigentlich starten sollte — sonst bliebe die App ohne Erklärung
 stumm.
 
-Beim allerersten Start wartet die App dagegen auf den Knopf und fragt dann ganz
-normal; ein erstmaliges Ablehnen führt beim nächsten Versuch noch einmal zur
-regulären Abfrage, nicht zum Hinweis.
+Beim Öffnen klärt die App die Mikrofonfrage, **bevor** sie die Sprachsteuerung
+startet: fehlt die Freigabe, fragt sie regulär; ist sie gesperrt, kommt der
+Hinweis. Die Abfrage für Benachrichtigungen kommt erst danach, damit nicht zwei
+Systemdialoge übereinander liegen.
 
 ## Start
 
