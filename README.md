@@ -124,6 +124,24 @@ startet: fehlt die Freigabe, fragt sie regulär; ist sie gesperrt, kommt der
 Hinweis. Die Abfrage für Benachrichtigungen kommt erst danach, damit nicht zwei
 Systemdialoge übereinander liegen.
 
+### Der geräteweite Mikrofonschalter
+
+Seit Android 12 lässt sich das Mikrofon in den Schnelleinstellungen für **alle**
+Apps auf einmal sperren („Mikrofonzugriff"). Das ist etwas anderes als die
+App-Freigabe — die bleibt dabei erteilt, die App bekommt nur noch Stille.
+
+Diesen Schalter darf keine App auslesen. Android bietet aber selbst an, ihn
+aufzuheben — mit dem Dialog „Gerätemikrofon entsperren?" —, und zwar jeder App,
+die das Mikrofon öffnet, während sie im Vordergrund ist. Die Spracherkennung
+nimmt allerdings im Prozess des Erkennungsdienstes auf, der nie im Vordergrund
+ist; der Dialog kam deshalb nie, und eine Sitzung hörte einfach nichts.
+
+Die App öffnet das Mikrofon deshalb beim Start kurz **selbst**, solange der
+Bildschirm vorne ist. Ist es gesperrt, erscheint Androids Dialog; die App lauscht
+weiter und startet die Sprachsteuerung, sobald Ton ankommt. Lehnst du ab, steht
+auf dem Bildschirm, wo der Schalter sitzt. Auf Geräten ohne diesen Schalter
+entfällt die Prüfung.
+
 ## Start
 
 Die App **startet die Sprachsteuerung beim Öffnen von selbst** — dafür ist sie

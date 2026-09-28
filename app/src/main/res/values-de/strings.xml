@@ -28,6 +28,8 @@
     <string name="mic_blocked_message">Die Sprachsteuerung braucht das Mikrofon, und Android verweigert es, ohne noch einmal zu fragen. Öffne die App-Einstellungen, erlaube Mikrofon und komm zurück — die Sitzung startet dann von selbst.</string>
     <string name="mic_blocked_open_settings">Einstellungen öffnen</string>
     <string name="mic_blocked_no_settings">Die App-Einstellungen ließen sich nicht öffnen. Erlaube Mikrofon für Peroma Voice unter Einstellungen, Apps.</string>
+    <string name="mic_device_blocked_waiting">Das Mikrofon ist geräteweit gesperrt. Tippe im Android-Dialog auf „Entsperren“ — die Sprachsteuerung startet dann von selbst.</string>
+    <string name="mic_device_blocked">Das Mikrofon ist für alle Apps gesperrt. Schalte „Mikrofonzugriff“ in den Schnelleinstellungen wieder ein und tippe dann auf „Sprachsteuerung starten“.</string>
 
     <string name="read_timeline">Timeline vorlesen</string>
     <string name="pauses_state_on">Zwischenfragen: an — tippen zum Ausschalten</string>

@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.SystemClock
 import android.provider.Settings
 import android.view.View
 import android.widget.Button
@@ -49,6 +50,16 @@ class MainActivity : AppCompatActivity() {
 
     /** Keeps the notification request to one per visit to this screen. */
     private var notificationPermissionHandled = false
+
+    /** What waits for the device microphone check to come back open. */
+    private var afterMicCheck: (() -> Unit)? = null
+    private var micCheckRunning = false
+    private var micCheckAbandoned = false
+    private var focusLeftDuringMicCheck = false
+
+    /** Read by the listening thread on every pass; see [DeviceMicProbe.listen]. */
+    @Volatile
+    private var micCheckDeadline = 0L
 
     private val micPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -217,7 +228,7 @@ class MainActivity : AppCompatActivity() {
         // show the way to the settings if Android will no longer ask. Doing
         // nothing was the bug — the app opened, stayed silent, and gave no hint
         // that a permission was in the way.
-        withMicrophone { startVoiceSession() }
+        withMicrophone { afterDeviceMicCheck { startVoiceSession() } }
         return true
     }
 
@@ -238,6 +249,13 @@ class MainActivity : AppCompatActivity() {
 
     override fun onStop() {
         super.onStop()
+        if (micCheckRunning) {
+            // Out of sight, Android feeds the app silence whatever the switch
+            // says, so listening on would only report a block that is not
+            // there. The check starts over once the screen is back.
+            micCheckAbandoned = true
+            micCheckDeadline = 0L
+        }
         VoiceService.State.listener = null
     }
 
@@ -284,7 +302,7 @@ class MainActivity : AppCompatActivity() {
         ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED
 
     private fun onStartVoiceClicked() {
-        withMicrophone { startVoiceSession() }
+        withMicrophone { afterDeviceMicCheck { startVoiceSession() } }
     }
 
     /**
@@ -316,6 +334,93 @@ class MainActivity : AppCompatActivity() {
             }
 
             MicPermissionStep.SEND_TO_SETTINGS -> showMicrophoneBlockedDialog()
+        }
+    }
+
+    /**
+     * Runs [action] once the device microphone is known to let sound through.
+     *
+     * The permission is not enough. Since Android 12 the microphone can be
+     * switched off for every app at once, and a session started behind that
+     * switch hears nothing. See [DeviceMicProbe] for why the app has to open
+     * the microphone itself to get Android's offer to unblock it — and why
+     * that has to happen while this screen is in front.
+     */
+    private fun afterDeviceMicCheck(action: () -> Unit) {
+        if (!DeviceMicProbe.applies(this)) {
+            action()
+            return
+        }
+        afterMicCheck = action
+        if (micCheckRunning) return
+        // Android only offers its dialog to the app the user is looking at, so
+        // the check waits for this window to have the focus.
+        if (hasWindowFocus()) startMicCheck()
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (!hasFocus) {
+            if (micCheckRunning) focusLeftDuringMicCheck = true
+            return
+        }
+        if (micCheckRunning) {
+            if (focusLeftDuringMicCheck) {
+                // The system dialog, or the quick settings, has closed again.
+                // If the microphone was unblocked, sound arrives within a
+                // moment; if not, that was the answer, and waiting on is pointless.
+                micCheckDeadline = minOf(
+                    micCheckDeadline,
+                    SystemClock.elapsedRealtime() + MIC_CHECK_GRACE_MS
+                )
+            }
+            return
+        }
+        if (afterMicCheck != null) startMicCheck()
+    }
+
+    private fun startMicCheck() {
+        micCheckRunning = true
+        micCheckAbandoned = false
+        focusLeftDuringMicCheck = false
+        micCheckDeadline = SystemClock.elapsedRealtime() + MIC_CHECK_MAX_MS
+        val context = applicationContext
+        val waiting = getString(R.string.mic_device_blocked_waiting)
+        Background.run(
+            work = {
+                DeviceMicProbe.listen(
+                    context,
+                    deadline = { micCheckDeadline },
+                    onNothingYet = { Background.onMain { setStatus(waiting) } }
+                )
+            },
+            onSuccess = { outcome -> onMicCheckDone(outcome) },
+            onError = { onMicCheckDone(DeviceMicProbe.Outcome.UNKNOWN) }
+        )
+    }
+
+    private fun onMicCheckDone(outcome: DeviceMicProbe.Outcome) {
+        micCheckRunning = false
+        if (isFinishing || isDestroyed) return
+        if (micCheckAbandoned) {
+            // Abandoned when the screen went away; if it is already back,
+            // the focus change that would restart the check has come and gone.
+            if (hasWindowFocus() && afterMicCheck != null) startMicCheck()
+            return
+        }
+        when (outcome) {
+            DeviceMicProbe.Outcome.OPEN, DeviceMicProbe.Outcome.UNKNOWN -> {
+                val action = afterMicCheck ?: return
+                afterMicCheck = null
+                action()
+            }
+
+            DeviceMicProbe.Outcome.BLOCKED -> {
+                // Not started over automatically: that would bring the system
+                // dialog straight back after the user has just declined it.
+                afterMicCheck = null
+                setStatus(getString(R.string.mic_device_blocked))
+            }
         }
     }
 
@@ -360,7 +465,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun onDictateClicked() {
-        withMicrophone { VoiceService.send(this, VoiceService.ACTION_NEW_POST) }
+        withMicrophone {
+            afterDeviceMicCheck { VoiceService.send(this, VoiceService.ACTION_NEW_POST) }
+        }
     }
 
     private fun logout() {
@@ -377,6 +484,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private companion object {
+        /** How long the check listens while Android's dialog waits for an answer. */
+        const val MIC_CHECK_MAX_MS = 30_000L
+
+        /** Time for sound to arrive once the dialog has closed on an unblock. */
+        const val MIC_CHECK_GRACE_MS = 2_000L
+
         /**
          * Message to show once the screen has been rebuilt.
          *

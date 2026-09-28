@@ -28,6 +28,8 @@
     <string name="mic_blocked_message">音声操作にはマイクが必要ですが、Android は再度たずねることなく拒否しています。アプリの設定を開いてマイクを許可し、戻ってきてください。そのままセッションが始まります。</string>
     <string name="mic_blocked_open_settings">設定を開く</string>
     <string name="mic_blocked_no_settings">アプリの設定を開けませんでした。設定のアプリから Peroma Voice のマイクを許可してください。</string>
+    <string name="mic_device_blocked_waiting">マイクがデバイス全体でブロックされています。Android のダイアログで「ブロックを解除」を押すと、音声操作が自動で始まります。</string>
+    <string name="mic_device_blocked">マイクがすべてのアプリでブロックされています。クイック設定で「マイクへのアクセス」をオンに戻してから、「音声操作を開始」を押してください。</string>
 
     <string name="read_timeline">タイムラインを読む</string>
     <string name="pauses_state_on">投稿ごとに尋ねる: オン — 押すとオフ</string>
