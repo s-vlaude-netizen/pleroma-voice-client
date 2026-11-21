@@ -136,8 +136,9 @@ app keeps its permission, it just receives silence.
 
 No app may read this switch. But Android itself offers to lift it — with the dialog
 "Unblock device microphone?" — to any app that opens the microphone while it is in the
-foreground. A voice session, however, records in a background service that is never in
-the foreground; the dialog therefore never came, and a session simply heard nothing.
+foreground. Speech recognition, however, records in the process of the recognition
+service, which is never in the foreground; the dialog therefore never came, and a
+session simply heard nothing.
 
 The app therefore briefly opens the microphone **itself** at start-up, while the
 screen is in front. If it is blocked, Android's dialog appears; the app keeps listening
@@ -201,9 +202,13 @@ taken away from it. Only when it can make nothing of the utterance do the others
 their turn, and there the whole utterance has to be the command — a "bye" in the
 middle of a sentence therefore ends nothing.
 
-**Dictation follows this choice automatically.** For every recording the app tells the
-speech model the desired language (`en`, `de`, `ja`) — there is nothing to set in the
-system settings. The same model understands all three languages.
+**Dictation follows this choice automatically.** With every recording the app tells
+the recognition service the desired language (`en-US`, `de-DE`, `ja-JP`) — there is
+nothing to set in the system settings. Two caveats: the service has to know the
+language (offline this needs the respective language pack, downloadable under *Voice
+input → Google → Offline speech recognition*), and some services ignore the request
+and use the system language — Samsung's own is known for this. If that happens,
+choose Google as the voice input.
 
 The choice applies to **everything**: interface, announcements, recognized commands
 and the voice that reads the timeline. Switching in the middle of a session discards
@@ -286,8 +291,8 @@ If it sounds tinny, a better service helps:
 
 Alternatively there are free engines such as RHVoice. Restart the app after switching.
 
-Speech *recognition* does **not** use Android's built-in services but its own model on
-the device — see [On-device speech recognition](#on-device-speech-recognition).
+Speech recognition also uses Android's built-in facilities (`SpeechRecognizer`). If
+none is set up, the app says so and ends the session — the buttons keep working.
 
 ### When the session is killed in the background
 
@@ -304,13 +309,7 @@ cd pleroma-voice-client
 ```
 
 The APK is then in `app/build/outputs/apk/release/`.
-Requires JDK 17, the Android SDK (compile SDK 34), NDK 26.1 and CMake 3.22 (both via
-the SDK manager). The first build downloads transcribe.cpp from crates.io (against a
-fixed checksum) and compiles it for ARM — this takes a few minutes.
-
-A test that runs the real model through JNI on the desktop JVM is optional and needs
-a desktop build of the library; see `LocalSttModelTest.kt` for the environment
-variables.
+Requires JDK 17 and the Android SDK (compile SDK 34).
 
 ### Signing
 
@@ -347,13 +346,10 @@ Changing the key requires uninstalling again on every device.
 | `SpeechText.kt` | HTML → speakable text (links, hashtags, mentions, entities) |
 | `Strings.kt` | all spoken texts per language, plus language selection |
 | `VoiceCommands.kt` | voice commands per language → commands, matched word by word |
-| `LocalRecognizer.kt` | recording, detecting the end of speech, handing the result to the dialog |
-| `Endpointer.kt` | level gate: when an utterance starts and ends |
-| `LocalStt.kt`, `cpp/peroma_stt.cpp` | JNI bridge to transcribe.cpp |
-| `SpeechModel.kt` | model file: location, download, checksum |
 | `VoiceService.kt` | dialog state machine: speaking ↔ listening, wake lock, tones |
 | `TtsSetup.kt` | picks the best installed offline voice for the chosen language |
 | `MainActivity.kt` | starting the voice session, optional buttons |
+| `LegacyCleanup.kt` | deletes the speech model that 2.10.x downloaded |
 | `LoginActivity.kt` | instance selection and OAuth redirect |
 
 The dialog flow in `VoiceService` is a state machine with the stages `MENU`,
@@ -364,50 +360,26 @@ stop.
 
 The app needs no networking library (`HttpURLConnection` + `org.json`).
 
-## On-device speech recognition
+## Speech recognition
 
-Since version 2.10 the app recognizes speech **by itself and fully offline**, instead
-of asking Android's `SpeechRecognizer` (which on most phones leads to Google). The
-engine is [transcribe.cpp](https://github.com/handy-computer/transcribe.cpp), the same
-library that powers the dictation app [Handy](https://handy.computer).
+The app uses Android's `SpeechRecognizer`, i.e. whatever voice-input service the
+device has set up. On most phones that is Google's, which may send the audio to
+Google for recognition — see [Privacy](#privacy).
 
-- **Model:** Whisper Small (8-bit, 270 MB) from Handy's model catalogue. It
-  understands English, German and Japanese and is downloaded on first start with the
-  *Download speech model* button — once, preferably on Wi-Fi. The download can be
-  resumed and is verified against a fixed SHA-256 checksum. After that, speech
-  recognition needs no network.
-- **Without the model** no voice session starts; the app says so. It deliberately does
-  **not** fall back to Google.
-- **Flow:** `LocalRecognizer` records via `AudioRecord`, `Endpointer` detects the start
-  and end of speech (a simple level gate), `LocalStt` hands the utterance to the engine
-  via JNI (`app/src/main/cpp/peroma_stt.cpp`).
-- **Speed:** An utterance is recognized in one go after you stop speaking; on a recent
-  phone that takes a few seconds. It runs on the CPU only and is built for 64-bit ARM
-  devices (`arm64-v8a`).
-- **Hardening:** The engine ships debug code that, after an internal crash, forks a
-  child process running `gdb` or `lldb` and attaches it to the app's own process
-  (`fork`, `execlp`, `prctl`). A phone has no use for that, and it is the kind of
-  behavior malware scanners look for, so the build switches it off
-  (`app/src/main/cpp/CMakeLists.txt`; the build fails if the upstream source changes
-  and the patch no longer applies). The library also exports only its three JNI
-  functions, so the linker drops code that is never called — among it the code that
-  loads modules with `dlopen`. The result contains no networking functions and does
-  not start processes. None of this is a claim about how Play Protect rates
-  sideloaded builds.
-- **Quality:** Whisper Small is much better than a tiny offline recognizer, but still
-  makes mistakes with proper names and hashtags. Noise it cannot read it sometimes
-  answers with a stock phrase; input in `[…]` or `(…)` is treated as silence by the
-  app.
+An on-device alternative was tried in 2.10.0 and 2.10.1: Whisper Small, run through
+[transcribe.cpp](https://github.com/handy-computer/transcribe.cpp), the engine behind
+[Handy](https://handy.computer). Its recognition turned out worse than the system's,
+so 2.11.0 goes back. The code is in the git history (commits `e8ba0c6` and
+`ec8961d`), and 2.11.0 deletes the 270 MB model those versions had downloaded.
 
 ## Privacy
 
 The access token and the instance address are stored exclusively locally, in the
 app-private `SharedPreferences`. There is no server of the app, no analytics and no
-third-party SDKs. Speech recognition runs entirely on the device: recordings are
-neither stored nor sent. The app needs the network for Pleroma itself and for the
-one-time model download from Hugging Face.
+third-party SDKs. Speech recognition runs through the Android service set up on the
+device; depending on the device, that service may send the recording to its provider
+for recognition.
 
 ## License
 
-MIT — see [LICENSE](LICENSE). transcribe.cpp (MIT) is downloaded during the build and
-not copied into this repository; the Whisper model is under Apache-2.0.
+MIT — see [LICENSE](LICENSE).

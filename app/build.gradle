@@ -21,42 +21,6 @@ def usingEnvKeystore = envKeystore != null && !envKeystore.isEmpty() && file(env
 def keystoreFile = usingEnvKeystore ? file(envKeystore) : file("peroma-release.jks")
 def hasReleaseKeystore = keystoreFile.exists()
 
-// The speech engine: transcribe.cpp, the library behind Handy
-// (https://handy.computer), MIT licensed. It is downloaded rather than copied
-// into this repository, from the crate that Handy itself builds against, and
-// checked against a fixed hash so the build cannot silently pick up other code.
-def transcribeVersion = '0.4.2'
-def transcribeSha256 = '32f94fb1e9a3033101bbd500d02993cfc95e315f24417038fd42f1fd80e1059a'
-def transcribeRoot = layout.buildDirectory.dir('transcribe-src').get().asFile
-def transcribeSrc = new File(transcribeRoot, "transcribe-cpp-sys-${transcribeVersion}")
-
-tasks.register('fetchTranscribe') {
-    outputs.dir(transcribeSrc)
-    onlyIf { !new File(transcribeSrc, 'CMakeLists.txt').exists() }
-    doLast {
-        def archive = new File(transcribeRoot, "transcribe-cpp-sys-${transcribeVersion}.crate")
-        transcribeRoot.mkdirs()
-        new URL("https://static.crates.io/crates/transcribe-cpp-sys/transcribe-cpp-sys-${transcribeVersion}.crate")
-            .withInputStream { input -> archive.withOutputStream { it << input } }
-        def digest = java.security.MessageDigest.getInstance('SHA-256')
-            .digest(archive.bytes).collect { String.format('%02x', it) }.join()
-        if (digest != transcribeSha256) {
-            archive.delete()
-            throw new GradleException("transcribe-cpp-sys checksum mismatch: got ${digest}")
-        }
-        copy {
-            from tarTree(resources.gzip(archive))
-            into transcribeRoot
-        }
-    }
-}
-
-tasks.configureEach { task ->
-    if (task.name.startsWith('configureCMake') || task.name.startsWith('buildCMake')) {
-        task.dependsOn 'fetchTranscribe'
-    }
-}
-
 android {
     namespace 'de.peroma.voice'
     compileSdk 34
@@ -65,28 +29,9 @@ android {
         applicationId "de.peroma.voice"
         minSdk 24
         targetSdk 34
-        versionCode 21
-        versionName "2.10.1"
-
-        ndk {
-            // 64-bit ARM covers every phone that can run the speech model at a
-            // usable speed. Add "x86_64" here to run it in an emulator.
-            abiFilters 'arm64-v8a'
-        }
-        externalNativeBuild {
-            cmake {
-                arguments "-DTRANSCRIBE_SRC=${transcribeSrc}"
-            }
-        }
+        versionCode 22
+        versionName "2.11.0"
     }
-
-    externalNativeBuild {
-        cmake {
-            path file('src/main/cpp/CMakeLists.txt')
-            version '3.22.1'
-        }
-    }
-    ndkVersion '26.1.10909125'
 
     signingConfigs {
         release {
@@ -103,14 +48,6 @@ android {
         release {
             minifyEnabled false
             signingConfig hasReleaseKeystore ? signingConfigs.release : signingConfigs.debug
-        }
-    }
-
-    testOptions {
-        unitTests.all {
-            // Lets LocalSttModelTest load a desktop build of the JNI library.
-            def libDir = System.getenv('PEROMA_STT_LIB_DIR')
-            if (libDir) jvmArgs "-Djava.library.path=${libDir}"
         }
     }
 

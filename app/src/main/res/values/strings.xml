@@ -20,11 +20,6 @@
 
     <string name="start_voice">Start voice control</string>
     <string name="stop_voice">Stop voice control</string>
-    <string name="download_model">Download speech model (270 MB, once)</string>
-    <string name="model_needed">Speech recognition runs on this phone, without Google. It needs a speech model first: tap the download button, ideally on Wi-Fi.</string>
-    <string name="model_downloading">Downloading speech model: %1$d %%</string>
-    <string name="model_ready">Speech model installed. You can start voice control now.</string>
-    <string name="model_failed">Download failed (%1$s). Tap the button to resume.</string>
     <string name="starting_voice">Starting voice control …</string>
     <string name="manual_hint">Optional: the same functions as buttons, for when speech recognition is unavailable.</string>
     <string name="main_intro">Signed in as %1$s on %2$s.\n\nTap Start voice control — after that you can switch the screen off and do everything by voice.</string>

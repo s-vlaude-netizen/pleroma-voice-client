@@ -20,11 +20,6 @@
 
     <string name="start_voice">Sprachsteuerung starten</string>
     <string name="stop_voice">Sprachsteuerung beenden</string>
-    <string name="download_model">Sprachmodell herunterladen (270 MB, einmalig)</string>
-    <string name="model_needed">Die Spracherkennung läuft auf diesem Handy, ohne Google. Dafür braucht sie zuerst ein Sprachmodell: Tippe auf den Download-Knopf, am besten im WLAN.</string>
-    <string name="model_downloading">Sprachmodell wird geladen: %1$d %%</string>
-    <string name="model_ready">Sprachmodell installiert. Du kannst die Sprachsteuerung jetzt starten.</string>
-    <string name="model_failed">Download fehlgeschlagen (%1$s). Tippe auf den Knopf, um fortzufahren.</string>
     <string name="starting_voice">Sprachsteuerung wird gestartet …</string>
     <string name="manual_hint">Optional: dieselben Funktionen per Knopf, falls die Spracherkennung gerade nicht verfügbar ist.</string>
     <string name="main_intro">Angemeldet als %1$s auf %2$s.\n\nTippe auf Sprachsteuerung starten — danach kannst du den Bildschirm ausschalten und alles per Stimme steuern.</string>

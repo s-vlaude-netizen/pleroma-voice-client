@@ -20,14 +20,6 @@
             android:focusable="true" />
 
         <Button
-            android:id="@+id/btnDownloadModel"
-            style="@style/VoiceButton"
-            android:minHeight="96dp"
-            android:textSize="20sp"
-            android:visibility="gone"
-            android:text="@string/download_model" />
-
-        <Button
             android:id="@+id/btnStartVoice"
             style="@style/VoiceButton"
             android:minHeight="96dp"
