@@ -24,18 +24,6 @@ enum class Language(val tag: String) {
     val hasWordBoundaries: Boolean
         get() = this != JAPANESE
 
-    /**
-     * Used to ask the recognizer for a language. The region is included,
-     * because several recognition services honour a full BCP-47 tag and quietly
-     * fall back to the system language when given a bare one.
-     */
-    val recognizerTag: String
-        get() = when (this) {
-            ENGLISH -> "en-US"
-            GERMAN -> "de-DE"
-            JAPANESE -> "ja-JP"
-        }
-
     /** The language's own name, so the button reads the same in every locale. */
     val displayName: String
         get() = when (this) {
@@ -132,10 +120,9 @@ interface Strings {
     val sessionStarted: String
     val sessionEnded: String
     val loggedOut: String
-    val noRecognizer: String
     val missingMicPermission: String
     val recognizerRefusedMic: String
-    fun recognizerDiagnostic(packages: List<String>): String
+    val modelMissing: String
     val nothingHeardEnding: String
     val stillListening: String
     val notUnderstood: String
@@ -237,21 +224,14 @@ object EnglishStrings : Strings {
             "Say read timeline, new post, or help."
     override val sessionEnded = "Voice control ended. See you."
     override val loggedOut = "You are logged out."
-    override val noRecognizer =
-        "This device has no speech recognition set up. Voice control will stop."
     override val missingMicPermission =
         "I do not have microphone permission. Please grant it in the app."
     override val recognizerRefusedMic =
-        "The speech recognition service is refusing the microphone, even though this " +
-            "app has permission. Check that your voice input app — usually Google — " +
-            "has microphone permission, or pick a different voice input service in " +
-            "the system settings."
-
-    override fun recognizerDiagnostic(packages: List<String>): String {
-        val listed = if (packages.isEmpty()) "none found" else packages.joinToString(", ")
-        return "Speech recognition refused the microphone although this app holds " +
-            "RECORD_AUDIO. Recognition services installed: $listed."
-    }
+        "The microphone is not delivering any audio, even though this app has " +
+            "permission. Another app may be using it, or the system has blocked it."
+    override val modelMissing =
+        "The speech model is not installed yet. Open the app and download it " +
+            "once. Voice control will stop."
     override val nothingHeardEnding = "I cannot hear anything, so I am ending voice control."
     override val stillListening = "I am listening. Say help if you need the commands."
     override val notUnderstood = "I did not understand that. Say help for the available commands."
@@ -370,22 +350,14 @@ object GermanStrings : Strings {
             "Sag Timeline vorlesen, Neuer Beitrag, oder Hilfe."
     override val sessionEnded = "Sprachsteuerung beendet. Bis bald."
     override val loggedOut = "Du bist abgemeldet."
-    override val noRecognizer =
-        "Auf diesem Gerät ist keine Spracherkennung eingerichtet. " +
-            "Die Sprachsteuerung wird beendet."
     override val missingMicPermission =
         "Mir fehlt die Freigabe für das Mikrofon. Bitte in der App erteilen."
     override val recognizerRefusedMic =
-        "Der Spracherkennungsdienst verweigert das Mikrofon, obwohl diese App die " +
-            "Freigabe hat. Prüfe, ob deine Spracheingabe-App — meist Google — " +
-            "Mikrofonzugriff hat, oder wähle in den Systemeinstellungen einen " +
-            "anderen Dienst für die Spracheingabe."
-
-    override fun recognizerDiagnostic(packages: List<String>): String {
-        val listed = if (packages.isEmpty()) "keine gefunden" else packages.joinToString(", ")
-        return "Spracherkennung verweigert das Mikrofon, obwohl die App RECORD_AUDIO " +
-            "besitzt. Installierte Erkennungsdienste: $listed."
-    }
+        "Das Mikrofon liefert keinen Ton, obwohl diese App die Freigabe hat. " +
+            "Vielleicht nutzt eine andere App es gerade, oder das System hat es gesperrt."
+    override val modelMissing =
+        "Das Sprachmodell ist noch nicht installiert. Öffne die App und lade es " +
+            "einmal herunter. Die Sprachsteuerung wird beendet."
     override val nothingHeardEnding = "Ich höre nichts mehr und beende die Sprachsteuerung."
     override val stillListening = "Ich höre zu. Sag Hilfe, wenn du die Befehle brauchst."
     override val notUnderstood =
@@ -507,20 +479,14 @@ object JapaneseStrings : Strings {
             "タイムライン、新しい投稿、またはヘルプと言ってください。"
     override val sessionEnded = "音声操作を終了します。またどうぞ。"
     override val loggedOut = "ログアウトしました。"
-    override val noRecognizer =
-        "この端末では音声認識が設定されていません。音声操作を終了します。"
     override val missingMicPermission =
         "マイクの許可がありません。アプリで許可してください。"
     override val recognizerRefusedMic =
-        "アプリには許可があるのに、音声認識サービスがマイクを拒否しています。" +
-            "音声入力アプリ、通常は Google にマイクの許可があるか確認するか、" +
-            "システム設定で別の音声入力サービスを選んでください。"
-
-    override fun recognizerDiagnostic(packages: List<String>): String {
-        val listed = if (packages.isEmpty()) "見つかりません" else packages.joinToString(", ")
-        return "アプリは RECORD_AUDIO を持っていますが、音声認識がマイクを拒否しました。" +
-            "インストール済みの音声認識サービス: $listed。"
-    }
+        "アプリには許可があるのに、マイクから音声が届きません。" +
+            "他のアプリが使用中か、システムがマイクをブロックしている可能性があります。"
+    override val modelMissing =
+        "音声認識モデルがまだインストールされていません。アプリを開いて一度ダウンロードしてください。" +
+            "音声操作を終了します。"
 
     override val nothingHeardEnding = "何も聞こえないので音声操作を終了します。"
     override val stillListening = "聞いています。コマンドが必要ならヘルプと言ってください。"

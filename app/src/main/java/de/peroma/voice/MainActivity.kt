@@ -40,6 +40,7 @@ class MainActivity : AppCompatActivity() {
     private var attachedLanguage: Language? = null
     private lateinit var statusText: TextView
     private lateinit var startButton: Button
+    private lateinit var downloadButton: Button
     private lateinit var pauseToggle: Button
     private lateinit var warningsToggle: Button
     private lateinit var autoStartToggle: Button
@@ -109,6 +110,9 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         statusText = findViewById(R.id.statusText)
         startButton = findViewById(R.id.btnStartVoice)
+        downloadButton = findViewById(R.id.btnDownloadModel)
+        downloadButton.setOnClickListener { downloadModel() }
+        updateModelButton()
 
         startButton.setOnClickListener { onStartVoiceClicked() }
         findViewById<Button>(R.id.btnStopVoice).setOnClickListener {
@@ -224,6 +228,10 @@ class MainActivity : AppCompatActivity() {
         if (savedInstanceState != null) return false
         if (!prefs.startVoiceOnLaunch) return false
         if (VoiceService.State.running) return false
+        if (!SpeechModel.isInstalled(this)) {
+            if (!downloadingModel) setStatus(getString(R.string.model_needed))
+            return false
+        }
         // Settle the microphone here and now: ask for it if it is missing, and
         // show the way to the settings if Android will no longer ask. Doing
         // nothing was the bug — the app opened, stayed silent, and gave no hint
@@ -242,6 +250,7 @@ class MainActivity : AppCompatActivity() {
         VoiceService.State.listener = { state ->
             Background.onMain { statusText.text = state.statusText }
         }
+        updateModelButton()
         // Keep the intro on screen until the service actually reports something.
         val current = VoiceService.State.current.statusText
         if (current.isNotBlank()) statusText.text = current
@@ -302,6 +311,10 @@ class MainActivity : AppCompatActivity() {
         ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED
 
     private fun onStartVoiceClicked() {
+        if (!SpeechModel.isInstalled(this)) {
+            if (!downloadingModel) setStatus(getString(R.string.model_needed))
+            return
+        }
         withMicrophone { afterDeviceMicCheck { startVoiceSession() } }
     }
 
@@ -478,6 +491,47 @@ class MainActivity : AppCompatActivity() {
         finish()
     }
 
+    private fun updateModelButton() {
+        downloadButton.visibility =
+            if (SpeechModel.isInstalled(this)) View.GONE else View.VISIBLE
+        downloadButton.isEnabled = !downloadingModel
+    }
+
+    /** Fetches the speech model once; a partial download is resumed. */
+    private fun downloadModel() {
+        if (downloadingModel) return
+        downloadingModel = true
+        updateModelButton()
+        setStatus(getString(R.string.model_downloading, 0))
+        val app = applicationContext
+        var lastPercent = -1
+        Background.run(
+            work = {
+                SpeechModel.download(app, isCancelled = { false }) { done, total ->
+                    val percent = (done * 100 / total).toInt()
+                    if (percent != lastPercent) {
+                        lastPercent = percent
+                        Background.onMain {
+                            if (downloadingModel) {
+                                statusText.text = getString(R.string.model_downloading, percent)
+                            }
+                        }
+                    }
+                }
+            },
+            onSuccess = {
+                downloadingModel = false
+                updateModelButton()
+                setStatus(getString(R.string.model_ready))
+            },
+            onError = { e ->
+                downloadingModel = false
+                updateModelButton()
+                setStatus(getString(R.string.model_failed, e.message ?: e.javaClass.simpleName))
+            }
+        )
+    }
+
     private fun setStatus(message: String) {
         statusText.text = message
         statusText.announceForAccessibility(message)
@@ -497,5 +551,13 @@ class MainActivity : AppCompatActivity() {
          * announcing the new language is parked here rather than in a field.
          */
         var pendingStatus: String? = null
+
+        /**
+         * Whether the model is being downloaded. Held here for the same reason:
+         * rotating the screen must not allow a second download to write into
+         * the same partial file.
+         */
+        @Volatile
+        var downloadingModel = false
     }
 }

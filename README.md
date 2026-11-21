@@ -201,13 +201,9 @@ vollständig geprüft, sodass ihr nichts weggenommen werden kann. Erst wenn sie 
 der Äußerung nichts anfangen kann, kommen die anderen zum Zug, und dort muss die
 ganze Äußerung der Befehl sein — ein „bye" mitten im Satz beendet also nichts.
 
-**Diktieren folgt dieser Wahl automatisch.** Die App teilt dem Erkennungsdienst bei
-jeder Aufnahme die gewünschte Sprache mit (`en-US`, `de-DE`, `ja-JP`) — in den
-Systemeinstellungen ist dafür nichts zu tun. Zwei Vorbehalte: Der Dienst muss die
-Sprache beherrschen (offline braucht es das jeweilige Sprachpaket, nachzuladen unter
-*Spracheingabe → Google → Offline-Spracherkennung*), und einzelne Dienste ignorieren
-die Angabe und nehmen die Systemsprache — Samsungs eigener ist dafür bekannt. Hilft
-dann: als Spracheingabe Google wählen.
+**Diktieren folgt dieser Wahl automatisch.** Die App sagt dem Sprachmodell bei jeder
+Aufnahme die gewünschte Sprache (`en`, `de`, `ja`) — in den Systemeinstellungen ist
+dafür nichts zu tun. Dasselbe Modell versteht alle drei Sprachen.
 
 Die Wahl gilt für **alles**: Oberfläche, Ansagen, erkannte Befehle und die
 Stimme, die die Timeline vorliest. Ein Wechsel mitten in der Sitzung verwirft die
@@ -291,9 +287,8 @@ Klingt es blechern, hilft ein besserer Dienst:
 
 Alternativ gibt es freie Engines wie RHVoice. Nach dem Wechsel die App neu starten.
 
-Die Spracherkennung nutzt ebenfalls die Android-Bordmittel (`SpeechRecognizer`).
-Ist keine eingerichtet, sagt die App das an und beendet die Sitzung — die Knöpfe
-funktionieren dann weiter.
+Die Spracherkennung nutzt **nicht** die Android-Bordmittel, sondern ein eigenes
+Modell auf dem Gerät — siehe [Spracherkennung auf dem Gerät](#spracherkennung-auf-dem-gerät).
 
 ### Wenn die Sitzung im Hintergrund abbricht
 
@@ -310,7 +305,13 @@ cd pleroma-voice-client
 ```
 
 Die APK liegt danach unter `app/build/outputs/apk/release/`.
-Benötigt JDK 17 und das Android SDK (Compile-SDK 34).
+Benötigt JDK 17, das Android SDK (Compile-SDK 34), NDK 26.1 und CMake 3.22 (beides
+über den SDK-Manager). Der erste Build lädt transcribe.cpp von crates.io (mit fester
+Prüfsumme) und übersetzt es für ARM — das dauert einige Minuten.
+
+Ein Test, der das echte Modell über JNI auf dem Desktop-JVM laufen lässt, ist
+optional und braucht eine Desktop-Version der Bibliothek; siehe
+`LocalSttModelTest.kt` für die Umgebungsvariablen.
 
 ### Signierung
 
@@ -349,6 +350,10 @@ Ein Wechsel des Schlüssels verlangt erneut ein Deinstallieren auf jedem Gerät.
 | `SpeechText.kt` | HTML → vorlesbarer Text (Links, Hashtags, Erwähnungen, Entities) |
 | `Strings.kt` | alle gesprochenen Texte je Sprache, plus Sprachauswahl |
 | `VoiceCommands.kt` | Sprachbefehle je Sprache → Kommandos, wortweise geprüft |
+| `LocalRecognizer.kt` | Aufnahme, Sprechende erkennen, Ergebnis an den Dialog |
+| `Endpointer.kt` | Pegelfilter: wann beginnt/endet eine Äußerung |
+| `LocalStt.kt`, `cpp/peroma_stt.cpp` | JNI-Brücke zu transcribe.cpp |
+| `SpeechModel.kt` | Modelldatei: Speicherort, Download, Prüfsumme |
 | `VoiceService.kt` | Dialog-Zustandsautomat: sprechen ↔ zuhören, Wake-Lock, Töne |
 | `TtsSetup.kt` | wählt die beste installierte deutsche Offline-Stimme |
 | `MainActivity.kt` | Start der Sprachsitzung, optionale Knöpfe |
@@ -362,14 +367,40 @@ weitergelesen oder beendet wird.
 
 Die App kommt ohne Netzwerk-Bibliothek aus (`HttpURLConnection` + `org.json`).
 
+## Spracherkennung auf dem Gerät
+
+Seit Version 2.10 erkennt die App Sprache **selbst und vollständig offline**, statt
+den Android-`SpeechRecognizer` zu fragen (der auf den meisten Telefonen zu Google
+führt). Die Engine ist [transcribe.cpp](https://github.com/handy-computer/transcribe.cpp),
+dieselbe Bibliothek, auf der die Diktier-App [Handy](https://handy.computer) läuft.
+
+- **Modell:** Whisper Small (8 Bit, 270 MB) aus Handys Modellkatalog. Es versteht
+  Englisch, Deutsch und Japanisch und wird beim ersten Start über den Knopf
+  *Sprachmodell herunterladen* geladen — einmalig, am besten im WLAN. Der Download
+  ist fortsetzbar und wird gegen eine feste SHA-256-Prüfsumme geprüft. Danach
+  braucht die Spracherkennung kein Netz mehr.
+- **Ohne Modell** startet keine Sprachsitzung; die App weist darauf hin. Auf
+  Google fällt sie bewusst **nicht** zurück.
+- **Ablauf:** `LocalRecognizer` nimmt über `AudioRecord` auf, `Endpointer` erkennt
+  Sprechbeginn und -ende (einfacher Pegelfilter), `LocalStt` übergibt die Äußerung
+  per JNI (`app/src/main/cpp/peroma_stt.cpp`) an die Engine.
+- **Geschwindigkeit:** Eine Äußerung wird nach dem Sprechen am Stück erkannt; auf
+  einem aktuellen Telefon dauert das ein paar Sekunden. Der Lauf nutzt nur die CPU
+  und ist auf 64-Bit-ARM-Geräte (`arm64-v8a`) gebaut.
+- **Qualität:** Whisper Small ist deutlich besser als eine Mini-Offline-Erkennung,
+  macht bei Eigennamen und Hashtags aber weiter Fehler. Rauschen, das es nicht
+  lesen kann, beantwortet es manchmal mit einer Floskel; Eingaben in `[…]` oder
+  `(…)` behandelt die App als Stille.
+
 ## Datenschutz
 
 Zugangstoken und Instanzadresse liegen ausschließlich lokal in den app-privaten
 `SharedPreferences`. Es gibt keinen Server der App, keine Analytik und keine
-Drittanbieter-SDKs. Die Spracherkennung läuft über den auf dem Gerät
-eingerichteten Android-Dienst; je nach Gerät kann dieser die Aufnahme zur
-Erkennung an den jeweiligen Anbieter senden.
+Drittanbieter-SDKs. Die Spracherkennung läuft vollständig auf dem Gerät: Aufnahmen
+werden weder gespeichert noch gesendet. Das Netz braucht die App für Pleroma selbst
+und für den einmaligen Modell-Download von Hugging Face.
 
 ## Lizenz
 
-MIT — siehe [LICENSE](LICENSE).
+MIT — siehe [LICENSE](LICENSE). transcribe.cpp (MIT) wird beim Bauen geladen und
+nicht in dieses Repository kopiert; das Whisper-Modell steht unter Apache-2.0.

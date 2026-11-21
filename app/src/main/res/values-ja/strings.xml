@@ -20,6 +20,11 @@
 
     <string name="start_voice">音声操作を開始</string>
     <string name="stop_voice">音声操作を終了</string>
+    <string name="download_model">音声認識モデルをダウンロード（270 MB、初回のみ）</string>
+    <string name="model_needed">音声認識はGoogleを使わず、この端末の中で動きます。最初に音声認識モデルが必要です。ダウンロードボタンを押してください（Wi-Fi推奨）。</string>
+    <string name="model_downloading">音声認識モデルをダウンロード中: %1$d %%</string>
+    <string name="model_ready">音声認識モデルをインストールしました。音声操作を開始できます。</string>
+    <string name="model_failed">ダウンロードに失敗しました（%1$s）。ボタンを押すと再開します。</string>
     <string name="starting_voice">音声操作を開始しています …</string>
     <string name="manual_hint">補助: 音声認識が使えないときのために、同じ機能をボタンでも用意しています。</string>
     <string name="main_intro">%2$s に %1$s としてログインしています。\n\n「音声操作を開始」を押してください。そのあとは画面を消したまま、すべて音声で操作できます。</string>

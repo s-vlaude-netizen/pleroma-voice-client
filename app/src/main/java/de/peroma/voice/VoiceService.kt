@@ -15,15 +15,10 @@ import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.media.ToneGenerator
 import android.os.Build
-import android.os.Bundle
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.os.PowerManager
-import android.speech.RecognitionListener
-import android.speech.RecognitionService
-import android.speech.RecognizerIntent
-import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import androidx.core.app.NotificationCompat
@@ -67,7 +62,7 @@ class VoiceService : Service() {
     private var language = Language.ENGLISH
     private var strings: Strings = EnglishStrings
 
-    private var recognizer: SpeechRecognizer? = null
+    private val recognizer = LocalRecognizer { engine() }
     private var listening = false
     private var listenTimeout: Runnable? = null
     private var listenStart: Runnable? = null
@@ -122,6 +117,7 @@ class VoiceService : Service() {
         }
         lastStatus = strings.ready
         createNotificationChannel()
+        preloadEngine()
         initTts()
     }
 
@@ -301,58 +297,30 @@ class VoiceService : Service() {
     }
 
     private fun listen(windowMs: Long) {
-        if (!SpeechRecognizer.isRecognitionAvailable(this)) {
-            speak(strings.noRecognizer, After.STOP_SESSION)
+        if (!SpeechModel.isInstalled(this)) {
+            speak(strings.modelMissing, After.STOP_SESSION)
             return
         }
 
         cancelListening()
         abandonAudioFocus()
 
-        val speech = recognizer ?: SpeechRecognizer.createSpeechRecognizer(this).also {
-            it.setRecognitionListener(recognitionListener)
-            recognizer = it
-        }
-
         beep(ToneGenerator.TONE_PROP_BEEP)
         listening = true
-
-        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-            putExtra(
-                RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
-            )
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE, language.recognizerTag)
-            putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
-            putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, false)
-            // Several recognition services, Google's among them, expect to be
-            // told who is calling and misbehave when it is missing.
-            putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, packageName)
-        }
 
         // Open the microphone only once the earcon has died away. Starting it
         // immediately means the recognizer hears our own beep and reports that
         // it understood nothing.
         val start = Runnable {
             if (!listening) return@Runnable
-            try {
-                speech.startListening(intent)
-            } catch (e: Exception) {
-                listening = false
-                retryAfterRecognizerTrouble()
-                return@Runnable
-            }
+            recognizer.start(language.tag, recognitionListener)
 
-            // The engine's own silence timeout is only a hint, so close the
-            // window ourselves — otherwise the pause between posts drags on.
+            // Close the window ourselves — otherwise the pause between posts
+            // drags on. Speech starting cancels it, see onSpeechStarted.
             val timeout = Runnable {
                 if (listening) {
                     listening = false
-                    try {
-                        recognizer?.cancel()
-                    } catch (e: Exception) {
-                        // Nothing useful to do; treat it as silence below.
-                    }
+                    recognizer.cancel()
                     handleSilence()
                 }
             }
@@ -364,21 +332,17 @@ class VoiceService : Service() {
     }
 
     /**
-     * The recognizer reported a permission problem — but not necessarily ours.
-     *
-     * ERROR_INSUFFICIENT_PERMISSIONS is raised by the recognition service, and
-     * it also fires when that service itself cannot reach the microphone. So
-     * check our own permission before blaming the user for it: telling someone
-     * to grant a permission they already granted sends them in circles.
+     * The microphone delivered nothing — but is that our permission or the
+     * device's? Telling someone to grant a permission they already granted
+     * sends them in circles, so check ours first.
      */
-    private fun handleInsufficientPermissions() {
+    private fun handleMicrophoneTrouble() {
         if (!hasMicPermission()) {
             speak(strings.missingMicPermission, After.STOP_SESSION)
             return
         }
 
         recognizerRefusals++
-        publish(strings.recognizerDiagnostic(installedRecognizers()))
         if (recognizerRefusals >= MAX_RECOGNIZER_REFUSALS) {
             recognizerRefusals = 0
             speak(strings.recognizerRefusedMic, After.STOP_SESSION)
@@ -392,16 +356,6 @@ class VoiceService : Service() {
             this,
             Manifest.permission.RECORD_AUDIO
         ) == PackageManager.PERMISSION_GRANTED
-
-    /** Shown on screen so a refusal can be traced to the service responsible. */
-    private fun installedRecognizers(): List<String> = try {
-        packageManager
-            .queryIntentServices(Intent(RecognitionService.SERVICE_INTERFACE), 0)
-            .mapNotNull { it.serviceInfo?.packageName }
-            .distinct()
-    } catch (e: Exception) {
-        emptyList()
-    }
 
     /**
      * A recognizer that is busy or broken fails almost instantly. Without a
@@ -419,63 +373,79 @@ class VoiceService : Service() {
         listenTimeout = null
         if (listening) {
             listening = false
-            try {
-                recognizer?.cancel()
-            } catch (e: Exception) {
-                // Ignored: we are tearing the turn down anyway.
-            }
+            recognizer.cancel()
         }
     }
 
-    private val recognitionListener = object : RecognitionListener {
-        override fun onReadyForSpeech(params: Bundle?) = Unit
-        override fun onBeginningOfSpeech() {
+    private val recognitionListener = object : LocalRecognizer.Listener {
+        override fun onSpeechStarted() {
             // Speech started: let the user finish rather than cutting them off.
             listenTimeout?.let { mainHandler.removeCallbacks(it) }
             listenTimeout = null
         }
 
-        override fun onRmsChanged(rmsdB: Float) = Unit
-        override fun onBufferReceived(buffer: ByteArray?) = Unit
-        override fun onEndOfSpeech() = Unit
-
-        override fun onError(error: Int) {
+        override fun onResult(text: String) {
             if (!listening) return
             listening = false
             listenTimeout?.let { mainHandler.removeCallbacks(it) }
             listenTimeout = null
-            mainHandler.post {
-                when (error) {
-                    SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS ->
-                        handleInsufficientPermissions()
-
-                    // The user simply said nothing — carry on straight away.
-                    SpeechRecognizer.ERROR_NO_MATCH,
-                    SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> handleSilence()
-
-                    // Busy, client or audio errors come back instantly, so
-                    // back off before trying again.
-                    else -> retryAfterRecognizerTrouble()
-                }
-            }
+            if (isNoise(text)) handleSilence() else handleSpoken(text)
         }
 
-        override fun onResults(results: Bundle?) {
+        override fun onError(error: LocalRecognizer.Error) {
             if (!listening) return
             listening = false
             listenTimeout?.let { mainHandler.removeCallbacks(it) }
             listenTimeout = null
-            val spoken = results
-                ?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                ?.firstOrNull()
-                .orEmpty()
-            mainHandler.post {
-                if (spoken.isBlank()) handleSilence() else handleSpoken(spoken)
+            when (error) {
+                LocalRecognizer.Error.MICROPHONE -> handleMicrophoneTrouble()
+                LocalRecognizer.Error.NO_MODEL -> speak(strings.modelMissing, After.STOP_SESSION)
+                LocalRecognizer.Error.ENGINE -> retryAfterRecognizerTrouble()
             }
         }
+    }
 
-        override fun onPartialResults(partialResults: Bundle?) = Unit
-        override fun onEvent(eventType: Int, params: Bundle?) = Unit
+    /**
+     * Whisper-style models answer a noise they cannot read with a stock phrase
+     * or a bracketed label such as "[BLANK_AUDIO]". Treat those as silence.
+     */
+    private fun isNoise(text: String): Boolean {
+        val t = text.trim()
+        if (t.isEmpty()) return true
+        if (t.startsWith("[") && t.endsWith("]")) return true
+        if (t.startsWith("(") && t.endsWith(")")) return true
+        return false
+    }
+
+    // ---- speech model -----------------------------------------------------
+
+    private var engine: LocalStt? = null
+
+    /**
+     * The loaded model, loading it first if need be. Called from the
+     * recognition thread; [preloadEngine] normally got there first, so this
+     * rarely waits.
+     */
+    @Synchronized
+    private fun engine(): Transcriber? {
+        engine?.let { return it }
+        if (!SpeechModel.isInstalled(this)) return null
+        return try {
+            LocalStt.open(SpeechModel.file(this)).also { engine = it }
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    @Synchronized
+    private fun releaseEngine() {
+        engine?.close()
+        engine = null
+    }
+
+    /** Loading takes a moment; do it while the greeting is being spoken. */
+    private fun preloadEngine() {
+        Thread({ engine() }, "peroma-stt-load").apply { isDaemon = true }.start()
     }
 
     /** Nothing was said inside the window. What that means depends on the stage. */
@@ -1006,8 +976,7 @@ class VoiceService : Service() {
     override fun onDestroy() {
         State.running = false
         cancelListening()
-        recognizer?.destroy()
-        recognizer = null
+        releaseEngine()
         tts?.stop()
         tts?.shutdown()
         tts = null
