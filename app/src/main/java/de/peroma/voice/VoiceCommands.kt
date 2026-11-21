@@ -166,8 +166,8 @@ object VoiceCommands {
         VoiceCommand.LANGUAGE_JAPANESE to listOf(
             "japanisch", "sprich japanisch", "auf japanisch", "japanese"
         ),
-        // Vor NEXT und READ_TIMELINE, deren "überspringen" bzw. "vorlesen"
-        // sonst diese längeren Wendungen aufsaugen würden.
+        // Before NEXT and READ_TIMELINE, whose "überspringen" and "vorlesen"
+        // would otherwise swallow these longer phrases.
         VoiceCommand.WARNINGS_READ to listOf(
             "inhalte immer vorlesen", "warnungen immer vorlesen", "immer alles vorlesen",
             "versteckte inhalte vorlesen"
@@ -187,8 +187,8 @@ object VoiceCommands {
         VoiceCommand.PREVIOUS to listOf(
             "vorheriger", "vorherige", "vorheriges", "zurück", "davor", "nochmal zurück"
         ),
-        // Vor REPEAT, dem das blanke "nochmal" gehört: mit "diktieren" dahinter
-        // geht es um den Entwurf, nicht um den vorgelesenen Beitrag.
+        // Before REPEAT, which owns the bare "nochmal": with "diktieren" after
+        // it, the draft is meant, not the post that was just read out.
         VoiceCommand.REDICTATE to listOf(
             "neu diktieren", "nochmal diktieren", "noch mal diktieren",
             "neu aufnehmen", "von vorne"
@@ -368,8 +368,8 @@ object VoiceCommands {
     )
 
     private val GERMAN_CONFIRMATION: List<Pair<VoiceCommand, List<String>>> = listOf(
-        // Kein blankes "neu": das klingt für einen Erkenner wie "nein" und
-        // würde den Beitrag löschen statt ihn neu aufzunehmen.
+        // No bare "neu": to a recognizer it sounds like "nein" and would
+        // delete the post instead of re-recording it.
         VoiceCommand.REDICTATE to listOf(
             "wiederholen", "wiederhole", "nochmal", "noch mal", "noch einmal",
             "neu diktieren", "neu aufnehmen", "nochmal diktieren", "von vorne"

@@ -83,8 +83,8 @@ jobs:
           files: ${{ steps.apk.outputs.name }}
           generate_release_notes: true
           body: |
-            **Peroma Voice** — reiner Audio-Client für Pleroma.
+            **Peroma Voice** — a purely audio client for Pleroma.
 
-            Lade die APK unten herunter und installiere sie auf deinem Android-Gerät
-            (Android 7.0 oder neuer). Dafür muss die Installation aus unbekannten
-            Quellen für den Browser bzw. die Dateiverwaltung erlaubt sein.
+            Download the APK below and install it on your Android device
+            (Android 7.0 or newer). For that, installation from unknown sources
+            must be allowed for the browser or file manager.

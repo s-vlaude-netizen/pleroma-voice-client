@@ -1,67 +1,47 @@
-# Peroma Voice — Audio-Client für Pleroma
+# Peroma Voice — Audio client for Pleroma
 
 *English, German and Japanese. The app speaks whichever language you pick — see
-[Sprache / Language](#sprache--language).*
+[Language](#language).*
 
-Ein reiner **Audio-Client** für das Fediverse-Netzwerk [Pleroma](https://pleroma.social)
-(oft „Peroma" ausgesprochen). Ab Version 2 wird die App **wie ein Telefonmenü per
-Stimme bedient**: App starten, Bildschirm ausschalten, Handy einstecken — Timeline
-vorlesen lassen und Beiträge diktieren, ohne einmal hinzusehen.
+A purely **audio client** for the fediverse network [Pleroma](https://pleroma.social)
+(often pronounced "Peroma"). Since version 2 the app is **operated by voice, like a
+phone menu**: start the app, switch the screen off, pocket the phone — have the
+timeline read out and dictate posts without looking once.
 
-## Funktionen
+## Features
 
-- **Vollständige Sprachsteuerung** — die App spricht, hört zu, führt aus und fragt
-  wieder nach. Sprechen und Zuhören wechseln sich strikt ab, damit das Mikrofon nicht
-  die eigene Sprachausgabe hört.
-- **Läuft bei ausgeschaltetem Bildschirm** — Vordergrunddienst mit Wake-Lock, die
-  Sitzung läuft in der Hosentasche weiter.
-- **Signaltöne** — ein kurzer Ton zeigt an, wann die App zuhört; eigene Töne für
-  Erfolg und Fehler. So ist ohne Blick klar, wer gerade „dran" ist.
-- **Timeline am Stück vorlesen** — Autor, Inhaltswarnung, Text und Bildbeschreibungen
-  der Anhänge. Standardmäßig laufen alle Beiträge ohne Unterbrechung durch; erst am
-  Ende fragt die App, wie es weitergehen soll.
-- **Zwischenfragen optional** — wer freihändig navigieren will, schaltet mit
-  „Mit Pausen" (oder dem Knopf) einen Modus ein, in dem das Mikrofon nach jedem
-  Beitrag kurz aufgeht. „Am Stück" schaltet zurück. Die Einstellung wird gemerkt.
-- **Beiträge diktieren** — diktieren, der Entwurf wird **zur Kontrolle vorgelesen**,
-  und erst nach einem gesprochenen „Ja" veröffentlicht.
-- **Sprechtempo per Stimme** — „schneller" / „langsamer", wird dauerhaft gemerkt.
-- **Knöpfe bleiben optional** — dieselben Funktionen sind weiterhin antippbar, falls
-  die Spracherkennung mal nicht verfügbar ist.
-- **Dreisprachig** — Englisch, Deutsch und Japanisch, jeweils komplett: Oberfläche,
-  gesprochene Ansagen und Sprachbefehle. Umschaltbar per Stimme („English",
-  „Deutsch", „日本語") oder über den Knopf, der reihum durchschaltet. Nur die
-  Beschriftung „Language" bleibt in jeder Sprache englisch, damit der Knopf auch
-  dann auffindbar ist, wenn die App gerade Japanisch spricht.
-- **Anmeldung per OAuth** — kein Passwort in der App, die Anmeldung läuft über die
-  Weboberfläche deiner Instanz.
+- **Complete voice control** — the app speaks, listens, acts and asks again.
+  Speaking and listening strictly alternate, so the microphone never hears the app's
+  own speech output.
+- **Runs with the screen off** — a foreground service with a wake lock; the session
+  keeps going in your pocket.
+- **Audio cues** — a short tone shows when the app is listening; separate tones for
+  success and error. So you can tell without looking whose turn it is.
+- **Timeline read straight through** — author, content warning, text and attachment
+  descriptions. By default all posts run without interruption; only at the end does
+  the app ask how to continue.
+- **Optional questions between posts** — if you want to navigate hands-free, "with
+  pauses" (or the button) turns on a mode in which the microphone opens briefly after
+  each post. "Straight through" switches back. The setting is remembered.
+- **Dictate posts** — dictate, the draft is **read back for checking**, and only
+  published after a spoken "yes".
+- **Speaking rate by voice** — "faster" / "slower", remembered permanently.
+- **Buttons stay optional** — the same functions can still be tapped, in case speech
+  recognition is unavailable.
+- **Three languages** — English, German and Japanese, each complete: interface,
+  spoken prompts and voice commands. Switch by voice ("English", "Deutsch", "日本語")
+  or with the button, which cycles through them. Only the label "Language" stays
+  English in every language, so the button can still be found when the app is
+  speaking Japanese.
+- **Sign-in via OAuth** — no password in the app; sign-in goes through your
+  instance's web interface.
 
-## Sprachbefehle
+## Voice commands
 
-| Sagen | Wirkung |
-| --- | --- |
-| „Timeline vorlesen", „Was gibt es Neues" | Home-Timeline laden und vorlesen |
-| „Nächster", „Überspringen" | nächster Beitrag |
-| „Vorheriger", „Zurück" | vorheriger Beitrag |
-| „Wiederholen", „Nochmal" | aktuellen Beitrag erneut vorlesen |
-| „Pause" / „Weiter" | anhalten / fortsetzen |
-| „Am Stück" / „Mit Pausen" | ohne bzw. mit Nachfrage zwischen den Beiträgen |
-| „Neuer Beitrag", „Diktieren", „Posten" | Beitrag diktieren |
-| „Ja", „Senden" / „Nein", „Verwerfen" / „Wiederholen" | Entwurf senden, verwerfen oder neu diktieren |
-| „Schneller" / „Langsamer" | Sprechtempo ändern |
-| „Wo bin ich" | aktuellen Stand ansagen |
-| „Hilfe" | alle Befehle vorlesen |
-| „Abmelden" | Konto abmelden |
-| „Trotzdem vorlesen" | den Beitrag hinter der Inhaltswarnung doch hören |
-| „Inhalte immer vorlesen" / „Nur die Warnung" | Inhaltswarnungen dauerhaft öffnen oder zulassen |
-| „English" / „Deutsch" / „Japanisch" | Sprache umschalten |
-| „Beenden", „Tschüss" | Sprachsitzung beenden |
+Say the commands in the language the app is set to. Commands of the other languages
+work too — see [Language](#language).
 
-Auf Englisch ist **„quit" oder „goodbye"** zuverlässiger als „end": Erkenner hören
-ein einzelnes kurzes Wort wie „end" oft als „and" oder „in". „end" funktioniert
-weiterhin, wenn es denn richtig ankommt.
-
-### English commands
+### English
 
 | Say | Effect |
 | --- | --- |
@@ -81,222 +61,241 @@ weiterhin, wenn es denn richtig ankommt.
 | "sign out" | log out of the account |
 | "quit", "goodbye", "finished" | end the voice session |
 
-### 日本語のコマンド
+In English, **"quit" or "goodbye"** is more reliable than "end": recognizers often
+hear a single short word like "end" as "and" or "in". "end" still works when it
+arrives correctly.
 
-| 言う | 動作 |
+### German
+
+| Say | Effect |
 | --- | --- |
-| タイムライン、新着 | ホームタイムラインを読み上げる |
-| 次 / 前、戻って | 投稿を移動する |
-| もう一度 | 今の投稿をもう一度読む |
-| 一時停止 / 続けて | 止める・再開する |
-| 続けて読んで / 間で聞いて | 止まらずに読む・投稿ごとに尋ねる |
-| 新しい投稿、口述 | 投稿を口述する |
-| はい、送信 / いいえ、キャンセル / もう一度 | 下書きを送る・破棄する・言い直す |
-| 速く / ゆっくり | 読み上げの速さを変える |
-| 今どこ | 現在の位置を言う |
-| ヘルプ | コマンドを読み上げる |
-| それでも読んで | 警告の内容を今の投稿だけ聞く |
-| 内容も読んで / 警告だけ | 警告の内容を常に読む・読まない |
-| 英語 / ドイツ語 / 日本語 | 言語を切り替える |
-| ログアウト | アカウントからログアウトする |
-| 終了、さようなら | 音声操作を終了する |
+| "Timeline vorlesen", "Was gibt es Neues" | load and read the home timeline |
+| "Nächster", "Überspringen" | next post |
+| "Vorheriger", "Zurück" | previous post |
+| "Wiederholen", "Nochmal" | read the current post again |
+| "Pause" / "Weiter" | pause / continue |
+| "Am Stück" / "Mit Pausen" | read without or with a prompt between posts |
+| "Neuer Beitrag", "Diktieren", "Posten" | dictate a post |
+| "Ja", "Senden" / "Nein", "Verwerfen" / "Wiederholen" | send, discard, or dictate the draft anew |
+| "Schneller" / "Langsamer" | change the speaking rate |
+| "Wo bin ich" | say the current position |
+| "Hilfe" | read out all commands |
+| "Abmelden" | log out of the account |
+| "Trotzdem vorlesen" | hear the post behind the content warning |
+| "Inhalte immer vorlesen" / "Nur die Warnung" | open content warnings for good, or keep them closed |
+| "English" / "Deutsch" / "Japanisch" | switch language |
+| "Beenden", "Tschüss" | end the voice session |
 
-日本語は分かち書きをしないため、コマンドは単語単位ではなく**部分一致**で
-判定します。長い言い回しが短いものを飲み込まないよう、表の順序が意味を
-持ちます（例: 「一時停止」は「停止」より先）。
+### Japanese (日本語)
 
-## Wenn das Mikrofon gesperrt ist
+| Say | Effect |
+| --- | --- |
+| タイムライン、新着 | read the home timeline aloud |
+| 次 / 前、戻って | move between posts |
+| もう一度 | read the current post again |
+| 一時停止 / 続けて | stop / resume |
+| 続けて読んで / 間で聞いて | read without stopping / ask after each post |
+| 新しい投稿、口述 | dictate a post |
+| はい、送信 / いいえ、キャンセル / もう一度 | send, discard, or dictate the draft anew |
+| 速く / ゆっくり | change the speaking rate |
+| 今どこ | say the current position |
+| ヘルプ | read out the commands |
+| それでも読んで | hear the content behind the warning for this post only |
+| 内容も読んで / 警告だけ | always read / never read the content behind warnings |
+| 英語 / ドイツ語 / 日本語 | switch language |
+| ログアウト | log out of the account |
+| 終了、さようなら | end the voice session |
 
-Wird die Mikrofonfreigabe entzogen — dauerhaft abgelehnt oder später in den
-Android-Einstellungen ausgeschaltet —, verweigert Android jede weitere Anfrage
-kommentarlos. Eine App, die dann einfach noch einmal fragt, wirkt kaputt: es
-passiert schlicht nichts.
+Japanese is written without spaces, so commands are matched by **substring** rather
+than word by word. So that long phrases are not swallowed by short ones, the order of
+the lookup table in `VoiceCommands.kt` matters (for example 「一時停止」 is checked
+before 「停止」).
 
-Peroma Voice zeigt in dem Fall einen Hinweis mit dem Knopf **Einstellungen
-öffnen**, der direkt auf die Berechtigungsseite der App führt. Nach der Rückkehr
-wird die Freigabe erneut geprüft und das, was du angestoßen hattest, von selbst
-fortgesetzt. Der Hinweis erscheint auch beim Öffnen der App, wenn die
-Sprachsteuerung eigentlich starten sollte — sonst bliebe die App ohne Erklärung
-stumm.
+## When the microphone is blocked
 
-Beim Öffnen klärt die App die Mikrofonfrage, **bevor** sie die Sprachsteuerung
-startet: fehlt die Freigabe, fragt sie regulär; ist sie gesperrt, kommt der
-Hinweis. Die Abfrage für Benachrichtigungen kommt erst danach, damit nicht zwei
-Systemdialoge übereinander liegen.
+If microphone permission is taken away — refused permanently, or switched off later
+in Android's settings — Android refuses every further request silently. An app that
+then simply asks again looks broken: nothing happens.
 
-### Der geräteweite Mikrofonschalter
+In that case Peroma Voice shows a notice with an **Open settings** button that leads
+straight to the app's permission page. When you come back, the permission is checked
+again and whatever you had started continues on its own. The notice also appears when
+you open the app and voice control should be starting — otherwise the app would stay
+silent without explanation.
 
-Seit Android 12 lässt sich das Mikrofon in den Schnelleinstellungen für **alle**
-Apps auf einmal sperren („Mikrofonzugriff"). Das ist etwas anderes als die
-App-Freigabe — die bleibt dabei erteilt, die App bekommt nur noch Stille.
+On opening, the app settles the microphone question **before** it starts voice
+control: if the permission is missing, it asks normally; if it is blocked, the notice
+appears. The notification permission request comes only afterwards, so that two
+system dialogs don't end up on top of each other.
 
-Diesen Schalter darf keine App auslesen. Android bietet aber selbst an, ihn
-aufzuheben — mit dem Dialog „Gerätemikrofon entsperren?" —, und zwar jeder App,
-die das Mikrofon öffnet, während sie im Vordergrund ist. Die Spracherkennung
-nimmt allerdings im Prozess des Erkennungsdienstes auf, der nie im Vordergrund
-ist; der Dialog kam deshalb nie, und eine Sitzung hörte einfach nichts.
+### The device-wide microphone switch
 
-Die App öffnet das Mikrofon deshalb beim Start kurz **selbst**, solange der
-Bildschirm vorne ist. Ist es gesperrt, erscheint Androids Dialog; die App lauscht
-weiter und startet die Sprachsteuerung, sobald Ton ankommt. Lehnst du ab, steht
-auf dem Bildschirm, wo der Schalter sitzt. Auf Geräten ohne diesen Schalter
-entfällt die Prüfung.
+Since Android 12 the microphone can be blocked for **all** apps at once in the quick
+settings ("Microphone access"). That is different from the per-app permission — the
+app keeps its permission, it just receives silence.
+
+No app may read this switch. But Android itself offers to lift it — with the dialog
+"Unblock device microphone?" — to any app that opens the microphone while it is in the
+foreground. A voice session, however, records in a background service that is never in
+the foreground; the dialog therefore never came, and a session simply heard nothing.
+
+The app therefore briefly opens the microphone **itself** at start-up, while the
+screen is in front. If it is blocked, Android's dialog appears; the app keeps listening
+and starts voice control as soon as sound arrives. If you decline, the screen says
+where the switch is. On devices without this switch the check is skipped.
 
 ## Start
 
-Die App **startet die Sprachsteuerung beim Öffnen von selbst** — dafür ist sie
-da, und der Griff zum Knopf ist genau der Schritt, den sie sparen soll. App
-öffnen, Handy einstecken, zuhören.
+The app **starts voice control by itself when opened** — that is what it is for, and
+reaching for a button is exactly the step it is meant to save. Open the app, pocket
+the phone, listen.
 
-Zwei Einschränkungen: Beim allerersten Mal wartet sie auf den Knopf, weil erst
-die Mikrofonfreigabe erteilt sein muss; ab dann startet sie allein. Und läuft
-bereits eine Sitzung, wird sie nicht ein zweites Mal begrüßt, sondern liest
-weiter. Abschalten lässt sich das über „Sprachsteuerung beim Start" in der App.
+Two caveats: the very first time it waits for the button, because the microphone
+permission has to be granted first; from then on it starts on its own. And if a
+session is already running, it is not greeted a second time but carries on reading.
+You can switch this off with "Start voice control on launch" in the app.
 
-## Ein diktierter Beitrag geht nicht verloren
+## A dictated post is never lost
 
-Spracherkennung versteht regelmäßig etwas falsch — das ist der Normalfall, nicht
-die Ausnahme. Deshalb wirft die App einen diktierten Beitrag **niemals** weg,
-weil sie die Rückfrage nicht verstanden hat. Verworfen wird er nur, wenn du es
-ausdrücklich sagst.
+Speech recognition regularly gets things wrong — that is the normal case, not the
+exception. The app therefore **never** throws a dictated post away because it did not
+understand the follow-up question. It is only discarded when you say so explicitly.
 
-Auf die Frage „Soll ich das senden?" gibt es drei Antworten: **Ja**, **Nein**
-und **Wiederholen** (englisch „again", japanisch 「もう一度」) zum neu Diktieren.
-Das Wort ist bewusst kurz und in jeder üblichen Schreibweise hinterlegt —
-„wiederholen", „nochmal", „noch mal", „noch einmal", „neu diktieren".
+The question "Should I send this?" has three answers: **yes**, **no** and **again**
+(German "Wiederholen", Japanese 「もう一度」) for dictating anew. The word is
+deliberately short and stored in every common spelling — in German "wiederholen",
+"nochmal", "noch mal", "noch einmal", "neu diktieren".
 
-Versteht die App dich mehrmals nicht oder hört sie nichts, geht sie zurück ins
-Menü und **behält den Entwurf**; dort gelten „Senden", „Verwerfen" und „Neuer
-Beitrag" weiter. Und weil auch das Ende einer Sitzung den Entwurf sonst mitnähme,
-liegt er außerhalb der Sitzung: Beim nächsten Start liest die App ihn wieder vor
-und fragt erneut.
+If the app fails to understand you several times, or hears nothing, it goes back to
+the menu and **keeps the draft**; there "send", "discard" and "new post" still apply.
+And because the end of a session would otherwise take the draft with it, it lives
+outside the session: at the next start the app reads it out again and asks again.
 
-## Inhaltswarnungen und Anhänge
+## Content warnings and attachments
 
-Ein Beitrag mit **Inhaltswarnung** wird nur mit seiner Warnung vorgelesen — der
-Text dahinter und seine Anhänge bleiben zu. Genau dafür ist die Warnung da: sie
-soll ihre Leserin entscheiden lassen. Zwei Wege führen dahinter:
+A post with a **content warning** is read out with its warning only — the text behind
+it and its attachments stay closed. That is exactly what the warning is for: it lets
+its reader decide. There are two ways past it:
 
-- „Trotzdem vorlesen" öffnet **den einen** Beitrag, bei dem die App gerade ist.
-- „Inhalte immer vorlesen" schaltet es dauerhaft um; „Nur die Warnung" zurück.
-  Denselben Schalter gibt es als Knopf in der App.
+- "Read anyway" opens **the one** post the app is currently on.
+- "Always read content" switches it on permanently; "Only the warning" switches back.
+  The same switch exists as a button in the app.
 
-**Anhänge ohne Beschreibung werden gezählt statt aufgezählt.** Zwölf Fotos, die
-niemand beschrieben hat, ergeben einen Satz — „Zwölf Bilder ohne Beschreibung." —
-statt zwölfmal derselben Ansage. Anhänge **mit** Beschreibung werden weiterhin
-einzeln vorgelesen: wer eine geschrieben hat, wollte sie gehört wissen.
+**Attachments without a description are counted rather than listed.** Twelve photos
+nobody described make one sentence — "Twelve images without a description." — instead
+of the same announcement twelve times. Attachments **with** a description are still
+read one by one: whoever wrote one wanted it to be heard.
 
-## Sprache / Language
+## Language
 
-Beim ersten Start folgt die App der Gerätesprache: Deutsch auf einem deutschen
-Gerät, Japanisch auf einem japanischen, sonst Englisch. Damit bekommen internationale
-Nutzer ohne Zutun ihre Sprache. Danach gilt, was du zuletzt gewählt hast — per
-Sprachbefehl („English", „Deutsch", „日本語") oder über den Knopf in der App.
+On first start the app follows the device language: German on a German device,
+Japanese on a Japanese one, English otherwise. That way international users get their
+language without doing anything. After that, whatever you chose last applies — by
+voice command ("English", "Deutsch", "日本語") or with the button in the app.
 
-**Befehle der anderen Sprachen gelten weiterhin.** Die Wahl bestimmt, was die
-App spricht — nicht, welche Wörter du vergessen haben musst. Steht sie auf
-Deutsch und du antwortest „yes", zählt das als Ja; steht sie auf Englisch und du
-sagst „Hilfe", bekommst du Hilfe. Die eingestellte Sprache wird immer zuerst und
-vollständig geprüft, sodass ihr nichts weggenommen werden kann. Erst wenn sie mit
-der Äußerung nichts anfangen kann, kommen die anderen zum Zug, und dort muss die
-ganze Äußerung der Befehl sein — ein „bye" mitten im Satz beendet also nichts.
+**Commands of the other languages still apply.** The choice determines what the app
+*speaks* — not which words you must have forgotten. If it is set to German and you
+answer "yes", that counts as yes; if it is set to English and you say "Hilfe", you get
+help. The selected language is always checked first and completely, so nothing can be
+taken away from it. Only when it can make nothing of the utterance do the others get
+their turn, and there the whole utterance has to be the command — a "bye" in the
+middle of a sentence therefore ends nothing.
 
-**Diktieren folgt dieser Wahl automatisch.** Die App sagt dem Sprachmodell bei jeder
-Aufnahme die gewünschte Sprache (`en`, `de`, `ja`) — in den Systemeinstellungen ist
-dafür nichts zu tun. Dasselbe Modell versteht alle drei Sprachen.
+**Dictation follows this choice automatically.** For every recording the app tells the
+speech model the desired language (`en`, `de`, `ja`) — there is nothing to set in the
+system settings. The same model understands all three languages.
 
-Die Wahl gilt für **alles**: Oberfläche, Ansagen, erkannte Befehle und die
-Stimme, die die Timeline vorliest. Ein Wechsel mitten in der Sitzung verwirft die
-geladene Timeline, weil deren Sprechtexte in der alten Sprache aufgebaut wurden —
-einfach „Timeline vorlesen" bzw. „read timeline" erneut sagen.
+The choice applies to **everything**: interface, announcements, recognized commands
+and the voice that reads the timeline. Switching in the middle of a session discards
+the loaded timeline, because its spoken texts were built in the old language — just
+say "read timeline" / "Timeline vorlesen" again.
 
-Im Standardmodus („am Stück") hört das Mikrofon während des Vorlesens **nicht** zu —
-zum Abbrechen dienen die Benachrichtigung oder der Knopf in der App. Wer mitten im
-Vorlesen per Stimme steuern will, schaltet „Mit Pausen" ein.
+In the default mode ("straight through") the microphone does **not** listen while the
+timeline is being read — use the notification or the button in the app to interrupt.
+If you want to steer by voice in the middle of reading, switch on "with pauses".
 
-Verworfen wird ein Entwurf nur nach einem ausdrücklichen „Nein" — siehe
-[Ein diktierter Beitrag geht nicht verloren](#ein-diktierter-beitrag-geht-nicht-verloren).
+A draft is only discarded after an explicit "no" — see
+[A dictated post is never lost](#a-dictated-post-is-never-lost).
 
-Befehle werden auf **ganze Wörter** geprüft, nicht auf Teilzeichenketten — „Jahr"
-gilt also nicht als „ja", und „nächster Beitrag" startet keinen neuen Beitrag.
+Commands are matched on **whole words**, not substrings — so "Jahr" does not count as
+"ja", and "nächster Beitrag" does not start a new post.
 
-Die App spricht mit der Mastodon-kompatiblen API von Pleroma
-(`/api/v1/timelines/home`, `/api/v1/statuses`, `/oauth/*`) und funktioniert
-deshalb auch mit Akkoma, Mastodon und anderen kompatiblen Servern.
+The app talks to Pleroma's Mastodon-compatible API (`/api/v1/timelines/home`,
+`/api/v1/statuses`, `/oauth/*`) and therefore also works with Akkoma, Mastodon and
+other compatible servers.
 
-## APK herunterladen
+## Download the APK
 
-Fertige Release-APKs liegen unter
+Finished release APKs are under
 **[Releases](https://github.com/s-vlaude-netizen/pleroma-voice-client/releases)**.
 
-1. `peroma-voice-<version>.apk` auf dem Android-Gerät herunterladen.
-2. Beim Öffnen die Installation aus unbekannten Quellen für den Browser bzw. die
-   Dateiverwaltung erlauben.
-3. Installieren und starten.
+1. Download `peroma-voice-<version>.apk` to the Android device.
+2. When opening it, allow installation from unknown sources for the browser or file
+   manager.
+3. Install and start.
 
-Voraussetzung: **Android 7.0 (API 24)** oder neuer.
+Requirement: **Android 7.0 (API 24)** or newer.
 
-Jeder Build legt die APK zusätzlich als Workflow-Artefakt unter *Actions* ab.
+Every build also stores the APK as a workflow artifact under *Actions*.
 
-### Versionen
+### Versions
 
-| Version | Bedienung |
+| Version | What it does |
 | --- | --- |
-| **2.3.x** | zusätzlich Russisch; Updates ohne Deinstallieren |
-| **2.2.x** | Englisch und Deutsch, umschaltbar |
-| **2.1.x** | Timeline läuft am Stück durch, Zwischenfragen optional |
-| **2.0.x** | Sprachsteuerung als Hauptbedienung, Nachfrage nach jedem Beitrag |
-| **1.0.0** | reine Knopfbedienung, Diktat über Bestätigungsdialog |
+| **2.3.x** | additionally Russian; updates without uninstalling |
+| **2.2.x** | English and German, switchable |
+| **2.1.x** | timeline runs straight through, questions in between optional |
+| **2.0.x** | voice control as the main way of operating, prompt after every post |
+| **1.0.0** | button operation only, dictation through a confirmation dialog |
 
-Alle bleiben unter *Releases* verfügbar. Version 2 ändert die Bedienung grundlegend,
-nutzt aber dieselben Konto- und Anmeldedaten — ein Update behält die Anmeldung bei.
+All remain available under *Releases*. Version 2 changes the operation fundamentally,
+but uses the same account and sign-in data — an update keeps you signed in.
 
-## Benutzung
+## Usage
 
-1. **Instanz eingeben** — z. B. `pleroma.example` (mit oder ohne `https://`).
-2. Die App registriert sich per `POST /api/v1/apps` auf der Instanz und öffnet die
-   Anmeldeseite im Browser.
-3. Nach „Zugriff erlauben" kehrt der Browser über `peromavoice://oauth` zur App zurück.
-4. **Sprachsteuerung starten** antippen und Mikrofon freigeben.
-5. Bildschirm ausschalten. Ab hier geht alles per Stimme.
+1. **Enter the instance** — e.g. `pleroma.example` (with or without `https://`).
+2. The app registers itself on the instance with `POST /api/v1/apps` and opens the
+   sign-in page in the browser.
+3. After "Allow access" the browser returns to the app via `peromavoice://oauth`.
+4. Tap **Start voice control** and grant the microphone permission.
+5. Switch the screen off. From here on everything is by voice.
 
-### Aktualisieren
+### Updating
 
-Ab **2.2.2** lässt sich eine neue Version einfach über die alte installieren. Vorher
-wurde jeder Build mit einem zufälligen Debug-Schlüssel signiert, weshalb Android
-Updates mit „App wurde nicht installiert" ablehnte.
+From **2.2.2** on, a new version can simply be installed over the old one. Before
+that, every build was signed with a random debug key, which is why Android rejected
+updates with "App not installed".
 
-**Einmalig nötig:** Der Wechsel von 2.2.1 oder älter auf 2.2.2 verlangt noch ein
-Deinstallieren, weil die installierte Version einen anderen Schlüssel trägt. Ab
-2.2.2 aufwärts geht es dann direkt. Deine Anmeldung geht beim Deinstallieren
-verloren — die Instanz einmal neu eingeben.
+**Needed once:** moving from 2.2.1 or older to 2.2.2 still requires uninstalling,
+because the installed version carries a different key. From 2.2.2 onwards it works
+directly. Your sign-in is lost when uninstalling — enter the instance once more.
 
-### Sprachausgabe verbessern
+### Improving the speech output
 
-Die Sprachqualität kommt vom **TTS-Dienst des Geräts**, nicht aus der App — Android
-erlaubt es nicht, ein eigenes Sprachmodell dafür mitzuliefern. Die App holt aber das
-Beste aus dem heraus, was installiert ist: sie wählt automatisch die
-höchstwertige Stimme der gewählten Sprache, die **offline** funktioniert.
+The voice quality comes from the **device's text-to-speech service**, not from the
+app — Android does not allow shipping your own speech model for that. The app does get
+the best out of what is installed, though: it automatically picks the highest-quality
+voice for the chosen language that works **offline**.
 
-Klingt es blechern, hilft ein besserer Dienst:
+If it sounds tinny, a better service helps:
 
-1. *Google Sprachausgabe* installieren bzw. aktualisieren.
-2. Android-Einstellungen → *Bedienungshilfen → Sprachausgabe* → Modul wählen.
-3. Dort unter *Sprachdaten installieren* für **Deutsch bzw. Englisch** die
-   hochwertigen Stimmen laden (oft als „Hohe Qualität" / „Neural" gekennzeichnet).
+1. Install or update *Speech Services by Google*.
+2. Android settings → *Accessibility → Text-to-speech output* → choose the engine.
+3. There, under *Install voice data*, download the high-quality voices for **German or
+   English** (often marked "High quality" / "Neural").
 
-Alternativ gibt es freie Engines wie RHVoice. Nach dem Wechsel die App neu starten.
+Alternatively there are free engines such as RHVoice. Restart the app after switching.
 
-Die Spracherkennung nutzt **nicht** die Android-Bordmittel, sondern ein eigenes
-Modell auf dem Gerät — siehe [Spracherkennung auf dem Gerät](#spracherkennung-auf-dem-gerät).
+Speech *recognition* does **not** use Android's built-in services but its own model on
+the device — see [On-device speech recognition](#on-device-speech-recognition).
 
-### Wenn die Sitzung im Hintergrund abbricht
+### When the session is killed in the background
 
-Manche Hersteller (Xiaomi, Samsung, Huawei …) beenden Hintergrunddienste aggressiv.
-Falls die Sprachsteuerung bei ausgeschaltetem Bildschirm stoppt, nimm die App in den
-Android-Einstellungen unter *Akku → Akku-Optimierung* von der Optimierung aus.
+Some manufacturers (Xiaomi, Samsung, Huawei …) kill background services aggressively.
+If voice control stops while the screen is off, exempt the app from optimization in
+Android's settings under *Battery → Battery optimization*.
 
-## Selbst bauen
+## Building it yourself
 
 ```bash
 git clone https://github.com/s-vlaude-netizen/pleroma-voice-client
@@ -304,111 +303,111 @@ cd pleroma-voice-client
 ./gradlew assembleRelease
 ```
 
-Die APK liegt danach unter `app/build/outputs/apk/release/`.
-Benötigt JDK 17, das Android SDK (Compile-SDK 34), NDK 26.1 und CMake 3.22 (beides
-über den SDK-Manager). Der erste Build lädt transcribe.cpp von crates.io (mit fester
-Prüfsumme) und übersetzt es für ARM — das dauert einige Minuten.
+The APK is then in `app/build/outputs/apk/release/`.
+Requires JDK 17, the Android SDK (compile SDK 34), NDK 26.1 and CMake 3.22 (both via
+the SDK manager). The first build downloads transcribe.cpp from crates.io (against a
+fixed checksum) and compiles it for ARM — this takes a few minutes.
 
-Ein Test, der das echte Modell über JNI auf dem Desktop-JVM laufen lässt, ist
-optional und braucht eine Desktop-Version der Bibliothek; siehe
-`LocalSttModelTest.kt` für die Umgebungsvariablen.
+A test that runs the real model through JNI on the desktop JVM is optional and needs
+a desktop build of the library; see `LocalSttModelTest.kt` for the environment
+variables.
 
-### Signierung
+### Signing
 
-Standardmäßig signiert jeder Build mit `app/peroma-release.jks` — einem
-Schlüssel, der **absichtlich im Repository liegt** (Alias `peroma`, Passwort
-`peromavoice`). Er sorgt dafür, dass aufeinanderfolgende Releases dieselbe
-Identität haben und einander ersetzen können. Ohne einen festen Schlüssel
-erzeugen die Build-Tools auf einem CI-Runner bei jedem Lauf einen neuen, und
-Android verweigert jedes Update.
+By default every build is signed with `app/peroma-release.jks` — a key that is
+**deliberately in the repository** (alias `peroma`, password `peromavoice`). It makes
+sure that consecutive releases have the same identity and can replace one another.
+Without a fixed key, the build tools on a CI runner generate a new one on every run,
+and Android refuses every update.
 
-> **Was das bedeutet:** Der Schlüssel ist öffentlich. Er belegt nicht, wer eine
-> APK gebaut hat, und **jede** damit signierte APK wird von Android als Update
-> einer bestehenden Installation akzeptiert — samt Zugriff auf den dort
-> gespeicherten Pleroma-Token. Für eine selbst verteilte Privat-App ist das ein
-> bewusster Kompromiss; für eine Veröffentlichung an Dritte oder in einem Store
-> ist es keiner.
+> **What this means:** The key is public. It does not prove who built an APK, and
+> **any** APK signed with it is accepted by Android as an update of an existing
+> installation — including access to the Pleroma token stored there. For a privately
+> distributed personal app this is a deliberate compromise; for publication to third
+> parties or in a store it is not.
 
-Für einen privaten Schlüssel diese Repository-Secrets setzen — sie haben Vorrang:
+To use a private key instead, set these repository secrets — they take precedence:
 
-| Secret | Bedeutung |
+| Secret | Meaning |
 | --- | --- |
-| `KEYSTORE_BASE64` | Keystore-Datei, base64-kodiert |
-| `KEYSTORE_PASSWORD` | Passwort des Keystores |
-| `KEY_ALIAS` | Alias des Schlüssels |
-| `KEY_PASSWORD` | Passwort des Schlüssels |
+| `KEYSTORE_BASE64` | keystore file, base64-encoded |
+| `KEYSTORE_PASSWORD` | password of the keystore |
+| `KEY_ALIAS` | alias of the key |
+| `KEY_PASSWORD` | password of the key |
 
-Lokal funktionieren dieselben Werte als Umgebungsvariablen (`KEYSTORE_FILE` als Pfad).
-Ein Wechsel des Schlüssels verlangt erneut ein Deinstallieren auf jedem Gerät.
+Locally the same values work as environment variables (`KEYSTORE_FILE` as a path).
+Changing the key requires uninstalling again on every device.
 
-## Aufbau
+## Structure
 
-| Datei | Aufgabe |
+| File | Purpose |
 | --- | --- |
-| `PleromaApi.kt` | OAuth-Registrierung, Token-Tausch, Timeline, Beitrag senden |
-| `Post.kt` | Timeline-Eintrag, aufbereitet als Sprechtext |
-| `SpeechText.kt` | HTML → vorlesbarer Text (Links, Hashtags, Erwähnungen, Entities) |
-| `Strings.kt` | alle gesprochenen Texte je Sprache, plus Sprachauswahl |
-| `VoiceCommands.kt` | Sprachbefehle je Sprache → Kommandos, wortweise geprüft |
-| `LocalRecognizer.kt` | Aufnahme, Sprechende erkennen, Ergebnis an den Dialog |
-| `Endpointer.kt` | Pegelfilter: wann beginnt/endet eine Äußerung |
-| `LocalStt.kt`, `cpp/peroma_stt.cpp` | JNI-Brücke zu transcribe.cpp |
-| `SpeechModel.kt` | Modelldatei: Speicherort, Download, Prüfsumme |
-| `VoiceService.kt` | Dialog-Zustandsautomat: sprechen ↔ zuhören, Wake-Lock, Töne |
-| `TtsSetup.kt` | wählt die beste installierte deutsche Offline-Stimme |
-| `MainActivity.kt` | Start der Sprachsitzung, optionale Knöpfe |
-| `LoginActivity.kt` | Instanzauswahl und OAuth-Rückleitung |
+| `PleromaApi.kt` | OAuth registration, token exchange, timeline, posting |
+| `Post.kt` | timeline entry, prepared as speakable text |
+| `SpeechText.kt` | HTML → speakable text (links, hashtags, mentions, entities) |
+| `Strings.kt` | all spoken texts per language, plus language selection |
+| `VoiceCommands.kt` | voice commands per language → commands, matched word by word |
+| `LocalRecognizer.kt` | recording, detecting the end of speech, handing the result to the dialog |
+| `Endpointer.kt` | level gate: when an utterance starts and ends |
+| `LocalStt.kt`, `cpp/peroma_stt.cpp` | JNI bridge to transcribe.cpp |
+| `SpeechModel.kt` | model file: location, download, checksum |
+| `VoiceService.kt` | dialog state machine: speaking ↔ listening, wake lock, tones |
+| `TtsSetup.kt` | picks the best installed offline voice for the chosen language |
+| `MainActivity.kt` | starting the voice session, optional buttons |
+| `LoginActivity.kt` | instance selection and OAuth redirect |
 
-Der Dialogablauf in `VoiceService` ist ein Zustandsautomat mit den Stufen
-`MENU`, `READING`, `DICTATING` und `CONFIRMING`. Jede Äußerung wird abhängig von der
-Stufe gedeutet: im Diktat ist „senden" Teil des Textes, in der Bestätigung ist es ein
-Ja. Nach jeder Sprachausgabe entscheidet ein `After`-Wert, ob als Nächstes zugehört,
-weitergelesen oder beendet wird.
+The dialog flow in `VoiceService` is a state machine with the stages `MENU`,
+`READING`, `DICTATING` and `CONFIRMING`. Every utterance is interpreted depending on
+the stage: in dictation "send" is part of the text, in confirmation it is a yes. After
+each speech output an `After` value decides whether to listen next, keep reading, or
+stop.
 
-Die App kommt ohne Netzwerk-Bibliothek aus (`HttpURLConnection` + `org.json`).
+The app needs no networking library (`HttpURLConnection` + `org.json`).
 
-## Spracherkennung auf dem Gerät
+## On-device speech recognition
 
-Seit Version 2.10 erkennt die App Sprache **selbst und vollständig offline**, statt
-den Android-`SpeechRecognizer` zu fragen (der auf den meisten Telefonen zu Google
-führt). Die Engine ist [transcribe.cpp](https://github.com/handy-computer/transcribe.cpp),
-dieselbe Bibliothek, auf der die Diktier-App [Handy](https://handy.computer) läuft.
+Since version 2.10 the app recognizes speech **by itself and fully offline**, instead
+of asking Android's `SpeechRecognizer` (which on most phones leads to Google). The
+engine is [transcribe.cpp](https://github.com/handy-computer/transcribe.cpp), the same
+library that powers the dictation app [Handy](https://handy.computer).
 
-- **Modell:** Whisper Small (8 Bit, 270 MB) aus Handys Modellkatalog. Es versteht
-  Englisch, Deutsch und Japanisch und wird beim ersten Start über den Knopf
-  *Sprachmodell herunterladen* geladen — einmalig, am besten im WLAN. Der Download
-  ist fortsetzbar und wird gegen eine feste SHA-256-Prüfsumme geprüft. Danach
-  braucht die Spracherkennung kein Netz mehr.
-- **Ohne Modell** startet keine Sprachsitzung; die App weist darauf hin. Auf
-  Google fällt sie bewusst **nicht** zurück.
-- **Ablauf:** `LocalRecognizer` nimmt über `AudioRecord` auf, `Endpointer` erkennt
-  Sprechbeginn und -ende (einfacher Pegelfilter), `LocalStt` übergibt die Äußerung
-  per JNI (`app/src/main/cpp/peroma_stt.cpp`) an die Engine.
-- **Geschwindigkeit:** Eine Äußerung wird nach dem Sprechen am Stück erkannt; auf
-  einem aktuellen Telefon dauert das ein paar Sekunden. Der Lauf nutzt nur die CPU
-  und ist auf 64-Bit-ARM-Geräte (`arm64-v8a`) gebaut.
-- **Play Protect:** Die Engine enthielt Debug-Code, der bei einem Absturz per
-  `fork` ein `gdb` startet und an den eigenen Prozess hängt — für einen
-  Malware-Scanner ein Warnsignal (Meldung „Schädliche App blockiert"). Der Build
-  schaltet das ab (`app/src/main/cpp/CMakeLists.txt`, bricht ab, falls sich der
-  Quelltext ändert und der Patch nicht mehr greift). Außerdem exportiert die
-  Bibliothek nur noch die drei JNI-Funktionen; Code zum Nachladen von Modulen
-  per `dlopen` ist dadurch nicht mehr enthalten, und die Datei ist kleiner. Die
-  Bibliothek hat weder Netzwerkfunktionen noch startet sie Prozesse.
-- **Qualität:** Whisper Small ist deutlich besser als eine Mini-Offline-Erkennung,
-  macht bei Eigennamen und Hashtags aber weiter Fehler. Rauschen, das es nicht
-  lesen kann, beantwortet es manchmal mit einer Floskel; Eingaben in `[…]` oder
-  `(…)` behandelt die App als Stille.
+- **Model:** Whisper Small (8-bit, 270 MB) from Handy's model catalogue. It
+  understands English, German and Japanese and is downloaded on first start with the
+  *Download speech model* button — once, preferably on Wi-Fi. The download can be
+  resumed and is verified against a fixed SHA-256 checksum. After that, speech
+  recognition needs no network.
+- **Without the model** no voice session starts; the app says so. It deliberately does
+  **not** fall back to Google.
+- **Flow:** `LocalRecognizer` records via `AudioRecord`, `Endpointer` detects the start
+  and end of speech (a simple level gate), `LocalStt` hands the utterance to the engine
+  via JNI (`app/src/main/cpp/peroma_stt.cpp`).
+- **Speed:** An utterance is recognized in one go after you stop speaking; on a recent
+  phone that takes a few seconds. It runs on the CPU only and is built for 64-bit ARM
+  devices (`arm64-v8a`).
+- **Hardening:** The engine ships debug code that, after an internal crash, forks a
+  child process running `gdb` or `lldb` and attaches it to the app's own process
+  (`fork`, `execlp`, `prctl`). A phone has no use for that, and it is the kind of
+  behavior malware scanners look for, so the build switches it off
+  (`app/src/main/cpp/CMakeLists.txt`; the build fails if the upstream source changes
+  and the patch no longer applies). The library also exports only its three JNI
+  functions, so the linker drops code that is never called — among it the code that
+  loads modules with `dlopen`. The result contains no networking functions and does
+  not start processes. None of this is a claim about how Play Protect rates
+  sideloaded builds.
+- **Quality:** Whisper Small is much better than a tiny offline recognizer, but still
+  makes mistakes with proper names and hashtags. Noise it cannot read it sometimes
+  answers with a stock phrase; input in `[…]` or `(…)` is treated as silence by the
+  app.
 
-## Datenschutz
+## Privacy
 
-Zugangstoken und Instanzadresse liegen ausschließlich lokal in den app-privaten
-`SharedPreferences`. Es gibt keinen Server der App, keine Analytik und keine
-Drittanbieter-SDKs. Die Spracherkennung läuft vollständig auf dem Gerät: Aufnahmen
-werden weder gespeichert noch gesendet. Das Netz braucht die App für Pleroma selbst
-und für den einmaligen Modell-Download von Hugging Face.
+The access token and the instance address are stored exclusively locally, in the
+app-private `SharedPreferences`. There is no server of the app, no analytics and no
+third-party SDKs. Speech recognition runs entirely on the device: recordings are
+neither stored nor sent. The app needs the network for Pleroma itself and for the
+one-time model download from Hugging Face.
 
-## Lizenz
+## License
 
-MIT — siehe [LICENSE](LICENSE). transcribe.cpp (MIT) wird beim Bauen geladen und
-nicht in dieses Repository kopiert; das Whisper-Modell steht unter Apache-2.0.
+MIT — see [LICENSE](LICENSE). transcribe.cpp (MIT) is downloaded during the build and
+not copied into this repository; the Whisper model is under Apache-2.0.
