@@ -65,8 +65,8 @@ android {
         applicationId "de.peroma.voice"
         minSdk 24
         targetSdk 34
-        versionCode 20
-        versionName "2.10.0"
+        versionCode 21
+        versionName "2.10.1"
 
         ndk {
             // 64-bit ARM covers every phone that can run the speech model at a

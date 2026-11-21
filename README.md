@@ -387,6 +387,14 @@ dieselbe Bibliothek, auf der die Diktier-App [Handy](https://handy.computer) lä
 - **Geschwindigkeit:** Eine Äußerung wird nach dem Sprechen am Stück erkannt; auf
   einem aktuellen Telefon dauert das ein paar Sekunden. Der Lauf nutzt nur die CPU
   und ist auf 64-Bit-ARM-Geräte (`arm64-v8a`) gebaut.
+- **Play Protect:** Die Engine enthielt Debug-Code, der bei einem Absturz per
+  `fork` ein `gdb` startet und an den eigenen Prozess hängt — für einen
+  Malware-Scanner ein Warnsignal (Meldung „Schädliche App blockiert"). Der Build
+  schaltet das ab (`app/src/main/cpp/CMakeLists.txt`, bricht ab, falls sich der
+  Quelltext ändert und der Patch nicht mehr greift). Außerdem exportiert die
+  Bibliothek nur noch die drei JNI-Funktionen; Code zum Nachladen von Modulen
+  per `dlopen` ist dadurch nicht mehr enthalten, und die Datei ist kleiner. Die
+  Bibliothek hat weder Netzwerkfunktionen noch startet sie Prozesse.
 - **Qualität:** Whisper Small ist deutlich besser als eine Mini-Offline-Erkennung,
   macht bei Eigennamen und Hashtags aber weiter Fehler. Rauschen, das es nicht
   lesen kann, beantwortet es manchmal mit einer Floskel; Eingaben in `[…]` oder
