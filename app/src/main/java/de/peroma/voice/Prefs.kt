@@ -68,6 +68,36 @@ class Prefs(context: Context) {
         set(value) = prefs.edit().putString(KEY_PENDING_DRAFT, value).apply()
 
     /**
+     * The post the pending draft is a comment on, or null for an ordinary post.
+     *
+     * Kept with [pendingDraft] and cleared with it: see [ReplyTarget].
+     */
+    var pendingReply: ReplyTarget?
+        get() {
+            val id = prefs.getString(KEY_REPLY_ID, "").orEmpty()
+            if (id.isBlank()) return null
+            return ReplyTarget(
+                id = id,
+                acct = prefs.getString(KEY_REPLY_ACCT, "").orEmpty(),
+                author = prefs.getString(KEY_REPLY_AUTHOR, "").orEmpty(),
+                visibility = prefs.getString(KEY_REPLY_VISIBILITY, "").orEmpty()
+            )
+        }
+        set(value) {
+            val editor = prefs.edit()
+            if (value == null) {
+                editor.remove(KEY_REPLY_ID).remove(KEY_REPLY_ACCT)
+                    .remove(KEY_REPLY_AUTHOR).remove(KEY_REPLY_VISIBILITY)
+            } else {
+                editor.putString(KEY_REPLY_ID, value.id)
+                    .putString(KEY_REPLY_ACCT, value.acct)
+                    .putString(KEY_REPLY_AUTHOR, value.author)
+                    .putString(KEY_REPLY_VISIBILITY, value.visibility)
+            }
+            editor.apply()
+        }
+
+    /**
      * Whether opening the app starts a voice session straight away.
      *
      * On by default: this is an audio client, and having to find a button
@@ -125,6 +155,10 @@ class Prefs(context: Context) {
         private const val KEY_READ_SENSITIVE = "read_sensitive_content"
         private const val KEY_START_ON_LAUNCH = "start_voice_on_launch"
         private const val KEY_PENDING_DRAFT = "pending_draft"
+        private const val KEY_REPLY_ID = "pending_reply_id"
+        private const val KEY_REPLY_ACCT = "pending_reply_acct"
+        private const val KEY_REPLY_AUTHOR = "pending_reply_author"
+        private const val KEY_REPLY_VISIBILITY = "pending_reply_visibility"
         private const val KEY_MIC_ASKED = "mic_permission_asked"
     }
 }

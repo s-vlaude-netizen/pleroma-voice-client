@@ -52,6 +52,9 @@
     <string name="stop">停止</string>
     <string name="dictate">投稿を口述する</string>
     <string name="repeat_post">投稿をもう一度</string>
+    <string name="like_post">投稿にいいね</string>
+    <string name="boost_post">投稿をブースト</string>
+    <string name="comment_post">投稿にコメント</string>
     <string name="logout">ログアウト</string>
     <string name="logged_out_toast">ログアウトしました</string>
 

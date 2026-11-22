@@ -11,7 +11,8 @@ import java.net.URLEncoder
  * Minimal client for the Mastodon-compatible API that Pleroma exposes.
  *
  * Only the endpoints an audio client actually needs are implemented:
- * app registration, the OAuth code flow, the home timeline and posting.
+ * app registration, the OAuth code flow, the home timeline, posting and
+ * answering, and the two reactions (favourite, boost) it offers on a post.
  * Everything runs on plain HttpURLConnection so the app carries no
  * networking dependency.
  */
@@ -19,6 +20,14 @@ object PleromaApi {
 
     const val REDIRECT_URI = "peromavoice://oauth"
     const val SCOPES = "read write"
+
+    /**
+     * What the API is reached over. Never anything else outside the tests, which
+     * point it at a local server; every request goes through [api].
+     */
+    internal var scheme = "https"
+
+    private fun api(instance: String, path: String) = "$scheme://$instance$path"
 
     /** Accepts "example.social", "https://example.social/" or "@user@example.social". */
     fun normalizeInstance(raw: String): String {
@@ -104,7 +113,7 @@ object PleromaApi {
                 "website" to "https://github.com/s-vlaude-netizen/pleroma-voice-client"
             )
         )
-        val json = JSONObject(request("POST", "https://$instance/api/v1/apps", body = body))
+        val json = JSONObject(request("POST", api(instance, "/api/v1/apps"), body = body))
         val id = json.optString("client_id")
         val secret = json.optString("client_secret")
         if (id.isBlank() || secret.isBlank()) {
@@ -137,7 +146,7 @@ object PleromaApi {
                 "code" to code
             )
         )
-        val json = JSONObject(request("POST", "https://$instance/oauth/token", body = body))
+        val json = JSONObject(request("POST", api(instance, "/oauth/token"), body = body))
         val token = json.optString("access_token")
         if (token.isBlank()) throw ApiException(ApiErrorKind.NO_TOKEN)
         return token
@@ -146,7 +155,7 @@ object PleromaApi {
     /** Returns the display name of the logged in account; also validates the token. */
     fun verifyCredentials(instance: String, token: String): String {
         val json = JSONObject(
-            request("GET", "https://$instance/api/v1/accounts/verify_credentials", token = token)
+            request("GET", api(instance, "/api/v1/accounts/verify_credentials"), token = token)
         )
         val name = json.optString("display_name")
         return if (name.isNotBlank()) name else json.optString("username")
@@ -160,7 +169,7 @@ object PleromaApi {
     ): List<Post> {
         val text = request(
             "GET",
-            "https://$instance/api/v1/timelines/home?limit=$limit",
+            api(instance, "/api/v1/timelines/home?limit=$limit"),
             token = token
         )
         val array = JSONArray(text)
@@ -172,22 +181,94 @@ object PleromaApi {
         return posts
     }
 
+    /**
+     * The form fields of a new status.
+     *
+     * [visibility] and [inReplyToId] are left out when null, so the server
+     * applies its own defaults rather than being told something false.
+     */
+    internal fun statusParams(
+        text: String,
+        visibility: String?,
+        inReplyToId: String?
+    ): Map<String, String> {
+        val params = LinkedHashMap<String, String>()
+        params["status"] = text
+        if (visibility != null) params["visibility"] = visibility
+        if (inReplyToId != null) params["in_reply_to_id"] = inReplyToId
+        return params
+    }
+
     /** Publishes a status. Returns the id of the created post. */
     fun postStatus(
         instance: String,
         token: String,
         text: String,
-        visibility: String = "public"
+        visibility: String? = "public",
+        inReplyToId: String? = null
     ): String {
-        val body = formBody(
-            mapOf(
-                "status" to text,
-                "visibility" to visibility
-            )
-        )
+        val body = formBody(statusParams(text, visibility, inReplyToId))
         val json = JSONObject(
-            request("POST", "https://$instance/api/v1/statuses", token = token, body = body)
+            request("POST", api(instance, "/api/v1/statuses"), token = token, body = body)
         )
         return json.optString("id")
+    }
+
+    /**
+     * The logged in account's own name as the server writes it ("alice").
+     * Needed to tell when a post being answered is one's own.
+     */
+    fun ownAcct(instance: String, token: String): String {
+        val json = JSONObject(
+            request("GET", api(instance, "/api/v1/accounts/verify_credentials"), token = token)
+        )
+        return json.optString("acct")
+    }
+
+    /**
+     * Answers a post. Returns the id of the comment.
+     *
+     * It goes out with the visibility of the post it answers and never a wider
+     * one, so a reply to a private post cannot end up public. When the server
+     * did not report a visibility, none is sent and its own rule applies.
+     */
+    fun postReply(
+        instance: String,
+        token: String,
+        text: String,
+        target: ReplyTarget
+    ): String {
+        val own = try {
+            ownAcct(instance, token)
+        } catch (e: Exception) {
+            null // The post below fails the same way if the problem is real.
+        }
+        return postStatus(
+            instance,
+            token,
+            Replies.statusText(text, target, own),
+            visibility = target.visibility.ifBlank { null },
+            inReplyToId = target.id
+        )
+    }
+
+    /** Favourites ("likes") a post. The server treats a repeat as no change. */
+    fun favourite(instance: String, token: String, postId: String) {
+        request(
+            "POST",
+            api(instance, "/api/v1/statuses/${encode(postId)}/favourite"),
+            token = token,
+            body = ""
+        )
+    }
+
+    /** Boosts (reblogs) a post to the account's followers. */
+    fun reblog(instance: String, token: String, postId: String) {
+        request(
+            "POST",
+            api(instance, "/api/v1/statuses/${encode(postId)}/reblog"),
+            token = token,
+            body = ""
+        )
     }
 }

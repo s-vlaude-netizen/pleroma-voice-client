@@ -16,7 +16,10 @@ data class Post(
     val body: String,
     val spoiler: String,
     val media: List<Media>,
-    val boostedBy: String?
+    val boostedBy: String?,
+
+    /** "public", "unlisted", "private" or "direct"; empty when the server did not say. */
+    val visibility: String = ""
 ) {
 
     /** True when the author put this post behind a content warning. */
@@ -137,7 +140,8 @@ data class Post(
                 body = SpeechText.fromHtml(source.optString("content"), strings),
                 spoiler = SpeechText.fromHtml(source.optString("spoiler_text"), strings),
                 media = media,
-                boostedBy = boostedBy
+                boostedBy = boostedBy,
+                visibility = source.optString("visibility")
             )
         }
 

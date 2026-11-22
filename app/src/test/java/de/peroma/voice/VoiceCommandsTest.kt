@@ -1,6 +1,7 @@
 package de.peroma.voice
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Test
 
 class VoiceCommandsTest {
@@ -483,5 +484,134 @@ class VoiceCommandsTest {
     fun emptyInputIsUnknown() {
         assertEquals(VoiceCommand.UNKNOWN, parseDe(""))
         assertEquals(VoiceCommand.UNKNOWN, parseEn("   "))
+    }
+
+    // ---- acting on the post that was just read -------------------------------
+
+    private fun assertAll(
+        expected: VoiceCommand,
+        parse: (String) -> VoiceCommand,
+        vararg phrases: String
+    ) {
+        for (phrase in phrases) assertEquals("\"$phrase\"", expected, parse(phrase))
+    }
+
+    @Test
+    fun englishRecognisesComment() = assertAll(
+        VoiceCommand.COMMENT, ::parseEn,
+        "comment", "Comment.", "new comment", "comment on this", "comment on that post",
+        "I'd like to make a comment", "I would like to comment on this",
+        "write a comment", "post a comment", "add a comment", "reply", "reply to this post",
+        "write a reply", "respond", "answer this", "write back"
+    )
+
+    @Test
+    fun englishRecognisesLike() = assertAll(
+        VoiceCommand.LIKE, ::parseEn,
+        "like", "Like.", "like this", "like that", "like it", "like this post",
+        "add like", "add a like", "give it a like", "i like this", "I liked it",
+        "favorite", "favourite this", "add to favorites", "thumbs up"
+    )
+
+    /** "like" sits inside plenty of sentences that are not a like. */
+    @Test
+    fun englishLikeNeedsTheCommandNotJustTheWord() {
+        assertEquals(VoiceCommand.NEW_POST, parseEn("I'd like to dictate"))
+        assertEquals(VoiceCommand.NEW_POST, parseEn("I would like to write a post"))
+        assertEquals(VoiceCommand.NEXT, parseEn("I'd like the next post"))
+        assertEquals(VoiceCommand.FASTER, parseEn("I'd like it faster"))
+        assertEquals(VoiceCommand.COMMENT, parseEn("I'd like this to be a comment"))
+    }
+
+    @Test
+    fun englishRecognisesBoost() = assertAll(
+        VoiceCommand.BOOST, ::parseEn,
+        "boost", "Boost.", "boost this", "boost this post", "please boost it",
+        "repost", "retweet", "re tweet", "reblog", "share", "share this post", "share it"
+    )
+
+    @Test
+    fun englishShareIsOnlyACommandAtTheStart() {
+        assertNotEquals(VoiceCommand.BOOST, parseEn("I want to share a thought"))
+    }
+
+    /** The new commands must not take anything away from the existing ones. */
+    @Test
+    fun englishPostingAndNavigationAreUnchanged() {
+        assertAll(
+            VoiceCommand.NEW_POST, ::parseEn,
+            "new post", "post", "dictate", "post something", "write a post", "compose"
+        )
+        assertAll(VoiceCommand.NEXT, ::parseEn, "next", "skip", "next post")
+        assertAll(VoiceCommand.PREVIOUS, ::parseEn, "previous", "go back")
+        assertAll(VoiceCommand.REPEAT, ::parseEn, "repeat", "again")
+    }
+
+    @Test
+    fun germanRecognisesComment() = assertAll(
+        VoiceCommand.COMMENT, ::parseDe,
+        "Kommentar", "neuer Kommentar", "kommentieren", "ich möchte kommentieren",
+        "ich möchte einen Kommentar schreiben", "Kommentar schreiben", "antworten",
+        "darauf antworten", "Antwort schreiben"
+    )
+
+    @Test
+    fun germanRecognisesLike() = assertAll(
+        VoiceCommand.LIKE, ::parseDe,
+        "Like", "liken", "das liken", "gefällt mir", "das gefällt mir", "Daumen hoch",
+        "favorisieren"
+    )
+
+    @Test
+    fun germanRecognisesBoost() = assertAll(
+        VoiceCommand.BOOST, ::parseDe,
+        "teilen", "Beitrag teilen", "teile das", "boosten", "Boost", "reposten",
+        "retweeten", "weiterverbreiten"
+    )
+
+    @Test
+    fun germanPostingAndPlaybackAreUnchanged() {
+        assertAll(
+            VoiceCommand.NEW_POST, ::parseDe,
+            "neuer Beitrag", "Beitrag schreiben", "etwas posten", "diktieren"
+        )
+        // "weiterverbreiten" must not turn "weiter" into a boost.
+        assertEquals(VoiceCommand.RESUME, parseDe("weiter"))
+        assertEquals(VoiceCommand.NEXT, parseDe("nächster Beitrag"))
+    }
+
+    @Test
+    fun japaneseRecognisesComment() = assertAll(
+        VoiceCommand.COMMENT, ::parseJa,
+        "コメント", "コメントしたい", "コメントを書きたい", "返信", "返信して", "リプライ", "返事"
+    )
+
+    @Test
+    fun japaneseRecognisesLike() = assertAll(
+        VoiceCommand.LIKE, ::parseJa,
+        "いいね", "いいねして", "お気に入り", "ふぁぼ"
+    )
+
+    /** リポスト contains ポスト, which NEW_POST owns. */
+    @Test
+    fun japaneseRecognisesBoost() = assertAll(
+        VoiceCommand.BOOST, ::parseJa,
+        "ブースト", "ブーストして", "リポスト", "リツイート", "リツイートして",
+        "シェア", "共有", "拡散して"
+    )
+
+    @Test
+    fun japanesePostingIsUnchanged() = assertAll(
+        VoiceCommand.NEW_POST, ::parseJa,
+        "新しい投稿", "投稿", "ポスト", "口述"
+    )
+
+    /** The other languages' commands count too, as whole utterances. */
+    @Test
+    fun theNewCommandsWorkAcrossLanguages() {
+        assertEquals(VoiceCommand.COMMENT, VoiceCommands.parse("kommentieren", en))
+        assertEquals(VoiceCommand.BOOST, VoiceCommands.parse("retweet", ja))
+        assertEquals(VoiceCommand.LIKE, VoiceCommands.parse("いいね", de))
+        assertEquals(VoiceCommand.LIKE, VoiceCommands.parse("like this post", de))
     }
 }

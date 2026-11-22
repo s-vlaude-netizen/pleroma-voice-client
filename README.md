@@ -25,6 +25,10 @@ timeline read out and dictate posts without looking once.
   each post. "Straight through" switches back. The setting is remembered.
 - **Dictate posts** — dictate, the draft is **read back for checking**, and only
   published after a spoken "yes".
+- **React to the post you just heard** — say *comment* to answer it, *like* to
+  favourite it, or *boost* to share it with your followers. A comment is dictated,
+  read back and only sent after a spoken "yes", just like a post; a boost asks
+  first. See [Reacting to the post you just heard](#reacting-to-the-post-you-just-heard).
 - **Speaking rate by voice** — "faster" / "slower", remembered permanently.
 - **Buttons stay optional** — the same functions can still be tapped, in case speech
   recognition is unavailable.
@@ -51,6 +55,9 @@ work too — see [Language](#language).
 | "pause" / "continue" | stop and resume |
 | "straight through" / "with pauses" | read without or with a prompt between posts |
 | "new post", "dictate", "post something" | dictate a post |
+| "comment", "reply", "comment on this" | comment on the post that was just read: dictate, check, send |
+| "like", "like this", "add like" | favourite the post that was just read |
+| "boost", "repost", "retweet", "share" | boost it to your followers (asks first) |
 | "yes", "send" / "no", "discard" / "again" | send, discard, or dictate the draft anew |
 | "faster" / "slower" | change the speaking rate |
 | "where am I" | say the current position |
@@ -76,6 +83,9 @@ arrives correctly.
 | "Pause" / "Weiter" | pause / continue |
 | "Am Stück" / "Mit Pausen" | read without or with a prompt between posts |
 | "Neuer Beitrag", "Diktieren", "Posten" | dictate a post |
+| "Kommentar", "Kommentieren", "Antworten" | comment on the post that was just read |
+| "Like", "Gefällt mir", "Liken" | favourite the post that was just read |
+| "Boost", "Teilen", "Reposten" | boost it to your followers (asks first) |
 | "Ja", "Senden" / "Nein", "Verwerfen" / "Wiederholen" | send, discard, or dictate the draft anew |
 | "Schneller" / "Langsamer" | change the speaking rate |
 | "Wo bin ich" | say the current position |
@@ -96,6 +106,9 @@ arrives correctly.
 | 一時停止 / 続けて | stop / resume |
 | 続けて読んで / 間で聞いて | read without stopping / ask after each post |
 | 新しい投稿、口述 | dictate a post |
+| コメント、返信 | comment on the post that was just read |
+| いいね、お気に入り | favourite the post that was just read |
+| ブースト、リポスト、シェア | boost it to your followers (asks first) |
 | はい、送信 / いいえ、キャンセル / もう一度 | send, discard, or dictate the draft anew |
 | 速く / ゆっくり | change the speaking rate |
 | 今どこ | say the current position |
@@ -171,6 +184,36 @@ If the app fails to understand you several times, or hears nothing, it goes back
 the menu and **keeps the draft**; there "send", "discard" and "new post" still apply.
 And because the end of a session would otherwise take the draft with it, it lives
 outside the session: at the next start the app reads it out again and asks again.
+
+## Reacting to the post you just heard
+
+The post the app has just read out is the one the next three commands refer to. They
+work whenever the microphone opens after a post — between posts in "with pauses"
+mode, and in the menu after you paused or the timeline ended — and each has a button
+in the app as well.
+
+- **Comment** (also "reply") — you dictate the comment, the app reads it back, and
+  only a spoken "yes" sends it, exactly as with a new post. It goes out as a reply to
+  that post, with its author mentioned at the start. If the post was a boost, the
+  comment goes to the original post. "New post" still starts an unrelated post, so
+  both are always available.
+- **Like** (also "favourite") — favourites the post at once and says "Liked."
+- **Boost** (also "repost", "retweet", "share") — boosts the post to your followers.
+  A boost is public, and "boost" sounds a lot like "post", so the app asks first:
+  "Boost the post by …? Say yes or no." Silence counts as no. The button boosts
+  straight away, because tapping it is deliberate.
+
+After a like, a boost or a sent comment from the pause between posts, the microphone
+opens again for a moment: say another reaction, or stay silent and the timeline
+carries on with the next post.
+
+A comment never goes out wider than the post it answers: a reply to a followers-only
+post stays followers-only, a reply to a direct message stays direct. And like the draft
+of a post, a draft comment survives the end of a session: at the next start the app
+reads it out again and asks again — as a comment on the same post.
+
+No new permission is needed. The app already asks for read and write access, which
+covers favouriting, boosting and replying, so signing in again is not necessary.
 
 ## Content warnings and attachments
 
@@ -343,6 +386,7 @@ Changing the key requires uninstalling again on every device.
 | --- | --- |
 | `PleromaApi.kt` | OAuth registration, token exchange, timeline, posting |
 | `Post.kt` | timeline entry, prepared as speakable text |
+| `Reply.kt` | the post a comment answers, and how the reply text is built |
 | `SpeechText.kt` | HTML → speakable text (links, hashtags, mentions, entities) |
 | `Strings.kt` | all spoken texts per language, plus language selection |
 | `VoiceCommands.kt` | voice commands per language → commands, matched word by word |

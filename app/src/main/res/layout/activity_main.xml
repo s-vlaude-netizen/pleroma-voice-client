@@ -85,6 +85,21 @@
                 android:text="@string/repeat_post" />
 
             <Button
+                android:id="@+id/btnLike"
+                style="@style/VoiceButton"
+                android:text="@string/like_post" />
+
+            <Button
+                android:id="@+id/btnBoost"
+                style="@style/VoiceButton"
+                android:text="@string/boost_post" />
+
+            <Button
+                android:id="@+id/btnComment"
+                style="@style/VoiceButton"
+                android:text="@string/comment_post" />
+
+            <Button
                 android:id="@+id/btnDictate"
                 style="@style/VoiceButton"
                 android:text="@string/dictate" />

@@ -185,6 +185,20 @@ interface Strings {
     val published: String
     fun sendFailed(reason: String): String
 
+    // ---- reacting to the post that was just read ---------------------------
+    fun commentPrompt(author: String): String
+    fun confirmComment(author: String, draft: String): String
+    fun commentWaiting(author: String): String
+    val commentPublished: String
+    val commentDiscarded: String
+    val liked: String
+    fun likeFailed(reason: String): String
+    fun confirmBoost(author: String): String
+    val boostAgain: String
+    val boosted: String
+    fun boostFailed(reason: String): String
+    val boostCancelled: String
+
     // ---- errors ------------------------------------------------------------
     fun apiError(kind: ApiErrorKind, status: Int, detail: String): String
     val unknownError: String
@@ -262,6 +276,8 @@ object EnglishStrings : Strings {
             "With pauses, if I should ask between posts, or straight through, if I should " +
             "read without stopping. Behind a content warning I read only the warning. " +
             "Say read anyway for the post I am on, or always read content, to hear every one. " +
+            "For the post I just read, say comment to reply to it, like to favourite it, " +
+            "or boost to share it with your followers. I ask before I boost. " +
             "Say German or Japanese to switch language. " +
             "Say log out to sign out of your account. " +
             "Say quit, or goodbye, to close voice control."
@@ -302,6 +318,27 @@ object EnglishStrings : Strings {
     override val published = "Post published. What would you like to do?"
     override fun sendFailed(reason: String) =
         "Sending failed. $reason. Should I try again? Say yes or no."
+
+    override fun commentPrompt(author: String) =
+        "Comment on the post by $author. Speak after the tone."
+
+    override fun confirmComment(author: String, draft: String) =
+        "Your comment to $author reads: $draft. Should I send it? Say yes, no, or again."
+
+    override fun commentWaiting(author: String) =
+        "A comment to $author that you dictated earlier is still waiting."
+
+    override val commentPublished = "Comment sent."
+    override val commentDiscarded = "Comment discarded."
+    override val liked = "Liked."
+    override fun likeFailed(reason: String) = "Liking failed. $reason"
+    override fun confirmBoost(author: String) =
+        "Boost the post by $author to your followers? Say yes or no."
+
+    override val boostAgain = "Should I boost it? Say yes or no."
+    override val boosted = "Boosted."
+    override fun boostFailed(reason: String) = "Boosting failed. $reason"
+    override val boostCancelled = "Not boosted."
 
     override fun apiError(kind: ApiErrorKind, status: Int, detail: String): String {
         val suffix = if (detail.isNotBlank()) ": $detail" else ""
@@ -400,6 +437,9 @@ object GermanStrings : Strings {
             "Bei einer Inhaltswarnung lese ich nur die Warnung vor. " +
             "Sag Trotzdem vorlesen für den Beitrag, bei dem ich gerade bin, " +
             "oder Inhalte immer vorlesen, um sie alle zu hören. " +
+            "Zum Beitrag, den ich gerade vorgelesen habe, sagst du Kommentar zum Antworten, " +
+            "Gefällt mir zum Liken, oder Teilen, um ihn an deine Follower weiterzugeben. " +
+            "Vor dem Teilen frage ich nach. " +
             "Sag Englisch oder Japanisch, um die Sprache zu wechseln. " +
             "Sag Abmelden, um dich vom Konto abzumelden. " +
             "Sag Beenden, um die Sprachsteuerung zu schließen."
@@ -446,6 +486,28 @@ object GermanStrings : Strings {
     override val published = "Beitrag veröffentlicht. Was möchtest du tun?"
     override fun sendFailed(reason: String) =
         "Senden fehlgeschlagen. $reason. Soll ich es erneut versuchen? Sag Ja oder Nein."
+
+    override fun commentPrompt(author: String) =
+        "Kommentar zum Beitrag von $author. Sprich nach dem Ton."
+
+    override fun confirmComment(author: String, draft: String) =
+        "Dein Kommentar an $author lautet: $draft. Soll ich ihn senden? " +
+            "Sag Ja, Nein, oder Wiederholen."
+
+    override fun commentWaiting(author: String) =
+        "Ein Kommentar an $author von vorhin liegt noch bereit."
+
+    override val commentPublished = "Kommentar gesendet."
+    override val commentDiscarded = "Kommentar verworfen."
+    override val liked = "Geliked."
+    override fun likeFailed(reason: String) = "Liken fehlgeschlagen. $reason"
+    override fun confirmBoost(author: String) =
+        "Soll ich den Beitrag von $author an deine Follower teilen? Sag Ja oder Nein."
+
+    override val boostAgain = "Soll ich ihn teilen? Sag Ja oder Nein."
+    override val boosted = "Geteilt."
+    override fun boostFailed(reason: String) = "Teilen fehlgeschlagen. $reason"
+    override val boostCancelled = "Nicht geteilt."
 
     override fun apiError(kind: ApiErrorKind, status: Int, detail: String): String {
         val suffix = if (detail.isNotBlank()) ": $detail" else ""
@@ -532,6 +594,8 @@ object JapaneseStrings : Strings {
             "続けて読む、と言うと止まらずに読みます。間で聞く、と言うと投稿ごとに尋ねます。" +
             "内容の警告がある投稿は警告だけを読み上げます。" +
             "それでも読んで、と言うと今の投稿を、内容も読む、と言うとこれからすべてを読み上げます。" +
+            "今読んだ投稿には、コメント、いいね、ブースト、と言えます。" +
+            "ブーストの前には確認します。" +
             "英語、またはドイツ語、と言うと言語を切り替えます。" +
             "ログアウト、と言うとアカウントから出ます。" +
             "終了、と言うと音声操作を閉じます。"
@@ -576,6 +640,28 @@ object JapaneseStrings : Strings {
     override val published = "投稿しました。次はどうしますか。"
     override fun sendFailed(reason: String) =
         "送信できませんでした。$reason。もう一度試しますか。はい、またはいいえ、と言ってください。"
+
+    override fun commentPrompt(author: String) =
+        "${author}さんの投稿にコメントします。音のあとに話してください。"
+
+    override fun confirmComment(author: String, draft: String) =
+        "${author}さんへのコメントは、$draft。送信しますか。" +
+            "はい、いいえ、またはもう一度、と言ってください。"
+
+    override fun commentWaiting(author: String) =
+        "前に口述した${author}さんへのコメントがまだ残っています。"
+
+    override val commentPublished = "コメントを送信しました。"
+    override val commentDiscarded = "コメントを破棄しました。"
+    override val liked = "いいねしました。"
+    override fun likeFailed(reason: String) = "いいねできませんでした。$reason"
+    override fun confirmBoost(author: String) =
+        "${author}さんの投稿をフォロワーにブーストしますか。はい、またはいいえ、と言ってください。"
+
+    override val boostAgain = "ブーストしますか。はい、またはいいえ、と言ってください。"
+    override val boosted = "ブーストしました。"
+    override fun boostFailed(reason: String) = "ブーストできませんでした。$reason"
+    override val boostCancelled = "ブーストしませんでした。"
 
     override fun apiError(kind: ApiErrorKind, status: Int, detail: String): String {
         val suffix = if (detail.isNotBlank()) ": $detail" else ""

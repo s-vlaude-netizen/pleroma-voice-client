@@ -49,6 +49,9 @@
     <string name="stop">Stop</string>
     <string name="dictate">Dictate a post</string>
     <string name="repeat_post">Repeat post</string>
+    <string name="like_post">Like this post</string>
+    <string name="boost_post">Boost this post</string>
+    <string name="comment_post">Comment on this post</string>
     <string name="logout">Sign out</string>
     <string name="logged_out_toast">Signed out</string>
 

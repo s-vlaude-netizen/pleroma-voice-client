@@ -191,6 +191,15 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btnRepeat).setOnClickListener {
             VoiceService.send(this, VoiceService.ACTION_REPEAT)
         }
+        findViewById<Button>(R.id.btnLike).setOnClickListener {
+            VoiceService.send(this, VoiceService.ACTION_LIKE)
+        }
+        findViewById<Button>(R.id.btnBoost).setOnClickListener {
+            VoiceService.send(this, VoiceService.ACTION_BOOST)
+        }
+        findViewById<Button>(R.id.btnComment).setOnClickListener {
+            onCommentClicked()
+        }
         findViewById<Button>(R.id.btnDictate).setOnClickListener {
             onDictateClicked()
         }
@@ -466,6 +475,13 @@ class MainActivity : AppCompatActivity() {
     private fun startVoiceSession() {
         VoiceService.send(this, VoiceService.ACTION_START_SESSION)
         setStatus(getString(R.string.starting_voice))
+    }
+
+    /** Dictating needs the microphone, so it is settled first, as for a new post. */
+    private fun onCommentClicked() {
+        withMicrophone {
+            afterDeviceMicCheck { VoiceService.send(this, VoiceService.ACTION_COMMENT) }
+        }
     }
 
     private fun onDictateClicked() {
