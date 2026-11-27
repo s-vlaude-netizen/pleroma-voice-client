@@ -158,6 +158,14 @@ interface Strings {
     val whatNow: String
     val alreadyFirstPost: String
 
+    // ---- notifications -----------------------------------------------------
+    val loadingNotifications: String
+    val emptyNotifications: String
+    fun notificationsFailed(reason: String): String
+    fun notificationCounter(index: Int, total: Int): String
+    fun notificationLead(kind: NotificationKind, actor: String, emoji: String?): String
+    fun allNotificationsRead(total: Int): String
+
     // ---- dictation ---------------------------------------------------------
     val dictatePrompt: String
     val nothingHeardRetry: String
@@ -257,7 +265,7 @@ object EnglishStrings : Strings {
     override val notUnderstood = "I did not understand that. Say help for the available commands."
     override val paused = "Paused. Say continue to carry on."
     override val helpText =
-        "You can say: read timeline. Next post. Previous post. Repeat. Pause. Continue. " +
+        "You can say: read timeline. Read notifications. Next post. Previous post. Repeat. Pause. Continue. " +
             "Stop. New post, to dictate something. Faster or slower for the speaking rate. " +
             "With pauses, if I should ask between posts, or straight through, if I should " +
             "read without stopping. Behind a content warning I read only the warning. " +
@@ -282,6 +290,29 @@ object EnglishStrings : Strings {
     override val noFurtherPost = "There is no further post."
     override val whatNow = "Would you like to write a post? Say new post, read timeline, or end."
     override val alreadyFirstPost = "This is already the first post."
+
+    override val loadingNotifications = "Loading notifications."
+    override val emptyNotifications = "You have no notifications."
+    override fun notificationsFailed(reason: String) =
+        "Notifications could not be loaded. $reason"
+
+    override fun notificationCounter(index: Int, total: Int) = "Notification $index of $total."
+    override fun notificationLead(kind: NotificationKind, actor: String, emoji: String?) =
+        when (kind) {
+            NotificationKind.MENTION -> "$actor mentioned you:"
+            NotificationKind.BOOST -> "$actor shared your post:"
+            NotificationKind.FAVORITE -> "$actor favorited your post:"
+            NotificationKind.REACTION ->
+                if (emoji != null) "$actor reacted with $emoji to your post:"
+                else "$actor reacted to your post:"
+            NotificationKind.FOLLOW -> "$actor followed you."
+            NotificationKind.FOLLOW_REQUEST -> "$actor asked to follow you."
+            NotificationKind.POLL -> "A poll you took part in has ended:"
+            NotificationKind.NEW_POST -> "$actor posted:"
+            NotificationKind.EDIT -> "$actor edited a post:"
+        }
+
+    override fun allNotificationsRead(total: Int) = "That was all $total notifications."
 
     override val dictatePrompt = "Speak your post after the tone."
     override val nothingHeardRetry = "I did not hear anything. Speak your post after the tone."
@@ -392,7 +423,7 @@ object GermanStrings : Strings {
         "Das habe ich nicht verstanden. Sag Hilfe für die möglichen Befehle."
     override val paused = "Pausiert. Sag Weiter, um fortzufahren."
     override val helpText =
-        "Du kannst sagen: Timeline vorlesen. Nächster Beitrag. Vorheriger Beitrag. " +
+        "Du kannst sagen: Timeline vorlesen. Benachrichtigungen vorlesen. Nächster Beitrag. Vorheriger Beitrag. " +
             "Wiederholen. Pause. Weiter. Stopp. Neuer Beitrag, um etwas zu diktieren. " +
             "Schneller oder langsamer für das Sprechtempo. " +
             "Mit Pausen, wenn ich zwischen den Beiträgen nachfragen soll, " +
@@ -423,6 +454,31 @@ object GermanStrings : Strings {
     override val whatNow =
         "Möchtest du einen Beitrag schreiben? Sag Neuer Beitrag, Timeline vorlesen, oder Beenden."
     override val alreadyFirstPost = "Das ist bereits der erste Beitrag."
+
+    override val loadingNotifications = "Benachrichtigungen werden geladen."
+    override val emptyNotifications = "Du hast keine Benachrichtigungen."
+    override fun notificationsFailed(reason: String) =
+        "Die Benachrichtigungen konnten nicht geladen werden. $reason"
+
+    override fun notificationCounter(index: Int, total: Int) =
+        "Benachrichtigung $index von $total."
+
+    override fun notificationLead(kind: NotificationKind, actor: String, emoji: String?) =
+        when (kind) {
+            NotificationKind.MENTION -> "$actor hat dich erwähnt:"
+            NotificationKind.BOOST -> "$actor hat deinen Beitrag geteilt:"
+            NotificationKind.FAVORITE -> "$actor hat deinen Beitrag favorisiert:"
+            NotificationKind.REACTION ->
+                if (emoji != null) "$actor hat mit $emoji auf deinen Beitrag reagiert:"
+                else "$actor hat auf deinen Beitrag reagiert:"
+            NotificationKind.FOLLOW -> "$actor folgt dir jetzt."
+            NotificationKind.FOLLOW_REQUEST -> "$actor möchte dir folgen."
+            NotificationKind.POLL -> "Eine Umfrage, an der du teilgenommen hast, ist beendet:"
+            NotificationKind.NEW_POST -> "$actor hat gepostet:"
+            NotificationKind.EDIT -> "$actor hat einen Beitrag bearbeitet:"
+        }
+
+    override fun allNotificationsRead(total: Int) = "Das waren alle $total Benachrichtigungen."
 
     override val dictatePrompt = "Sprich deinen Beitrag nach dem Ton."
     override val nothingHeardRetry =
@@ -527,7 +583,7 @@ object JapaneseStrings : Strings {
     override val notUnderstood = "聞き取れませんでした。ヘルプと言うとコマンドを読み上げます。"
     override val paused = "一時停止しました。続けると言うと再開します。"
     override val helpText =
-        "次のように言えます。タイムライン。次の投稿。前の投稿。もう一度。一時停止。続けて。" +
+        "次のように言えます。タイムライン。通知。次の投稿。前の投稿。もう一度。一時停止。続けて。" +
             "停止。新しい投稿、と言うと口述できます。速く、または遅く、で読み上げの速さを変えます。" +
             "続けて読む、と言うと止まらずに読みます。間で聞く、と言うと投稿ごとに尋ねます。" +
             "内容の警告がある投稿は警告だけを読み上げます。" +
@@ -553,6 +609,28 @@ object JapaneseStrings : Strings {
     override val whatNow =
         "投稿を書きますか。新しい投稿、タイムライン、または終了、と言ってください。"
     override val alreadyFirstPost = "これが最初の投稿です。"
+
+    override val loadingNotifications = "通知を読み込んでいます。"
+    override val emptyNotifications = "通知はありません。"
+    override fun notificationsFailed(reason: String) = "通知を読み込めませんでした。$reason"
+
+    override fun notificationCounter(index: Int, total: Int) = "$total 件中 $index 件目の通知。"
+    override fun notificationLead(kind: NotificationKind, actor: String, emoji: String?) =
+        when (kind) {
+            NotificationKind.MENTION -> "$actor さんがあなたをメンションしました。"
+            NotificationKind.BOOST -> "$actor さんがあなたの投稿をシェアしました。"
+            NotificationKind.FAVORITE -> "$actor さんがあなたの投稿をお気に入りにしました。"
+            NotificationKind.REACTION ->
+                if (emoji != null) "$actor さんがあなたの投稿に $emoji でリアクションしました。"
+                else "$actor さんがあなたの投稿にリアクションしました。"
+            NotificationKind.FOLLOW -> "$actor さんがあなたをフォローしました。"
+            NotificationKind.FOLLOW_REQUEST -> "$actor さんがフォローをリクエストしました。"
+            NotificationKind.POLL -> "参加した投票が終了しました。"
+            NotificationKind.NEW_POST -> "$actor さんが投稿しました。"
+            NotificationKind.EDIT -> "$actor さんが投稿を編集しました。"
+        }
+
+    override fun allNotificationsRead(total: Int) = "以上、通知 $total 件すべてです。"
 
     override val dictatePrompt = "音のあとに投稿を話してください。"
     override val nothingHeardRetry = "何も聞こえませんでした。音のあとに投稿を話してください。"

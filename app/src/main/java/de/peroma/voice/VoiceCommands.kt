@@ -4,6 +4,7 @@ package de.peroma.voice
 enum class VoiceCommand {
     HELP,
     READ_TIMELINE,
+    READ_NOTIFICATIONS,
     NEXT,
     PREVIOUS,
     REPEAT,
@@ -127,6 +128,11 @@ object VoiceCommands {
         VoiceCommand.SLOWER to listOf(
             "slower", "slow down", "too fast"
         ),
+        // Before READ_TIMELINE so "new notifications" is not heard as "news".
+        VoiceCommand.READ_NOTIFICATIONS to listOf(
+            "read notifications", "read my notifications", "read the notifications",
+            "notifications", "notification", "what did i miss"
+        ),
         VoiceCommand.READ_TIMELINE to listOf(
             "read timeline", "read the timeline", "read my timeline", "timeline",
             "what is new", "what s new", "news", "home"
@@ -223,6 +229,11 @@ object VoiceCommands {
         VoiceCommand.SLOWER to listOf(
             "langsamer", "langsamer sprechen", "zu schnell"
         ),
+        // Vor READ_TIMELINE, dessen blankes "vorlesen" sonst alles aufsaugt.
+        VoiceCommand.READ_NOTIFICATIONS to listOf(
+            "benachrichtigungen vorlesen", "benachrichtigungen lesen",
+            "benachrichtigungen", "benachrichtigung", "mitteilungen", "was habe ich verpasst"
+        ),
         VoiceCommand.READ_TIMELINE to listOf(
             "timeline vorlesen", "timeline lesen", "timeline", "vorlesen", "lies vor",
             "neuigkeiten", "was gibt es neues", "startseite", "zeitleiste"
@@ -318,6 +329,10 @@ object VoiceCommands {
         ),
         VoiceCommand.SLOWER to listOf(
             "ゆっくり", "遅く", "おそく"
+        ),
+        // READ_TIMELINE の 読んで や 新着 を含むため、その前に置く。
+        VoiceCommand.READ_NOTIFICATIONS to listOf(
+            "通知", "お知らせ", "つうち"
         ),
         VoiceCommand.READ_TIMELINE to listOf(
             "タイムライン", "読んで", "よんで", "ホーム", "新着", "ニュース"

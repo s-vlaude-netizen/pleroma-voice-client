@@ -41,6 +41,7 @@ vorlesen lassen und Beiträge diktieren, ohne einmal hinzusehen.
 | Sagen | Wirkung |
 | --- | --- |
 | „Timeline vorlesen", „Was gibt es Neues" | Home-Timeline laden und vorlesen |
+| „Benachrichtigungen vorlesen" | Benachrichtigungen (Favoriten, Boosts, Erwähnungen, Follower) vorlesen |
 | „Nächster", „Überspringen" | nächster Beitrag |
 | „Vorheriger", „Zurück" | vorheriger Beitrag |
 | „Wiederholen", „Nochmal" | aktuellen Beitrag erneut vorlesen |
@@ -66,6 +67,7 @@ weiterhin, wenn es denn richtig ankommt.
 | Say | Effect |
 | --- | --- |
 | "read timeline", "what's new" | load and read the home timeline |
+| "read notifications", "notifications" | read favorites, boosts, mentions and follows |
 | "next", "skip" / "previous", "back" | move between posts |
 | "repeat", "again" | read the current post again |
 | "pause" / "continue" | stop and resume |

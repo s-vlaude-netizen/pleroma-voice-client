@@ -2,6 +2,23 @@ package de.peroma.voice
 
 import org.json.JSONObject
 
+/** What a notification is about. Only [hasStatus] kinds carry a post to read. */
+enum class NotificationKind(val apiType: String, val hasStatus: Boolean) {
+    MENTION("mention", true),
+    BOOST("reblog", true),
+    FAVORITE("favourite", true),
+    REACTION("pleroma:emoji_reaction", true),
+    FOLLOW("follow", false),
+    FOLLOW_REQUEST("follow_request", false),
+    POLL("poll", true),
+    NEW_POST("status", true),
+    EDIT("update", true);
+
+    companion object {
+        fun fromApi(type: String): NotificationKind? = values().firstOrNull { it.apiType == type }
+    }
+}
+
 /**
  * A timeline entry reduced to what can be spoken aloud.
  *
@@ -16,7 +33,11 @@ data class Post(
     val body: String,
     val spoiler: String,
     val media: List<Media>,
-    val boostedBy: String?
+    val boostedBy: String?,
+    /** Set when this entry is a notification; [author] is then who caused it. */
+    val notification: NotificationKind? = null,
+    /** The emoji of an emoji reaction. */
+    val emoji: String? = null
 ) {
 
     /** True when the author put this post behind a content warning. */
@@ -36,12 +57,16 @@ data class Post(
         revealSensitive: Boolean = false
     ): String {
         val parts = ArrayList<String>()
-        parts.add(strings.postCounter(index, total))
-
-        if (boostedBy != null) {
-            parts.add(strings.boostedBy(boostedBy, author))
+        if (notification != null) {
+            parts.add(strings.notificationCounter(index, total))
+            parts.add(strings.notificationLead(notification, author, emoji))
         } else {
-            parts.add(strings.byAuthor(author))
+            parts.add(strings.postCounter(index, total))
+            if (boostedBy != null) {
+                parts.add(strings.boostedBy(boostedBy, author))
+            } else {
+                parts.add(strings.byAuthor(author))
+            }
         }
 
         if (isSensitive) {
@@ -58,7 +83,9 @@ data class Post(
 
         parts.addAll(describeMedia(strings))
 
-        if (body.isBlank() && media.isEmpty() && !isSensitive) {
+        if (body.isBlank() && media.isEmpty() && !isSensitive &&
+            (notification == null || notification.hasStatus)
+        ) {
             parts.add(strings.noReadableText)
         }
 
@@ -138,6 +165,30 @@ data class Post(
                 spoiler = SpeechText.fromHtml(source.optString("spoiler_text"), strings),
                 media = media,
                 boostedBy = boostedBy
+            )
+        }
+
+        /**
+         * A notification from `/api/v1/notifications`, or null for a type this
+         * app does not know how to say.
+         *
+         * The actor becomes the author and the post it concerns supplies the
+         * text, so favourites and boosts read back the post that was liked.
+         */
+        fun fromNotification(obj: JSONObject, strings: Strings): Post? {
+            val kind = NotificationKind.fromApi(obj.optString("type")) ?: return null
+            val account = obj.optJSONObject("account")
+            val status = obj.optJSONObject("status")?.let { fromJson(it, strings) }
+            return Post(
+                id = obj.optString("id"),
+                author = displayName(account, strings),
+                acct = account?.optString("acct").orEmpty(),
+                body = status?.body.orEmpty(),
+                spoiler = status?.spoiler.orEmpty(),
+                media = status?.media.orEmpty(),
+                boostedBy = null,
+                notification = kind,
+                emoji = obj.optString("emoji").takeIf { it.isNotBlank() && it != "null" }
             )
         }
 

@@ -139,4 +139,36 @@ class PostSpeechTest {
         val spoken = post(body = "", media = images(2)).toSpeech(1, 1, en)
         assertFalse(spoken.contains(en.noReadableText))
     }
+
+    private fun notification(kind: NotificationKind, body: String = "Nice weather.") =
+        Post(
+            id = "n1", author = "Sam", acct = "sam@example.social", body = body,
+            spoiler = "", media = emptyList(), boostedBy = null, notification = kind
+        )
+
+    @Test
+    fun favoriteNotificationNamesWhoAndReadsThePost() {
+        val spoken = notification(NotificationKind.FAVORITE).toSpeech(1, 3, en)
+        assertEquals("Notification 1 of 3. Sam favorited your post: Nice weather.", spoken)
+    }
+
+    @Test
+    fun followNotificationHasNoPostAndNoComplaintAboutIt() {
+        val spoken = notification(NotificationKind.FOLLOW, body = "").toSpeech(2, 3, de)
+        assertEquals("Benachrichtigung 2 von 3. Sam folgt dir jetzt.", spoken)
+    }
+
+    @Test
+    fun notificationsParseFromJson() {
+        val json = org.json.JSONObject(
+            """{"id":"9","type":"favourite","account":{"display_name":"Sam","username":"sam","acct":"sam"},
+               "status":{"id":"5","content":"<p>Hi</p>","spoiler_text":"","media_attachments":[],
+               "account":{"display_name":"Me","username":"me","acct":"me"}}}"""
+        )
+        val post = Post.fromNotification(json, en)!!
+        assertEquals("Sam", post.author)
+        assertEquals(NotificationKind.FAVORITE, post.notification)
+        assertEquals("Hi", post.body)
+        assertEquals(null, Post.fromNotification(org.json.JSONObject("""{"type":"pleroma:chat_mention"}"""), en))
+    }
 }

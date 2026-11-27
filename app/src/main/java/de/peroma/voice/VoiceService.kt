@@ -80,6 +80,9 @@ class VoiceService : Service() {
     private var stage = Stage.IDLE
     private var posts: List<Post> = emptyList()
     private var index = 0
+
+    /** Whether [posts] holds notifications rather than the home timeline. */
+    private var showingNotifications = false
     private var loading = false
     private var silenceStreak = 0
     private var dictationRetries = 0
@@ -201,6 +204,7 @@ class VoiceService : Service() {
         when (action) {
             ACTION_START_SESSION -> startSession()
             ACTION_READ_TIMELINE -> loadAndRead()
+            ACTION_READ_NOTIFICATIONS -> loadAndRead(notifications = true)
             ACTION_NEXT -> nextPost(auto = false)
             ACTION_PREVIOUS -> previousPost()
             ACTION_REPEAT -> speakCurrentPost()
@@ -543,6 +547,7 @@ class VoiceService : Service() {
     private fun handleCommand(command: VoiceCommand, duringReading: Boolean) {
         when (command) {
             VoiceCommand.READ_TIMELINE -> loadAndRead()
+            VoiceCommand.READ_NOTIFICATIONS -> loadAndRead(notifications = true)
             VoiceCommand.NEXT -> nextPost(auto = false)
             VoiceCommand.PREVIOUS -> previousPost()
             VoiceCommand.REPEAT -> speakCurrentPost()
@@ -645,6 +650,7 @@ class VoiceService : Service() {
         prefs.language = target
         strings = target.strings
         posts = emptyList()
+        showingNotifications = false
         index = 0
         tts?.let { TtsSetup.applyVoice(it, target.locale) }
         speak(strings.nowSpeakingThisLanguage, After.LISTEN_COMMAND)
@@ -661,33 +667,51 @@ class VoiceService : Service() {
 
     // ---- timeline ----------------------------------------------------------
 
-    private fun loadAndRead() {
+    private fun loadAndRead(notifications: Boolean = false) {
         if (loading) return
         if (!prefs.isLoggedIn) {
             speak(strings.notLoggedIn, After.STOP_SESSION)
             return
         }
         loading = true
-        speak(strings.loadingTimeline, After.NOTHING)
+        speak(
+            if (notifications) strings.loadingNotifications else strings.loadingTimeline,
+            After.NOTHING
+        )
 
         val instance = prefs.instance
         val token = prefs.accessToken
 
         Background.run(
-            work = { PleromaApi.fetchHomeTimeline(instance, token, strings, limit = 20) },
+            work = {
+                if (notifications) {
+                    PleromaApi.fetchNotifications(instance, token, strings, limit = 20)
+                } else {
+                    PleromaApi.fetchHomeTimeline(instance, token, strings, limit = 20)
+                }
+            },
             onSuccess = { result ->
                 loading = false
                 posts = result
+                showingNotifications = notifications
                 index = 0
                 if (result.isEmpty()) {
-                    speak(strings.emptyTimeline, After.LISTEN_COMMAND)
+                    speak(
+                        if (notifications) strings.emptyNotifications else strings.emptyTimeline,
+                        After.LISTEN_COMMAND
+                    )
                 } else {
                     speakCurrentPost()
                 }
             },
             onError = { error ->
                 loading = false
-                speak(strings.timelineFailed(error.userMessage(strings)), After.LISTEN_COMMAND)
+                val reason = error.userMessage(strings)
+                speak(
+                    if (notifications) strings.notificationsFailed(reason)
+                    else strings.timelineFailed(reason),
+                    After.LISTEN_COMMAND
+                )
             }
         )
     }
@@ -729,7 +753,12 @@ class VoiceService : Service() {
             return
         }
         if (index >= posts.lastIndex) {
-            val ending = if (auto) strings.allPostsRead(posts.size) else strings.noFurtherPost
+            val all = if (showingNotifications) {
+                strings.allNotificationsRead(posts.size)
+            } else {
+                strings.allPostsRead(posts.size)
+            }
+            val ending = if (auto) all else strings.noFurtherPost
             speak("$ending ${strings.whatNow}", After.LISTEN_COMMAND)
             return
         }
@@ -1043,6 +1072,7 @@ class VoiceService : Service() {
         const val ACTION_START_SESSION = "de.peroma.voice.action.START_SESSION"
         const val ACTION_STOP_SESSION = "de.peroma.voice.action.STOP_SESSION"
         const val ACTION_READ_TIMELINE = "de.peroma.voice.action.READ_TIMELINE"
+        const val ACTION_READ_NOTIFICATIONS = "de.peroma.voice.action.READ_NOTIFICATIONS"
         const val ACTION_NEXT = "de.peroma.voice.action.NEXT"
         const val ACTION_PREVIOUS = "de.peroma.voice.action.PREVIOUS"
         const val ACTION_REPEAT = "de.peroma.voice.action.REPEAT"

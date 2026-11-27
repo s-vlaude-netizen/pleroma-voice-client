@@ -172,6 +172,27 @@ object PleromaApi {
         return posts
     }
 
+    /** Recent notifications — favourites, boosts, mentions, follows — newest first. */
+    fun fetchNotifications(
+        instance: String,
+        token: String,
+        strings: Strings,
+        limit: Int = 20
+    ): List<Post> {
+        val text = request(
+            "GET",
+            "https://$instance/api/v1/notifications?limit=$limit",
+            token = token
+        )
+        val array = JSONArray(text)
+        val posts = ArrayList<Post>(array.length())
+        for (i in 0 until array.length()) {
+            val obj = array.optJSONObject(i) ?: continue
+            Post.fromNotification(obj, strings)?.let { posts.add(it) }
+        }
+        return posts
+    }
+
     /** Publishes a status. Returns the id of the created post. */
     fun postStatus(
         instance: String,

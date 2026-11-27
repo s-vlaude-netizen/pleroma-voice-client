@@ -484,4 +484,16 @@ class VoiceCommandsTest {
         assertEquals(VoiceCommand.UNKNOWN, parseDe(""))
         assertEquals(VoiceCommand.UNKNOWN, parseEn("   "))
     }
+
+    @Test
+    fun notificationsAreNotTheTimeline() {
+        assertEquals(VoiceCommand.READ_NOTIFICATIONS, parseEn("read notifications"))
+        assertEquals(VoiceCommand.READ_NOTIFICATIONS, parseEn("notifications"))
+        assertEquals(VoiceCommand.READ_TIMELINE, parseEn("read timeline"))
+        assertEquals(VoiceCommand.READ_NOTIFICATIONS, parseDe("Benachrichtigungen vorlesen"))
+        assertEquals(VoiceCommand.READ_TIMELINE, parseDe("Timeline vorlesen"))
+        assertEquals(VoiceCommand.READ_NOTIFICATIONS, parseJa("通知を読んでください"))
+        assertEquals(VoiceCommand.READ_NOTIFICATIONS, parseJa("新着通知"))
+        assertEquals(VoiceCommand.READ_TIMELINE, parseJa("新着は"))
+    }
 }
