@@ -178,12 +178,22 @@ object PleromaApi {
         token: String,
         strings: Strings,
         limit: Int = 20
-    ): List<Post> {
-        val text = request(
+    ): List<Post> = parseNotifications(
+        request(
             "GET",
             "https://$instance/api/v1/notifications?limit=$limit",
             token = token
-        )
+        ),
+        strings
+    )
+
+    /**
+     * The notifications the app can say, in the order the server sent them.
+     *
+     * Types it has no wording for — chat messages, admin reports — are left
+     * out rather than read as something they are not.
+     */
+    internal fun parseNotifications(text: String, strings: Strings): List<Post> {
         val array = JSONArray(text)
         val posts = ArrayList<Post>(array.length())
         for (i in 0 until array.length()) {

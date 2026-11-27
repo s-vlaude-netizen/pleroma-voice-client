@@ -20,6 +20,11 @@ vorlesen lassen und Beiträge diktieren, ohne einmal hinzusehen.
 - **Timeline am Stück vorlesen** — Autor, Inhaltswarnung, Text und Bildbeschreibungen
   der Anhänge. Standardmäßig laufen alle Beiträge ohne Unterbrechung durch; erst am
   Ende fragt die App, wie es weitergehen soll.
+- **Benachrichtigungen vorlesen** — „Benachrichtigungen vorlesen" (oder kurz
+  „Benachrichtigungen") liest Favoriten, Boosts, Erwähnungen, Reaktionen und neue
+  Follower vor: wer es war, was er getan hat und, wo es einen gibt, der Beitrag dazu.
+  Weiter, zurück und wiederholen funktionieren wie in der Timeline, und eine
+  Inhaltswarnung am Beitrag bleibt zu, bis du „trotzdem vorlesen" sagst.
 - **Zwischenfragen optional** — wer freihändig navigieren will, schaltet mit
   „Mit Pausen" (oder dem Knopf) einen Modus ein, in dem das Mikrofon nach jedem
   Beitrag kurz aufgeht. „Am Stück" schaltet zurück. Die Einstellung wird gemerkt.
@@ -346,8 +351,8 @@ Ein Wechsel des Schlüssels verlangt erneut ein Deinstallieren auf jedem Gerät.
 
 | Datei | Aufgabe |
 | --- | --- |
-| `PleromaApi.kt` | OAuth-Registrierung, Token-Tausch, Timeline, Beitrag senden |
-| `Post.kt` | Timeline-Eintrag, aufbereitet als Sprechtext |
+| `PleromaApi.kt` | OAuth-Registrierung, Token-Tausch, Timeline, Benachrichtigungen, Beitrag senden |
+| `Post.kt` | Timeline-Eintrag oder Benachrichtigung, aufbereitet als Sprechtext |
 | `SpeechText.kt` | HTML → vorlesbarer Text (Links, Hashtags, Erwähnungen, Entities) |
 | `Strings.kt` | alle gesprochenen Texte je Sprache, plus Sprachauswahl |
 | `VoiceCommands.kt` | Sprachbefehle je Sprache → Kommandos, wortweise geprüft |

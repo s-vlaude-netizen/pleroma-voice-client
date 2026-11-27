@@ -632,7 +632,7 @@ class VoiceService : Service() {
 
     private fun describeStatus(): String = when {
         posts.isEmpty() -> strings.noTimelineLoaded
-        else -> strings.statusAt(index + 1, posts.size, posts[index].summary())
+        else -> posts[index].statusLine(index + 1, posts.size, strings)
     }
 
     /**

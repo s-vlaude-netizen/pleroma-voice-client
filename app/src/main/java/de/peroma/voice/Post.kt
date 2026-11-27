@@ -119,10 +119,28 @@ data class Post(
 
     /** Short label for the notification and the screen. */
     fun summary(): String {
-        val text = if (body.isNotBlank()) body else spoiler
-        val shortened = if (text.length > 80) text.take(80) + "…" else text
+        val shortened = shorten(if (body.isNotBlank()) body else spoiler)
         return if (shortened.isBlank()) author else "$author: $shortened"
     }
+
+    /**
+     * What "where am I" says: the position, then what is there.
+     *
+     * A notification is introduced the way it is read out, because the plain
+     * summary would credit the post to whoever reacted to it — "Sam: Nice
+     * weather" — when it is the listener's own.
+     */
+    fun statusLine(index: Int, total: Int, strings: Strings): String {
+        if (notification == null) return strings.statusAt(index, total, summary())
+        val lead = strings.notificationCounter(index, total) + " " +
+            strings.notificationLead(notification, author, emoji)
+        // Behind a warning only the warning is shown, as when reading.
+        val text = shorten(if (isSensitive) spoiler else body)
+        return if (text.isBlank()) lead else "$lead $text"
+    }
+
+    private fun shorten(text: String): String =
+        if (text.length > 80) text.take(80) + "…" else text
 
     companion object {
 

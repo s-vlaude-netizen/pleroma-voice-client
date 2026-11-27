@@ -1,7 +1,9 @@
 package de.peroma.voice
 
+import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -140,11 +142,24 @@ class PostSpeechTest {
         assertFalse(spoken.contains(en.noReadableText))
     }
 
-    private fun notification(kind: NotificationKind, body: String = "Nice weather.") =
-        Post(
-            id = "n1", author = "Sam", acct = "sam@example.social", body = body,
-            spoiler = "", media = emptyList(), boostedBy = null, notification = kind
-        )
+    // ---- notifications ------------------------------------------------------
+
+    private fun notification(
+        kind: NotificationKind,
+        body: String = "Nice weather.",
+        spoiler: String = "",
+        emoji: String? = null
+    ) = Post(
+        id = "n1",
+        author = "Sam",
+        acct = "sam@example.social",
+        body = body,
+        spoiler = spoiler,
+        media = emptyList(),
+        boostedBy = null,
+        notification = kind,
+        emoji = emoji
+    )
 
     @Test
     fun favoriteNotificationNamesWhoAndReadsThePost() {
@@ -159,16 +174,144 @@ class PostSpeechTest {
     }
 
     @Test
-    fun notificationsParseFromJson() {
-        val json = org.json.JSONObject(
-            """{"id":"9","type":"favourite","account":{"display_name":"Sam","username":"sam","acct":"sam"},
-               "status":{"id":"5","content":"<p>Hi</p>","spoiler_text":"","media_attachments":[],
-               "account":{"display_name":"Me","username":"me","acct":"me"}}}"""
+    fun notificationIsIntroducedInJapaneseToo() {
+        val spoken = notification(NotificationKind.FAVORITE).toSpeech(1, 3, ja)
+        assertEquals(
+            "3 件中 1 件目の通知。 Sam さんがあなたの投稿をお気に入りにしました。 Nice weather.",
+            spoken
         )
-        val post = Post.fromNotification(json, en)!!
+    }
+
+    @Test
+    fun everyKindIsSpokenInEveryLanguage() {
+        for (strings in listOf(en, de, ja)) {
+            for (kind in NotificationKind.values()) {
+                val spoken = notification(kind, emoji = "🎉").toSpeech(1, 1, strings)
+                assertTrue("$kind: $spoken", spoken.isNotBlank())
+                // The poll announcement is about the poll, not about a person.
+                if (kind != NotificationKind.POLL) {
+                    assertTrue("$kind: $spoken", spoken.contains("Sam"))
+                }
+            }
+        }
+    }
+
+    @Test
+    fun reactionSaysWhichEmojiWhenItIsKnown() {
+        assertEquals(
+            "Notification 1 of 1. Sam reacted with 🎉 to your post: Nice weather.",
+            notification(NotificationKind.REACTION, emoji = "🎉").toSpeech(1, 1, en)
+        )
+        assertEquals(
+            "Notification 1 of 1. Sam reacted to your post: Nice weather.",
+            notification(NotificationKind.REACTION).toSpeech(1, 1, en)
+        )
+    }
+
+    @Test
+    fun aWarningOnTheFavoritedPostStillHoldsItsContentBack() {
+        val post = notification(NotificationKind.FAVORITE, body = "Secret.", spoiler = "Food")
+        assertEquals(
+            "Notification 1 of 1. Sam favorited your post: " +
+                "Content warning: Food. Content skipped.",
+            post.toSpeech(1, 1, en)
+        )
+        assertTrue(post.toSpeech(1, 1, en, revealSensitive = true).endsWith("Secret."))
+    }
+
+    // ---- "where am I" ---------------------------------------------------------
+
+    @Test
+    fun whereAmIIntroducesANotificationTheWayItIsRead() {
+        assertEquals(
+            "Notification 2 of 3. Sam favorited your post: Nice weather.",
+            notification(NotificationKind.FAVORITE).statusLine(2, 3, en)
+        )
+        assertEquals(
+            "Notification 2 of 3. Sam followed you.",
+            notification(NotificationKind.FOLLOW, body = "").statusLine(2, 3, en)
+        )
+    }
+
+    @Test
+    fun whereAmIKeepsTheTimelineWording() {
+        assertEquals("Post 2 of 3. Alex: Hello there.", post().statusLine(2, 3, en))
+    }
+
+    @Test
+    fun whereAmIDoesNotOpenAWarningOnANotification() {
+        val line = notification(NotificationKind.FAVORITE, body = "Secret.", spoiler = "Food")
+            .statusLine(1, 1, en)
+        assertTrue(line, line.endsWith("Food"))
+        assertFalse(line, line.contains("Secret"))
+    }
+
+    // ---- notifications as the server sends them -------------------------------
+
+    private val favouriteJson = """
+        {"id":"9","type":"favourite","created_at":"2026-11-27T10:00:00.000Z",
+         "account":{"id":"2","display_name":"Sam","username":"sam","acct":"sam@example.social"},
+         "status":{"id":"5","content":"<p>Nice <b>weather</b></p>","spoiler_text":"",
+                   "media_attachments":[],
+                   "account":{"id":"1","display_name":"Me","username":"me","acct":"me"}}}
+    """
+
+    @Test
+    fun aFavouriteParsesWithItsActorAndThePost() {
+        val post = Post.fromNotification(JSONObject(favouriteJson), en)!!
         assertEquals("Sam", post.author)
+        assertEquals("sam@example.social", post.acct)
         assertEquals(NotificationKind.FAVORITE, post.notification)
-        assertEquals("Hi", post.body)
-        assertEquals(null, Post.fromNotification(org.json.JSONObject("""{"type":"pleroma:chat_mention"}"""), en))
+        assertTrue(post.body, post.body.contains("Nice weather"))
+        assertNull(post.emoji)
+    }
+
+    @Test
+    fun aFollowParsesWithoutAPost() {
+        val post = Post.fromNotification(
+            JSONObject(
+                """{"id":"3","type":"follow",
+                    "account":{"display_name":"Sam","username":"sam","acct":"sam"}}"""
+            ),
+            en
+        )!!
+        assertEquals(NotificationKind.FOLLOW, post.notification)
+        assertEquals("", post.body)
+    }
+
+    @Test
+    fun anEmojiReactionKeepsItsEmoji() {
+        val reaction = JSONObject(favouriteJson)
+            .put("type", "pleroma:emoji_reaction")
+            .put("emoji", "🎉")
+        assertEquals("🎉", Post.fromNotification(reaction, en)!!.emoji)
+    }
+
+    @Test
+    fun aNullEmojiIsNotTheWordNull() {
+        // org.json turns a JSON null into the string "null" when asked for text.
+        val reaction = JSONObject(favouriteJson)
+            .put("type", "pleroma:emoji_reaction")
+            .put("emoji", JSONObject.NULL)
+        assertNull(Post.fromNotification(reaction, en)!!.emoji)
+    }
+
+    @Test
+    fun aTypeTheAppCannotSayIsLeftOut() {
+        val chat = JSONObject("""{"id":"4","type":"pleroma:chat_mention"}""")
+        assertNull(Post.fromNotification(chat, en))
+    }
+
+    @Test
+    fun theListKeepsTheServersOrderAndDropsWhatItCannotSay() {
+        val list = "[$favouriteJson," +
+            """{"id":"4","type":"pleroma:chat_mention"},""" +
+            """{"id":"3","type":"follow","account":{"display_name":"Alex","username":"alex"}}]"""
+        val posts = PleromaApi.parseNotifications(list, en)
+        assertEquals(
+            listOf(NotificationKind.FAVORITE, NotificationKind.FOLLOW),
+            posts.map { it.notification }
+        )
+        assertEquals(listOf("Sam", "Alex"), posts.map { it.author })
     }
 }

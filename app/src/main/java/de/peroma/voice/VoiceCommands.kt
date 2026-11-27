@@ -128,7 +128,8 @@ object VoiceCommands {
         VoiceCommand.SLOWER to listOf(
             "slower", "slow down", "too fast"
         ),
-        // Before READ_TIMELINE so "new notifications" is not heard as "news".
+        // Ahead of READ_TIMELINE as in the other tables, where it matters: there
+        // the timeline's bare "vorlesen" and 読んで would swallow these.
         VoiceCommand.READ_NOTIFICATIONS to listOf(
             "read notifications", "read my notifications", "read the notifications",
             "notifications", "notification", "what did i miss"
