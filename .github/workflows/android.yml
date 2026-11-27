@@ -79,6 +79,11 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || format('v{0}-build{1}', steps.apk.outputs.version, github.run_number) }}
+          # Without this, GitHub puts a new tag on the default branch's latest
+          # commit. A run on any other branch would then publish its APK under a
+          # tag that points at different source. For a tag that already exists,
+          # as when a v* tag is pushed, the value is ignored.
+          target_commitish: ${{ github.sha }}
           name: Peroma Voice ${{ steps.apk.outputs.version }}
           files: ${{ steps.apk.outputs.name }}
           generate_release_notes: true
