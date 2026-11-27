@@ -32,6 +32,7 @@
     <string name="mic_device_blocked">Das Mikrofon ist für alle Apps gesperrt. Schalte „Mikrofonzugriff“ in den Schnelleinstellungen wieder ein und tippe dann auf „Sprachsteuerung starten“.</string>
 
     <string name="read_timeline">Timeline vorlesen</string>
+    <string name="read_notifications">Benachrichtigungen vorlesen</string>
     <string name="pauses_state_on">Zwischenfragen: an — tippen zum Ausschalten</string>
     <string name="pauses_state_off">Zwischenfragen: aus — tippen zum Einschalten</string>
     <string name="pauses_on_status">Zwischen den Beiträgen wird nachgefragt.</string>
@@ -52,6 +53,9 @@
     <string name="stop">Stopp</string>
     <string name="dictate">Beitrag diktieren</string>
     <string name="repeat_post">Beitrag wiederholen</string>
+    <string name="like_post">Beitrag liken</string>
+    <string name="boost_post">Beitrag teilen (Boost)</string>
+    <string name="comment_post">Beitrag kommentieren</string>
     <string name="logout">Abmelden</string>
     <string name="logged_out_toast">Abgemeldet</string>
 

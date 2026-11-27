@@ -32,6 +32,7 @@
     <string name="mic_device_blocked">The microphone is blocked for all apps. Turn Microphone access back on in the quick settings, then tap Start voice control.</string>
 
     <string name="read_timeline">Read timeline</string>
+    <string name="read_notifications">Read notifications</string>
     <string name="pauses_state_on">Ask between posts: on — tap to turn off</string>
     <string name="pauses_state_off">Ask between posts: off — tap to turn on</string>
     <string name="pauses_on_status">I will ask between posts.</string>
@@ -49,6 +50,9 @@
     <string name="stop">Stop</string>
     <string name="dictate">Dictate a post</string>
     <string name="repeat_post">Repeat post</string>
+    <string name="like_post">Like this post</string>
+    <string name="boost_post">Boost this post</string>
+    <string name="comment_post">Comment on this post</string>
     <string name="logout">Sign out</string>
     <string name="logged_out_toast">Signed out</string>
 

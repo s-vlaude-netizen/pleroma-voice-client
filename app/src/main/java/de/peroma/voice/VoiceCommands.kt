@@ -18,6 +18,15 @@ enum class VoiceCommand {
     WARNINGS_READ,
     WARNINGS_SKIP,
     NEW_POST,
+
+    /** Answer the post that was just read out. */
+    COMMENT,
+
+    /** Favourite the post that was just read out. */
+    LIKE,
+
+    /** Boost (reblog) the post that was just read out. */
+    BOOST,
     CONFIRM,
     DECLINE,
     FASTER,
@@ -48,6 +57,11 @@ enum class VoiceCommand {
  * Punctuation is stripped before matching, which turns "don't" into two words,
  * so contractions are spelled out that way in the tables below.
  *
+ * A phrase that starts with `^` only counts at the very beginning of the
+ * utterance. It is for ordinary words such as "like", which sit inside a lot of
+ * sentences that are not meant as a command: "I'd like to dictate" must not
+ * like the post, while "like this post" must.
+ *
  * All three tables are consulted whatever language is set, the chosen one
  * first; see [VoiceCommands.matchAcrossLanguages].
  */
@@ -75,6 +89,28 @@ object VoiceCommands {
         ),
         VoiceCommand.LANGUAGE_JAPANESE to listOf(
             "japanese", "speak japanese", "in japanese", "nihongo"
+        ),
+        // Acting on the post that was just read. They sit this early because
+        // their phrases contain words that other commands own: "reply to the
+        // previous post", "post a comment" and "boost this post" would be heard
+        // as PREVIOUS or NEW_POST further down. COMMENT comes first so that
+        // "I'd like to make a comment" can never be taken for a like.
+        //
+        // LIKE happens at once and is harmless, so its phrases are strict.
+        // BOOST is public and the app asks before it boosts, which is what
+        // makes its looser phrases safe to accept.
+        VoiceCommand.COMMENT to listOf(
+            "comment", "reply", "respond", "answer this", "write back"
+        ),
+        VoiceCommand.LIKE to listOf(
+            "^like", "add like", "add a like", "give a like", "give it a like",
+            "i like this", "i like that", "i like it", "i liked it", "liked it",
+            "favorite", "favourite", "fave", "add to favorites", "add to favourites",
+            "thumbs up"
+        ),
+        VoiceCommand.BOOST to listOf(
+            "boost", "repost", "re post", "retweet", "re tweet", "reblog",
+            "re blog", "reshare", "^share", "share this", "share that", "share it"
         ),
         // Before NEXT, whose "skip" would otherwise swallow "skip warnings",
         // and before READ_TIMELINE, which owns "read".
@@ -173,8 +209,23 @@ object VoiceCommands {
         VoiceCommand.LANGUAGE_JAPANESE to listOf(
             "japanisch", "sprich japanisch", "auf japanisch", "japanese"
         ),
-        // Vor NEXT und READ_TIMELINE, deren "überspringen" bzw. "vorlesen"
-        // sonst diese längeren Wendungen aufsaugen würden.
+        // Acting on the post that was just read; see the English table for why
+        // these sit this early. "kommentar schreiben" and "beitrag teilen" would
+        // otherwise be heard as NEW_POST, which owns "schreiben" and "beitrag".
+        VoiceCommand.COMMENT to listOf(
+            "kommentar", "kommentieren", "kommentiere", "antworten", "antworte",
+            "antwort", "zurückschreiben"
+        ),
+        VoiceCommand.LIKE to listOf(
+            "^like", "liken", "geliked", "gefällt", "mag ich", "ich mag das",
+            "favorisieren", "favorit", "daumen hoch"
+        ),
+        VoiceCommand.BOOST to listOf(
+            "boost", "boosten", "repost", "reposten", "retweet", "retweeten",
+            "weiterverbreiten", "teilen", "teile"
+        ),
+        // Before NEXT and READ_TIMELINE, whose "überspringen" and "vorlesen"
+        // would otherwise swallow these longer phrases.
         VoiceCommand.WARNINGS_READ to listOf(
             "inhalte immer vorlesen", "warnungen immer vorlesen", "immer alles vorlesen",
             "versteckte inhalte vorlesen"
@@ -194,8 +245,8 @@ object VoiceCommands {
         VoiceCommand.PREVIOUS to listOf(
             "vorheriger", "vorherige", "vorheriges", "zurück", "davor", "nochmal zurück"
         ),
-        // Vor REPEAT, dem das blanke "nochmal" gehört: mit "diktieren" dahinter
-        // geht es um den Entwurf, nicht um den vorgelesenen Beitrag.
+        // Before REPEAT, which owns the bare "nochmal": with "diktieren" after
+        // it, the draft is meant, not the post that was just read out.
         VoiceCommand.REDICTATE to listOf(
             "neu diktieren", "nochmal diktieren", "noch mal diktieren",
             "neu aufnehmen", "von vorne"
@@ -280,6 +331,18 @@ object VoiceCommands {
         ),
         VoiceCommand.LANGUAGE_JAPANESE to listOf(
             "日本語", "にほんご"
+        ),
+        // 読んだ投稿への操作。NEW_POST の 書きたい と ポスト を含む表現
+        // （コメントを書きたい、リポスト）があるので、それより前に置く。
+        VoiceCommand.COMMENT to listOf(
+            "コメント", "返信", "リプ", "返事"
+        ),
+        VoiceCommand.LIKE to listOf(
+            "いいね", "お気に入り", "ライク", "ふぁぼ", "ファボ"
+        ),
+        VoiceCommand.BOOST to listOf(
+            "ブースト", "リブログ", "リポスト", "リツイート", "リノート",
+            "シェア", "共有", "拡散"
         ),
         // READ_TIMELINE の 読んで を含むため、ここに置く。
         VoiceCommand.WARNINGS_READ to listOf(
@@ -384,8 +447,8 @@ object VoiceCommands {
     )
 
     private val GERMAN_CONFIRMATION: List<Pair<VoiceCommand, List<String>>> = listOf(
-        // Kein blankes "neu": das klingt für einen Erkenner wie "nein" und
-        // würde den Beitrag löschen statt ihn neu aufzunehmen.
+        // No bare "neu": to a recognizer it sounds like "nein" and would
+        // delete the post instead of re-recording it.
         VoiceCommand.REDICTATE to listOf(
             "wiederholen", "wiederhole", "nochmal", "noch mal", "noch einmal",
             "neu diktieren", "neu aufnehmen", "nochmal diktieren", "von vorne"
@@ -479,14 +542,8 @@ object VoiceCommands {
     ) {
         private val byWord = language.hasWordBoundaries
 
-        private val entries: List<Pair<VoiceCommand, List<List<String>>>> =
-            table.map { (command, phrases) -> command to phrases.map { words(it) } }
-
-        private val joined: List<Pair<VoiceCommand, List<String>>> =
-            if (byWord) emptyList()
-            else entries.map { (command, phrases) ->
-                command to phrases.map { it.joinToString("") }
-            }
+        private val entries: List<Pair<VoiceCommand, List<Phrase>>> =
+            table.map { (command, phrases) -> command to phrases.map { Phrase.parse(it) } }
 
         /** A phrase anywhere in the utterance counts. */
         fun match(spoken: String): VoiceCommand = match(spoken, whole = false)
@@ -499,22 +556,50 @@ object VoiceCommands {
             if (said.isEmpty()) return VoiceCommand.UNKNOWN
             if (byWord) {
                 for ((command, phrases) in entries) {
-                    val hit = phrases.any {
-                        if (whole) said == it else contains(said, it)
-                    }
-                    if (hit) return command
+                    if (phrases.any { it.matches(said, whole) }) return command
                 }
             } else {
                 val text = said.joinToString("")
-                for ((command, phrases) in joined) {
-                    val hit = phrases.any {
-                        it.isNotEmpty() && if (whole) text == it else text.contains(it)
-                    }
-                    if (hit) return command
+                for ((command, phrases) in entries) {
+                    if (phrases.any { it.matchesText(text, whole) }) return command
                 }
             }
             return VoiceCommand.UNKNOWN
         }
+    }
+}
+
+/**
+ * One phrase of a table, with the words it is made of and where in the
+ * utterance it has to stand to count (see the `^` prefix in [VoiceCommands]).
+ */
+private class Phrase(private val words: List<String>, private val atStart: Boolean) {
+
+    /** The words run together, for languages that are written without spaces. */
+    private val joined: String = words.joinToString("")
+
+    fun matches(said: List<String>, whole: Boolean): Boolean {
+        if (words.isEmpty()) return false
+        return when {
+            whole -> said == words
+            atStart -> said.size >= words.size && said.subList(0, words.size) == words
+            else -> contains(said, words)
+        }
+    }
+
+    fun matchesText(text: String, whole: Boolean): Boolean {
+        if (joined.isEmpty()) return false
+        return when {
+            whole -> text == joined
+            atStart -> text.startsWith(joined)
+            else -> text.contains(joined)
+        }
+    }
+
+    companion object {
+        fun parse(raw: String): Phrase =
+            if (raw.startsWith("^")) Phrase(words(raw.substring(1)), atStart = true)
+            else Phrase(words(raw), atStart = false)
     }
 }
 

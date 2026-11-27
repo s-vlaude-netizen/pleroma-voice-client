@@ -32,6 +32,7 @@
     <string name="mic_device_blocked">マイクがすべてのアプリでブロックされています。クイック設定で「マイクへのアクセス」をオンに戻してから、「音声操作を開始」を押してください。</string>
 
     <string name="read_timeline">タイムラインを読む</string>
+    <string name="read_notifications">通知を読む</string>
     <string name="pauses_state_on">投稿ごとに尋ねる: オン — 押すとオフ</string>
     <string name="pauses_state_off">投稿ごとに尋ねる: オフ — 押すとオン</string>
     <string name="pauses_on_status">投稿ごとに尋ねます。</string>
@@ -52,6 +53,9 @@
     <string name="stop">停止</string>
     <string name="dictate">投稿を口述する</string>
     <string name="repeat_post">投稿をもう一度</string>
+    <string name="like_post">投稿にいいね</string>
+    <string name="boost_post">投稿をブースト</string>
+    <string name="comment_post">投稿にコメント</string>
     <string name="logout">ログアウト</string>
     <string name="logged_out_toast">ログアウトしました</string>
 

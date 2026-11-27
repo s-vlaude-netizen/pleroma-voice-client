@@ -100,6 +100,32 @@ class VoiceService : Service() {
             prefs.pendingDraft = value
         }
 
+    /**
+     * The post the draft is a comment on, or null when the draft is a post of
+     * its own. Stored with the draft and cleared with it; see [ReplyTarget].
+     */
+    private var replyTarget: ReplyTarget?
+        get() = prefs.pendingReply
+        set(value) {
+            prefs.pendingReply = value
+        }
+
+    /** Where the session goes once a comment has been sent or dropped. */
+    private var afterComment: After = After.LISTEN_COMMAND
+
+    /**
+     * The post a spoken "boost" is waiting for a yes on.
+     *
+     * A boost goes out to every follower, and "boost" sounds a lot like "post",
+     * so it is asked about first. A question only lives until the app says
+     * something else: [speak] drops it, which is what stops a later "yes" — to a
+     * draft, say — from boosting a post that was asked about minutes ago.
+     */
+    private var pendingBoost: Post? = null
+
+    /** Where the session goes once the boost question is answered. */
+    private var afterBoostQuestion: After = After.LISTEN_COMMAND
+
     private var utteranceCounter = 0
     private var awaitedUtterance: String? = null
     private var afterSpeech: After = After.NOTHING
@@ -208,7 +234,10 @@ class VoiceService : Service() {
             ACTION_NEXT -> nextPost(auto = false)
             ACTION_PREVIOUS -> previousPost()
             ACTION_REPEAT -> speakCurrentPost()
-            ACTION_NEW_POST -> promptForDictation()
+            ACTION_NEW_POST -> startNewPost()
+            ACTION_COMMENT -> startComment(fromReading = stage == Stage.READING)
+            ACTION_LIKE -> likeCurrentPost(spoken = false, resume = After.NOTHING)
+            ACTION_BOOST -> boostCurrentPostFromButton()
             else -> Unit
         }
     }
@@ -217,18 +246,23 @@ class VoiceService : Service() {
         acquireWakeLock()
         silenceStreak = 0
         confirmMisses = 0
+        pendingBoost = null
+        afterComment = After.LISTEN_COMMAND
         // A post dictated in an earlier session is picked up where it was left,
-        // rather than quietly dropped.
+        // rather than quietly dropped. A comment comes back as a comment.
         val waiting = draft
         if (waiting.isNotBlank()) {
             stage = Stage.CONFIRMING
+            val target = replyTarget
+            val intro = if (target != null) strings.commentWaiting(target.author)
+            else strings.draftWaiting
             speak(
-                strings.sessionStarted + " " + strings.draftWaiting + " " +
-                    strings.confirmDraft(waiting),
+                strings.sessionStarted + " " + intro + " " + confirmPrompt(),
                 After.LISTEN_CONFIRM
             )
             return
         }
+        replyTarget = null
         stage = Stage.MENU
         speak(strings.sessionStarted, After.LISTEN_COMMAND)
     }
@@ -237,6 +271,7 @@ class VoiceService : Service() {
 
     private fun speak(text: String, after: After) {
         val engine = tts ?: return
+        pendingBoost = null // see the field: a question lives until anything else is said
         cancelListening()
         requestAudioFocus()
 
@@ -495,6 +530,7 @@ class VoiceService : Service() {
                 dictationRetries++
                 if (dictationRetries >= 2) {
                     dictationRetries = 0
+                    clearDraft()
                     speak(strings.nothingHeardToMenu, After.LISTEN_COMMAND)
                 } else {
                     speak(strings.nothingHeardRetry, After.LISTEN_DICTATION)
@@ -502,6 +538,11 @@ class VoiceService : Service() {
             }
 
             Stage.CONFIRMING -> {
+                // No answer is not a yes: nothing is boosted on silence.
+                if (pendingBoost != null) {
+                    cancelBoost()
+                    return
+                }
                 silenceStreak++
                 if (silenceStreak >= 2) {
                     silenceStreak = 0
@@ -582,7 +623,11 @@ class VoiceService : Service() {
                 speak(strings.pausesOff, After.LISTEN_COMMAND)
             }
 
-            VoiceCommand.NEW_POST -> promptForDictation()
+            VoiceCommand.NEW_POST -> startNewPost()
+            VoiceCommand.COMMENT -> startComment(duringReading)
+            VoiceCommand.LIKE ->
+                likeCurrentPost(spoken = true, resume = afterReaction(duringReading))
+            VoiceCommand.BOOST -> askBeforeBoosting(duringReading)
             VoiceCommand.HELP -> speak(strings.helpText, After.LISTEN_COMMAND)
 
             VoiceCommand.FASTER -> changeRate(TtsSetup.RATE_STEP, duringReading)
@@ -609,12 +654,7 @@ class VoiceService : Service() {
                 if (draft.isNotBlank()) publishDraft() else shrug(duringReading)
 
             VoiceCommand.DECLINE ->
-                if (draft.isNotBlank()) {
-                    draft = ""
-                    speak(strings.draftDiscarded, After.LISTEN_COMMAND)
-                } else {
-                    shrug(duringReading)
-                }
+                if (draft.isNotBlank()) discardDraft() else shrug(duringReading)
 
             VoiceCommand.UNKNOWN -> shrug(duringReading)
         }
@@ -787,10 +827,61 @@ class VoiceService : Service() {
 
     // ---- dictation ---------------------------------------------------------
 
+    /** Asks for the text of a post — or of a comment, if [replyTarget] is set. */
     private fun promptForDictation() {
         dictationRetries = 0
         draft = ""
-        speak(strings.dictatePrompt, After.LISTEN_DICTATION)
+        val target = replyTarget
+        speak(
+            if (target != null) strings.commentPrompt(target.author) else strings.dictatePrompt,
+            After.LISTEN_DICTATION
+        )
+    }
+
+    /** A post of its own, whatever the session was reading. */
+    private fun startNewPost() {
+        replyTarget = null
+        afterComment = After.LISTEN_COMMAND
+        promptForDictation()
+    }
+
+    /**
+     * A comment on the post the session is on: the last one that was read out.
+     *
+     * Started from the pause between two posts, it hands back to that pause once
+     * it is sent or dropped, so the timeline carries on where it was.
+     */
+    private fun startComment(fromReading: Boolean) {
+        val resume = if (fromReading) After.LISTEN_BETWEEN_POSTS else After.LISTEN_COMMAND
+        val post = reactionTarget(spoken = true, resume = resume) ?: return
+        replyTarget = ReplyTarget.of(post)
+        afterComment = resume
+        promptForDictation()
+    }
+
+    /** What is read back for a yes: the post, or the comment and who it is for. */
+    private fun confirmPrompt(): String {
+        val target = replyTarget
+        return if (target != null) strings.confirmComment(target.author, draft)
+        else strings.confirmDraft(draft)
+    }
+
+    /** Throws the draft away, with the comment target and what follows it. */
+    private fun clearDraft() {
+        draft = ""
+        replyTarget = null
+        afterComment = After.LISTEN_COMMAND
+    }
+
+    private fun discardDraft() {
+        val wasComment = replyTarget != null
+        val next = afterComment
+        clearDraft()
+        if (wasComment) {
+            speak(strings.commentDiscarded, next)
+        } else {
+            speak(strings.draftDiscarded, After.LISTEN_COMMAND)
+        }
     }
 
     private fun handleDictationResult(spoken: String) {
@@ -801,6 +892,7 @@ class VoiceService : Service() {
         if (wordCount <= 2) {
             when (VoiceCommands.parseConfirmation(spoken, language)) {
                 VoiceCommand.DECLINE -> {
+                    clearDraft()
                     speak(strings.dictationCancelled, After.LISTEN_COMMAND)
                     return
                 }
@@ -817,10 +909,14 @@ class VoiceService : Service() {
         draft = spoken.trim()
         dictationRetries = 0
         confirmMisses = 0
-        speak(strings.confirmDraft(draft), After.LISTEN_CONFIRM)
+        speak(confirmPrompt(), After.LISTEN_CONFIRM)
     }
 
     private fun handleConfirmation(spoken: String) {
+        pendingBoost?.let {
+            handleBoostAnswer(it, spoken)
+            return
+        }
         when (VoiceCommands.parseConfirmation(spoken, language)) {
             VoiceCommand.CONFIRM -> {
                 confirmMisses = 0
@@ -829,8 +925,7 @@ class VoiceService : Service() {
 
             VoiceCommand.DECLINE -> {
                 confirmMisses = 0
-                draft = ""
-                speak(strings.draftDiscarded, After.LISTEN_COMMAND)
+                discardDraft()
             }
 
             VoiceCommand.REDICTATE -> {
@@ -868,13 +963,22 @@ class VoiceService : Service() {
 
         val instance = prefs.instance
         val token = prefs.accessToken
+        val target = replyTarget
 
         Background.run(
-            work = { PleromaApi.postStatus(instance, token, text) },
+            work = {
+                if (target != null) PleromaApi.postReply(instance, token, text, target)
+                else PleromaApi.postStatus(instance, token, text)
+            },
             onSuccess = {
-                draft = ""
+                val next = afterComment
+                clearDraft()
                 beep(ToneGenerator.TONE_PROP_ACK)
-                speak(strings.published, After.LISTEN_COMMAND)
+                if (target != null) {
+                    speak(strings.commentPublished, next)
+                } else {
+                    speak(strings.published, After.LISTEN_COMMAND)
+                }
             },
             onError = { error ->
                 beep(ToneGenerator.TONE_PROP_NACK)
@@ -882,6 +986,128 @@ class VoiceService : Service() {
                 speak(strings.sendFailed(error.userMessage(strings)), After.LISTEN_CONFIRM)
             }
         )
+    }
+
+    // ---- reacting to the post that was just read ---------------------------
+
+    /** The post the session is on: the last one that was read out. */
+    private fun currentPost(): Post? = posts.getOrNull(index)
+
+    /**
+     * The post a comment, like or boost acts on — or null, after saying why
+     * there is none.
+     *
+     * A notification can be without one: a follow has no post, and a favourite
+     * is about the listener's own, which is not the favouriter's to answer.
+     * Tapping a button must not cut off what is being read, so it is [spoken]
+     * only when the listener said it.
+     */
+    private fun reactionTarget(spoken: Boolean, resume: After): Post? {
+        val post = currentPost()
+        if (post == null) {
+            speak(strings.noTimelineLoaded, After.LISTEN_COMMAND)
+            return null
+        }
+        if (!post.canBeAnswered) {
+            reactionFailed(strings.nothingToReactTo, spoken, resume)
+            return null
+        }
+        return post
+    }
+
+    /**
+     * What follows a like or boost. Said from the pause between posts, the
+     * session goes back into that pause, so a second reaction can follow and
+     * silence carries on to the next post; said anywhere else, it waits for the
+     * next command.
+     */
+    private fun afterReaction(duringReading: Boolean): After =
+        if (duringReading) After.LISTEN_BETWEEN_POSTS else After.LISTEN_COMMAND
+
+    /**
+     * Likes the current post.
+     *
+     * A button is not [spoken]: tapping it while a post is being read must not
+     * cut the post off to announce the result, so it gets a tone and a line of
+     * text. Said aloud, the app is already waiting for the user, and answers.
+     */
+    private fun likeCurrentPost(spoken: Boolean, resume: After) {
+        val post = reactionTarget(spoken, resume) ?: return
+        val instance = prefs.instance
+        val token = prefs.accessToken
+        Background.run(
+            work = { PleromaApi.favourite(instance, token, post.id) },
+            onSuccess = { reacted(strings.liked, spoken, resume) },
+            onError = { error ->
+                reactionFailed(strings.likeFailed(error.userMessage(strings)), spoken, resume)
+            }
+        )
+    }
+
+    /** Asks before boosting, because a boost is public. */
+    private fun askBeforeBoosting(duringReading: Boolean) {
+        val post = reactionTarget(spoken = true, resume = afterReaction(duringReading)) ?: return
+        confirmMisses = 0
+        afterBoostQuestion = afterReaction(duringReading)
+        speak(strings.confirmBoost(post.author), After.LISTEN_CONFIRM)
+        pendingBoost = post // after speak, which clears it
+    }
+
+    private fun handleBoostAnswer(post: Post, spoken: String) {
+        when (VoiceCommands.parseConfirmation(spoken, language)) {
+            VoiceCommand.CONFIRM -> {
+                pendingBoost = null
+                confirmMisses = 0
+                boost(post, spoken = true, resume = afterBoostQuestion)
+            }
+
+            VoiceCommand.DECLINE -> cancelBoost()
+
+            // Anything else is no answer. Ask again, but only a couple of times:
+            // a recognizer that keeps mishearing must not trap the session here.
+            else -> {
+                confirmMisses++
+                if (confirmMisses >= MAX_CONFIRM_MISSES) {
+                    cancelBoost()
+                } else {
+                    speak(strings.boostAgain, After.LISTEN_CONFIRM)
+                    pendingBoost = post
+                }
+            }
+        }
+    }
+
+    private fun cancelBoost() {
+        confirmMisses = 0
+        speak(strings.boostCancelled, afterBoostQuestion)
+    }
+
+    /** The button is a deliberate tap on "Boost", so it needs no question. */
+    private fun boostCurrentPostFromButton() {
+        val post = reactionTarget(spoken = false, resume = After.NOTHING) ?: return
+        boost(post, spoken = false, resume = After.NOTHING)
+    }
+
+    private fun boost(post: Post, spoken: Boolean, resume: After) {
+        val instance = prefs.instance
+        val token = prefs.accessToken
+        Background.run(
+            work = { PleromaApi.reblog(instance, token, post.id) },
+            onSuccess = { reacted(strings.boosted, spoken, resume) },
+            onError = { error ->
+                reactionFailed(strings.boostFailed(error.userMessage(strings)), spoken, resume)
+            }
+        )
+    }
+
+    private fun reacted(text: String, spoken: Boolean, resume: After) {
+        beep(ToneGenerator.TONE_PROP_ACK)
+        if (spoken) speak(text, resume) else publish(text)
+    }
+
+    private fun reactionFailed(text: String, spoken: Boolean, resume: After) {
+        beep(ToneGenerator.TONE_PROP_NACK)
+        if (spoken) speak(text, resume) else publish(text)
     }
 
     // ---- session end -------------------------------------------------------
@@ -892,6 +1118,8 @@ class VoiceService : Service() {
             return
         }
         stage = Stage.IDLE
+        pendingBoost = null
+        afterComment = After.LISTEN_COMMAND
         cancelListening()
         tts?.stop()
         abandonAudioFocus()
@@ -1077,6 +1305,9 @@ class VoiceService : Service() {
         const val ACTION_PREVIOUS = "de.peroma.voice.action.PREVIOUS"
         const val ACTION_REPEAT = "de.peroma.voice.action.REPEAT"
         const val ACTION_NEW_POST = "de.peroma.voice.action.NEW_POST"
+        const val ACTION_COMMENT = "de.peroma.voice.action.COMMENT"
+        const val ACTION_LIKE = "de.peroma.voice.action.LIKE"
+        const val ACTION_BOOST = "de.peroma.voice.action.BOOST"
 
         private const val CHANNEL_ID = "voice_session"
         private const val NOTIFICATION_ID = 42

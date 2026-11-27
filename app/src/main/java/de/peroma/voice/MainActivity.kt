@@ -100,6 +100,10 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         prefs = Prefs(this)
 
+        // Free the speech model that 2.10.x downloaded; see LegacyCleanup.
+        val appContext = applicationContext
+        Background.run({ LegacyCleanup.removeSpeechModel(appContext) }, {}, {})
+
         if (!prefs.isLoggedIn) {
             startActivity(Intent(this, LoginActivity::class.java))
             finish()
@@ -117,6 +121,10 @@ class MainActivity : AppCompatActivity() {
 
         findViewById<Button>(R.id.btnRead).setOnClickListener {
             VoiceService.send(this, VoiceService.ACTION_READ_TIMELINE)
+        }
+
+        findViewById<Button>(R.id.btnReadNotifications).setOnClickListener {
+            VoiceService.send(this, VoiceService.ACTION_READ_NOTIFICATIONS)
         }
 
         pauseToggle = findViewById(R.id.btnTogglePauses)
@@ -186,6 +194,15 @@ class MainActivity : AppCompatActivity() {
         }
         findViewById<Button>(R.id.btnRepeat).setOnClickListener {
             VoiceService.send(this, VoiceService.ACTION_REPEAT)
+        }
+        findViewById<Button>(R.id.btnLike).setOnClickListener {
+            VoiceService.send(this, VoiceService.ACTION_LIKE)
+        }
+        findViewById<Button>(R.id.btnBoost).setOnClickListener {
+            VoiceService.send(this, VoiceService.ACTION_BOOST)
+        }
+        findViewById<Button>(R.id.btnComment).setOnClickListener {
+            onCommentClicked()
         }
         findViewById<Button>(R.id.btnDictate).setOnClickListener {
             onDictateClicked()
@@ -462,6 +479,13 @@ class MainActivity : AppCompatActivity() {
     private fun startVoiceSession() {
         VoiceService.send(this, VoiceService.ACTION_START_SESSION)
         setStatus(getString(R.string.starting_voice))
+    }
+
+    /** Dictating needs the microphone, so it is settled first, as for a new post. */
+    private fun onCommentClicked() {
+        withMicrophone {
+            afterDeviceMicCheck { VoiceService.send(this, VoiceService.ACTION_COMMENT) }
+        }
     }
 
     private fun onDictateClicked() {

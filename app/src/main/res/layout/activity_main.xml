@@ -50,6 +50,11 @@
                 android:text="@string/read_timeline" />
 
             <Button
+                android:id="@+id/btnReadNotifications"
+                style="@style/VoiceButton"
+                android:text="@string/read_notifications" />
+
+            <Button
                 android:id="@+id/btnTogglePauses"
                 style="@style/VoiceButton"
                 android:text="@string/pauses_state_off" />
@@ -83,6 +88,21 @@
                 android:id="@+id/btnRepeat"
                 style="@style/VoiceButton"
                 android:text="@string/repeat_post" />
+
+            <Button
+                android:id="@+id/btnLike"
+                style="@style/VoiceButton"
+                android:text="@string/like_post" />
+
+            <Button
+                android:id="@+id/btnBoost"
+                style="@style/VoiceButton"
+                android:text="@string/boost_post" />
+
+            <Button
+                android:id="@+id/btnComment"
+                style="@style/VoiceButton"
+                android:text="@string/comment_post" />
 
             <Button
                 android:id="@+id/btnDictate"

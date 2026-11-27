@@ -314,4 +314,65 @@ class PostSpeechTest {
         )
         assertEquals(listOf("Sam", "Alex"), posts.map { it.author })
     }
+
+    // ---- comment, like and boost on a notification ----------------------------
+
+    private fun mentionJson(visibility: String = "private") = """
+        {"id":"9","type":"mention",
+         "account":{"id":"2","display_name":"Sam","username":"sam","acct":"sam@example.social"},
+         "status":{"id":"5","content":"<p>Are you there?</p>","spoiler_text":"",
+                   "visibility":"$visibility","media_attachments":[],
+                   "account":{"id":"2","display_name":"Sam","username":"sam",
+                              "acct":"sam@example.social"}}}
+    """
+
+    @Test
+    fun aNotificationActsOnThePostNotOnTheNotification() {
+        // Liking or boosting what was just read goes by the post's id. Handing
+        // over the notification's ("9") would favourite nothing, or the wrong thing.
+        val post = Post.fromNotification(JSONObject(mentionJson()), en)!!
+        assertEquals("5", post.id)
+        assertEquals("private", post.visibility)
+        assertEquals("5", Post.fromNotification(JSONObject(favouriteJson), en)!!.id)
+    }
+
+    @Test
+    fun aCommentOnAMentionAnswersThePostAndStaysAsNarrowAsIt() {
+        val target = ReplyTarget.of(Post.fromNotification(JSONObject(mentionJson()), en)!!)
+        assertEquals(ReplyTarget("5", "sam@example.social", "Sam", "private"), target)
+    }
+
+    @Test
+    fun onlyNotificationsAboutTheOtherPersonsPostCanBeAnswered() {
+        val answerable = setOf(
+            NotificationKind.MENTION, NotificationKind.POLL,
+            NotificationKind.NEW_POST, NotificationKind.EDIT
+        )
+        for (kind in NotificationKind.values()) {
+            assertEquals(kind.name, kind in answerable, notification(kind).canBeAnswered)
+        }
+    }
+
+    @Test
+    fun aFavouriteIsAboutTheListenersOwnPostSoThereIsNothingToAnswer() {
+        // "Sam favorited your post" — a boost of it would otherwise be offered as
+        // "boost Sam's post".
+        assertFalse(Post.fromNotification(JSONObject(favouriteJson), en)!!.canBeAnswered)
+    }
+
+    @Test
+    fun aMentionWhosePostIsGoneCannotBeAnswered() {
+        val json = JSONObject(mentionJson()).apply { remove("status") }
+        assertFalse(Post.fromNotification(json, en)!!.canBeAnswered)
+    }
+
+    @Test
+    fun timelinePostsCanAlwaysBeAnswered() {
+        assertTrue(post().canBeAnswered)
+    }
+
+    @Test
+    fun theNothingToDoMessageIsSaidInEveryLanguage() {
+        for (strings in listOf(en, de, ja)) assertTrue(strings.nothingToReactTo.isNotBlank())
+    }
 }

@@ -2,17 +2,28 @@ package de.peroma.voice
 
 import org.json.JSONObject
 
-/** What a notification is about. Only [hasStatus] kinds carry a post to read. */
-enum class NotificationKind(val apiType: String, val hasStatus: Boolean) {
-    MENTION("mention", true),
-    BOOST("reblog", true),
-    FAVORITE("favourite", true),
-    REACTION("pleroma:emoji_reaction", true),
-    FOLLOW("follow", false),
-    FOLLOW_REQUEST("follow_request", false),
-    POLL("poll", true),
-    NEW_POST("status", true),
-    EDIT("update", true);
+/**
+ * What a notification is about.
+ *
+ * Only [hasStatus] kinds carry a post to read. [actorWroteIt] says whose post
+ * that is: a mention is the other person's own words, but a favourite, a boost or
+ * a reaction is about the listener's post, so a comment, like or boost must not
+ * treat that one as the other person's.
+ */
+enum class NotificationKind(
+    val apiType: String,
+    val hasStatus: Boolean,
+    val actorWroteIt: Boolean
+) {
+    MENTION("mention", true, true),
+    BOOST("reblog", true, false),
+    FAVORITE("favourite", true, false),
+    REACTION("pleroma:emoji_reaction", true, false),
+    FOLLOW("follow", false, false),
+    FOLLOW_REQUEST("follow_request", false, false),
+    POLL("poll", true, true),
+    NEW_POST("status", true, true),
+    EDIT("update", true, true);
 
     companion object {
         fun fromApi(type: String): NotificationKind? = values().firstOrNull { it.apiType == type }
@@ -34,6 +45,10 @@ data class Post(
     val spoiler: String,
     val media: List<Media>,
     val boostedBy: String?,
+
+    /** "public", "unlisted", "private" or "direct"; empty when the server did not say. */
+    val visibility: String = "",
+
     /** Set when this entry is a notification; [author] is then who caused it. */
     val notification: NotificationKind? = null,
     /** The emoji of an emoji reaction. */
@@ -42,6 +57,17 @@ data class Post(
 
     /** True when the author put this post behind a content warning. */
     val isSensitive: Boolean get() = spoiler.isNotBlank()
+
+    /**
+     * Whether a comment, like or boost has a post to act on here.
+     *
+     * Every timeline entry has. A notification only does when it is about a
+     * post the other person wrote: a follow has none, and a favourite is about
+     * the listener's own post — answering or boosting that under the name of
+     * whoever favourited it would be wrong.
+     */
+    val canBeAnswered: Boolean
+        get() = id.isNotBlank() && (notification == null || notification.actorWroteIt)
 
     /**
      * The full text the speech engine reads for this post.
@@ -182,7 +208,8 @@ data class Post(
                 body = SpeechText.fromHtml(source.optString("content"), strings),
                 spoiler = SpeechText.fromHtml(source.optString("spoiler_text"), strings),
                 media = media,
-                boostedBy = boostedBy
+                boostedBy = boostedBy,
+                visibility = source.optString("visibility")
             )
         }
 
@@ -192,19 +219,24 @@ data class Post(
          *
          * The actor becomes the author and the post it concerns supplies the
          * text, so favourites and boosts read back the post that was liked.
+         *
+         * The [id] is the post's, not the notification's: a comment, like or
+         * boost on what was just read goes to the post, and so does the
+         * visibility a comment is not allowed to exceed.
          */
         fun fromNotification(obj: JSONObject, strings: Strings): Post? {
             val kind = NotificationKind.fromApi(obj.optString("type")) ?: return null
             val account = obj.optJSONObject("account")
             val status = obj.optJSONObject("status")?.let { fromJson(it, strings) }
             return Post(
-                id = obj.optString("id"),
+                id = status?.id.orEmpty(),
                 author = displayName(account, strings),
                 acct = account?.optString("acct").orEmpty(),
                 body = status?.body.orEmpty(),
                 spoiler = status?.spoiler.orEmpty(),
                 media = status?.media.orEmpty(),
                 boostedBy = null,
+                visibility = status?.visibility.orEmpty(),
                 notification = kind,
                 emoji = obj.optString("emoji").takeIf { it.isNotBlank() && it != "null" }
             )
